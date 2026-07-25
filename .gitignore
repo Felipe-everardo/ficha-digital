@@ -1,0 +1,29 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+
+# React
+**/node_modules/
+**/dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.log
+.dev-logs/
+
+# Tests and coverage
+**/TestResults/
+**/coverage/
+
+# Editors and operating systems
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentação pessoal de publicação
+/docs/particular
