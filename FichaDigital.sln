@@ -9,6 +9,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{FE36
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FichaDigital.Api", "src\backend\FichaDigital.Api\FichaDigital.Api.csproj", "{7D8AD57B-2943-4479-847D-6BF7F67058A4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{C62EED4C-2AC9-F50F-E0BC-649CFEA98BDB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FichaDigital.UnitTests", "tests\backend\FichaDigital.UnitTests\FichaDigital.UnitTests.csproj", "{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +37,18 @@ Global
 		{7D8AD57B-2943-4479-847D-6BF7F67058A4}.Release|x64.Build.0 = Release|Any CPU
 		{7D8AD57B-2943-4479-847D-6BF7F67058A4}.Release|x86.ActiveCfg = Release|Any CPU
 		{7D8AD57B-2943-4479-847D-6BF7F67058A4}.Release|x86.Build.0 = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|x64.Build.0 = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Debug|x86.Build.0 = Debug|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|x64.ActiveCfg = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|x64.Build.0 = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|x86.ActiveCfg = Release|Any CPU
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -38,5 +56,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{FE360695-3F2B-1049-3887-35FBB5135923} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{7D8AD57B-2943-4479-847D-6BF7F67058A4} = {FE360695-3F2B-1049-3887-35FBB5135923}
+		{C62EED4C-2AC9-F50F-E0BC-649CFEA98BDB} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{A905755E-EBDD-46B1-B92C-F4479EDBAC4A} = {C62EED4C-2AC9-F50F-E0BC-649CFEA98BDB}
 	EndGlobalSection
 EndGlobal

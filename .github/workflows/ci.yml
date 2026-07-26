@@ -31,6 +31,9 @@ jobs:
       - name: Compilar
         run: dotnet build FichaDigital.sln --configuration Release --no-restore
 
+      - name: Executar testes
+        run: dotnet test FichaDigital.sln --configuration Release --no-build
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest

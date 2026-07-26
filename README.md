@@ -22,12 +22,14 @@ Já estão implementados:
 
 - API REST com ASP.NET Core;
 - frontend React integrado à API;
+- formulário inicial com cadastro dos dados obrigatórios do cliente;
 - módulo de clientes com entidade protegida por regras de negócio;
 - validação de requisições com DTOs;
 - persistência com Entity Framework Core e SQL Server;
 - migrations versionadas;
 - endpoint `POST /api/clientes`;
 - respostas HTTP separadas das entidades de domínio;
+- primeiros testes unitários das regras de domínio;
 - pipeline de integração contínua para backend e frontend.
 
 O sistema ainda não está pronto para produção e não deve receber dados pessoais
@@ -69,6 +71,7 @@ expor propriedades internas ou dados sensíveis por acidente.
 - .NET 10;
 - ASP.NET Core Web API;
 - Entity Framework Core 10;
+- xUnit v3;
 - SQL Server LocalDB no desenvolvimento.
 
 ### Frontend
@@ -82,6 +85,7 @@ expor propriedades internas ou dados sensíveis por acidente.
 
 - migrations versionadas;
 - validação no domínio e na fronteira HTTP;
+- testes unitários;
 - lint e build do frontend;
 - GitHub Actions.
 
@@ -95,6 +99,9 @@ FichaDigital/
 │   ├── backend/
 │   │   └── FichaDigital.Api/
 │   └── frontend/
+├── tests/
+│   └── backend/
+│       └── FichaDigital.UnitTests/
 ├── FichaDigital.sln
 └── README.md
 ```
