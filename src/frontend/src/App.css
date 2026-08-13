@@ -184,6 +184,21 @@ h1 {
   box-shadow: 0 0 0 3px rgba(83, 107, 74, 0.13);
 }
 
+.field input[aria-invalid='true'] {
+  border-color: var(--error);
+  background: #fff9f7;
+}
+
+.field input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(152, 78, 72, 0.12);
+}
+
+.field-error {
+  color: var(--error);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .field input::placeholder {
   color: #899286;
 }

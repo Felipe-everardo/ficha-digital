@@ -28,8 +28,16 @@ Já estão implementados:
 - persistência com Entity Framework Core e SQL Server;
 - migrations versionadas;
 - endpoint `POST /api/clientes`;
+- endpoint `POST /api/clientes/{clienteId}/fichas/convites`;
+- endpoint `POST /api/fichas/convites/abrir` para validar o token e iniciar o preenchimento;
+- endpoint `POST /api/fichas/questionario-saude` para registrar respostas pelo token;
+- limitação de requisições por IP nos endpoints públicos que recebem tokens;
 - respostas HTTP separadas das entidades de domínio;
 - primeiros testes unitários das regras de domínio;
+- primeiro teste de integração do cadastro via HTTP;
+- modelagem e persistência inicial de fichas com vínculo ao cliente e estados controlados;
+- geração criptográfica e persistência inicial de convites seguros;
+- questionário de saúde versionado, com validações condicionais e condições clínicas;
 - pipeline de integração contínua para backend e frontend.
 
 O sistema ainda não está pronto para produção e não deve receber dados pessoais
@@ -85,7 +93,7 @@ expor propriedades internas ou dados sensíveis por acidente.
 
 - migrations versionadas;
 - validação no domínio e na fronteira HTTP;
-- testes unitários;
+- testes unitários e de integração;
 - lint e build do frontend;
 - GitHub Actions.
 
@@ -101,6 +109,7 @@ FichaDigital/
 │   └── frontend/
 ├── tests/
 │   └── backend/
+│       ├── FichaDigital.IntegrationTests/
 │       └── FichaDigital.UnitTests/
 ├── FichaDigital.sln
 └── README.md
@@ -211,13 +220,15 @@ Os valores acima são fictícios.
 - [x] Comunicação entre React e ASP.NET Core;
 - [x] Entidade e persistência de clientes;
 - [x] Primeiro endpoint de cadastro;
+- [x] Formulário responsivo para o cadastro inicial;
+- [x] Primeiros testes unitários e de integração;
+- [x] Modelagem e persistência inicial do módulo de fichas;
 - [ ] Consulta de clientes;
 - [ ] Convites com links seguros;
-- [ ] Questionário de saúde versionado;
+- [ ] ário de saúde versionado;
 - [ ] Termo de consentimento versionado;
 - [ ] Autenticação e autorização do estúdio;
-- [ ] Testes automatizados;
-- [ ] Formulário responsivo para o cliente;
+- [ ] Ampliação da cobertura de testes automatizados;
 - [ ] Auditoria, backup e preparação para produção.
 
 ## Privacidade

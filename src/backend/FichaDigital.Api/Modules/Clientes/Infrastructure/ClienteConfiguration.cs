@@ -19,7 +19,6 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
             .HasMaxLength(150)
             .IsRequired();
 
-
         builder.Property(cliente => cliente.NomeSocial)
             .HasMaxLength(150);
 

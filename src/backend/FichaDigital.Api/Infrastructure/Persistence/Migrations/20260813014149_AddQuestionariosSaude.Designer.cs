@@ -4,6 +4,7 @@ using FichaDigital.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(FichaDigitalDbContext))]
-    partial class FichaDigitalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813014149_AddQuestionariosSaude")]
+    partial class AddQuestionariosSaude
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,9 +134,6 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FichaId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("PossuiCondicaoCardiaca")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("PossuiPressaoAlta")
                         .HasColumnType("bit");
 
@@ -146,18 +146,9 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<bool>("TemDiabetes")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("TemEpilepsia")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("TemHemofilia")
-                        .HasColumnType("bit");
-
                     b.Property<string>("TipoDiabetes")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("UsaMarcaPasso")
-                        .HasColumnType("bit");
 
                     b.Property<int>("Versao")
                         .HasColumnType("int");

@@ -1,4 +1,5 @@
 using FichaDigital.Api.Modules.Clientes.Domain;
+using FichaDigital.Api.Modules.Fichas.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Infrastructure.Persistence;
@@ -8,6 +9,12 @@ public sealed class FichaDigitalDbContext(
     : DbContext(options)
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();
+
+    public DbSet<Ficha> Fichas => Set<Ficha>();
+
+    public DbSet<ConviteFicha> ConvitesFicha => Set<ConviteFicha>();
+
+    public DbSet<QuestionarioSaude> QuestionariosSaude => Set<QuestionarioSaude>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

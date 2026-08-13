@@ -4,6 +4,7 @@ using FichaDigital.Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(FichaDigitalDbContext))]
-    partial class FichaDigitalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813001257_AddConvitesFicha")]
+    partial class AddConvitesFicha
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,60 +119,6 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("Fichas", (string)null);
                 });
 
-            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("DescricaoAlergia")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<bool>("EstaGravidaOuAmamentando")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("FichaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("PossuiCondicaoCardiaca")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("PossuiPressaoAlta")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset>("RespondidoEmUtc")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<bool>("TemAlergia")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("TemDiabetes")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("TemEpilepsia")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("TemHemofilia")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TipoDiabetes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("UsaMarcaPasso")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Versao")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FichaId")
-                        .IsUnique();
-
-                    b.ToTable("QuestionariosSaude", (string)null);
-                });
-
             modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.ConviteFicha", b =>
                 {
                     b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
@@ -184,15 +133,6 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.HasOne("FichaDigital.Api.Modules.Clientes.Domain.Cliente", null)
                         .WithMany()
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", b =>
-                {
-                    b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
-                        .WithOne()
-                        .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", "FichaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

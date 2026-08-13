@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import './App.css'
 import {
+  ApiValidationError,
   criarCliente,
   getApiStatus,
   type ApiStatus,
@@ -8,18 +9,42 @@ import {
   type CriarClienteInput,
 } from './services/api'
 
+type ErrosFormulario = Partial<Record<keyof CriarClienteInput, string>>
+
+const camposPorNomeDaApi: Record<string, keyof CriarClienteInput> = {
+  nomecompleto: 'nomeCompleto',
+  nomesocial: 'nomeSocial',
+  pronomes: 'pronomes',
+  datanascimento: 'dataNascimento',
+  celular: 'celular',
+  email: 'email',
+}
+
 const formularioInicial: CriarClienteInput = {
   nomeCompleto: '',
+  nomeSocial: '',
+  pronomes: '',
   dataNascimento: '',
   celular: '',
+  email: '',
+}
+
+function formatarDataParaInput(data: Date) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+
+  return `${ano}-${mes}-${dia}`
 }
 
 function App() {
+  const dataMaximaNascimento = formatarDataParaInput(new Date())
   const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [formulario, setFormulario] = useState<CriarClienteInput>(formularioInicial)
   const [clienteCriado, setClienteCriado] = useState<ClienteCriado | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<ErrosFormulario>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -39,21 +64,49 @@ function App() {
       ...formularioAtual,
       [campo]: valor,
     }))
+
+    setFieldErrors((errosAtuais) => ({
+      ...errosAtuais,
+      [campo]: undefined,
+    }))
+    setSubmitError(null)
+  }
+
+  function mapearErrosDaApi(
+    errors: Record<string, string[]>,
+  ): ErrosFormulario {
+    const errosMapeados: ErrosFormulario = {}
+
+    for (const [nomeCampo, mensagens] of Object.entries(errors)) {
+      const campo = camposPorNomeDaApi[nomeCampo.toLowerCase()]
+
+      if (campo && mensagens.length > 0) {
+        errosMapeados[campo] = mensagens[0]
+      }
+    }
+
+    return errosMapeados
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSubmitError(null)
+    setFieldErrors({})
     setIsSubmitting(true)
 
     try {
       const response = await criarCliente(formulario)
       setClienteCriado(response)
       setFormulario(formularioInicial)
-    } catch {
-      setSubmitError(
-        'Não foi possível enviar seus dados. Confira as informações e tente novamente.',
-      )
+    } catch (error) {
+      if (error instanceof ApiValidationError) {
+        setFieldErrors(mapearErrosDaApi(error.errors))
+        setSubmitError('Confira os campos destacados e tente novamente.')
+      } else {
+        setSubmitError(
+          'Não foi possível enviar seus dados. Tente novamente em alguns instantes.',
+        )
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -125,11 +178,68 @@ function App() {
                   autoComplete="name"
                   maxLength={150}
                   required
+                  aria-invalid={Boolean(fieldErrors.nomeCompleto)}
+                  aria-describedby={
+                    fieldErrors.nomeCompleto
+                      ? 'nomeCompleto-error'
+                      : undefined
+                  }
                   value={formulario.nomeCompleto}
                   onChange={(event) =>
                     atualizarCampo('nomeCompleto', event.target.value)
                   }
                 />
+                {fieldErrors.nomeCompleto && (
+                  <small className="field-error" id="nomeCompleto-error">
+                    {fieldErrors.nomeCompleto}
+                  </small>
+                )}
+              </label>
+
+              <label className="field">
+                <span>Nome social (opcional)</span>
+                <input
+                  type="text"
+                  name="nomeSocial"
+                  autoComplete="nickname"
+                  maxLength={150}
+                  aria-invalid={Boolean(fieldErrors.nomeSocial)}
+                  aria-describedby={
+                    fieldErrors.nomeSocial ? 'nomeSocial-error' : undefined
+                  }
+                  value={formulario.nomeSocial}
+                  onChange={(event) =>
+                    atualizarCampo('nomeSocial', event.target.value)
+                  }
+                />
+                {fieldErrors.nomeSocial && (
+                  <small className="field-error" id="nomeSocial-error">
+                    {fieldErrors.nomeSocial}
+                  </small>
+                )}
+              </label>
+
+              <label className="field">
+                <span>Pronomes (opcional)</span>
+                <input
+                  type="text"
+                  name="pronomes"
+                  maxLength={50}
+                  placeholder="Ex.: ela/dela"
+                  aria-invalid={Boolean(fieldErrors.pronomes)}
+                  aria-describedby={
+                    fieldErrors.pronomes ? 'pronomes-error' : undefined
+                  }
+                  value={formulario.pronomes}
+                  onChange={(event) =>
+                    atualizarCampo('pronomes', event.target.value)
+                  }
+                />
+                {fieldErrors.pronomes && (
+                  <small className="field-error" id="pronomes-error">
+                    {fieldErrors.pronomes}
+                  </small>
+                )}
               </label>
 
               <label className="field">
@@ -138,12 +248,24 @@ function App() {
                   type="date"
                   name="dataNascimento"
                   autoComplete="bday"
+                  max={dataMaximaNascimento}
                   required
+                  aria-invalid={Boolean(fieldErrors.dataNascimento)}
+                  aria-describedby={
+                    fieldErrors.dataNascimento
+                      ? 'dataNascimento-error'
+                      : undefined
+                  }
                   value={formulario.dataNascimento}
                   onChange={(event) =>
                     atualizarCampo('dataNascimento', event.target.value)
                   }
                 />
+                {fieldErrors.dataNascimento && (
+                  <small className="field-error" id="dataNascimento-error">
+                    {fieldErrors.dataNascimento}
+                  </small>
+                )}
               </label>
 
               <label className="field">
@@ -155,11 +277,44 @@ function App() {
                   maxLength={25}
                   placeholder="(21) 99999-9999"
                   required
+                  aria-invalid={Boolean(fieldErrors.celular)}
+                  aria-describedby={
+                    fieldErrors.celular ? 'celular-error' : undefined
+                  }
                   value={formulario.celular}
                   onChange={(event) =>
                     atualizarCampo('celular', event.target.value)
                   }
                 />
+                {fieldErrors.celular && (
+                  <small className="field-error" id="celular-error">
+                    {fieldErrors.celular}
+                  </small>
+                )}
+              </label>
+
+              <label className="field field--full">
+                <span>E-mail (opcional)</span>
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  placeholder="nome@exemplo.com"
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={
+                    fieldErrors.email ? 'email-error' : undefined
+                  }
+                  value={formulario.email}
+                  onChange={(event) =>
+                    atualizarCampo('email', event.target.value)
+                  }
+                />
+                {fieldErrors.email && (
+                  <small className="field-error" id="email-error">
+                    {fieldErrors.email}
+                  </small>
+                )}
               </label>
             </div>
 
