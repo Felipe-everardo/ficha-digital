@@ -230,12 +230,4 @@ Este repositório usa apenas dados fictícios e não representa, no estado atual
 uma solução pronta ou juridicamente validada para tratamento de dados reais.
 Consulte também a [política de segurança](SECURITY.md).
 
-## Documentação do aprendizado
-
-- [Especificação inicial do MVP](docs/01-especificacao-mvp.md);
-- [Primeira integração](docs/02-etapa-1-primeira-integracao.md);
-- [Modelo de domínio](docs/03-etapa-2a-modelo-cliente.md);
-- [Entity Framework e SQL Server](docs/04-etapa-2b-entity-framework.md);
-- [Endpoint de cadastro](docs/05-etapa-2c-cadastrar-cliente.md);
-- [Decisão sobre o SQL Server](docs/decisoes/001-sql-server.md).
 
