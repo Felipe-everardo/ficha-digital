@@ -239,9 +239,3 @@ Consulte também a [política de segurança](SECURITY.md).
 - [Endpoint de cadastro](docs/05-etapa-2c-cadastrar-cliente.md);
 - [Decisão sobre o SQL Server](docs/decisoes/001-sql-server.md).
 
-## Sobre o desenvolvimento
-
-O projeto está sendo construído em entregas pequenas. Cada etapa registra as
-decisões, os conceitos estudados e exercícios implementados no código real.
-Essa abordagem permite demonstrar não apenas o resultado, mas também a evolução
-do raciocínio técnico.
