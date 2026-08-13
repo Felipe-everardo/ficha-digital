@@ -40,6 +40,7 @@ public sealed class AberturaConvitesFichaController(
                 new ConviteFichaAbertoResponse(
                     resultado.FichaId!.Value,
                     resultado.StatusFicha!.Value.ToString(),
+                    resultado.QuestionarioRespondido,
                     new TermoConsentimentoResponse(
                         TermoConsentimentoAtual.Versao,
                         TermoConsentimentoAtual.Conteudo,

@@ -39,6 +39,7 @@ public sealed class AbrirConviteFichaTests
         Assert.NotNull(response);
         Assert.Equal(conviteEmitido.FichaId, response.FichaId);
         Assert.Equal("EmPreenchimento", response.Status);
+        Assert.False(response.QuestionarioRespondido);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
@@ -83,6 +84,61 @@ public sealed class AbrirConviteFichaTests
             TestContext.Current.CancellationToken));
         Assert.Equal(1, await dbContext.ConvitesFicha.CountAsync(
             TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Abrir_AposResponderQuestionario_DeveInformarEtapaConcluida()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = CriarHttpClient(factory);
+        var conviteEmitido = await EmitirConviteAsync(factory, client);
+        var token = ObterToken(conviteEmitido.LinkPreenchimento);
+
+        using var aberturaInicial = await client.PostAsJsonAsync(
+            "/api/fichas/convites/abrir",
+            new AbrirConviteFichaRequest
+            {
+                Token = token
+            },
+            TestContext.Current.CancellationToken);
+
+        aberturaInicial.EnsureSuccessStatusCode();
+
+        using var respostaQuestionario = await client.PostAsJsonAsync(
+            "/api/fichas/questionario-saude",
+            new ResponderQuestionarioSaudeRequest
+            {
+                Token = token,
+                TemDiabetes = false,
+                PossuiPressaoAlta = false,
+                TemAlergia = false,
+                PossuiCondicaoCardiaca = false,
+                TemEpilepsia = false,
+                TemHemofilia = false,
+                UsaMarcaPasso = false,
+                EstaGravidaOuAmamentando = false
+            },
+            TestContext.Current.CancellationToken);
+
+        respostaQuestionario.EnsureSuccessStatusCode();
+
+        using var reabertura = await client.PostAsJsonAsync(
+            "/api/fichas/convites/abrir",
+            new AbrirConviteFichaRequest
+            {
+                Token = token
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, reabertura.StatusCode);
+
+        var response = await reabertura.Content
+            .ReadFromJsonAsync<ConviteFichaAbertoResponse>(
+                TestContext.Current.CancellationToken);
+
+        Assert.NotNull(response);
+        Assert.True(response.QuestionarioRespondido);
+        Assert.Equal("EmPreenchimento", response.Status);
     }
 
     [Fact]

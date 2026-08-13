@@ -22,7 +22,8 @@ Já estão implementados:
 
 - API REST com ASP.NET Core;
 - frontend React integrado à API;
-- página pública que valida o convite, oculta o token da URL e registra o questionário de saúde;
+- página pública que valida o convite, oculta o token da URL, registra o questionário e conclui a ficha pelo aceite;
+- retomada segura pelo link original quando o questionário já foi respondido, sem devolver respostas de saúde;
 - formulário inicial com cadastro dos dados obrigatórios do cliente;
 - módulo de clientes com entidade protegida por regras de negócio;
 - validação de requisições com DTOs;
@@ -231,8 +232,8 @@ Os valores acima são fictícios.
 - [x] Questionário de saúde versionado;
 - [x] Fluxo técnico de aceite eletrônico e conclusão da ficha;
 - [x] Abertura do convite e questionário de saúde na página pública React;
+- [x] Aceite do termo e confirmação final na página pública React;
 - [ ] Consulta de clientes;
-- [ ] Aceite do termo e conclusão na página pública React;
 - [ ] Modelagem do histórico de procedimentos validada com o estúdio;
 - [ ] Revisão jurídica e publicação do termo de consentimento definitivo;
 - [ ] Autenticação e autorização do estúdio;

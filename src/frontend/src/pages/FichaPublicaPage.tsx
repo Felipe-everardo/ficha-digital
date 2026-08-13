@@ -3,9 +3,10 @@ import {
   ApiRequestError,
   ApiValidationError,
   abrirConviteFicha,
+  aceitarTermoConsentimento,
   responderQuestionarioSaude,
   type ConviteFichaAberto,
-  type QuestionarioSaudeRespondido,
+  type TermoConsentimentoAceito,
 } from '../services/api'
 import './FichaPublicaPage.css'
 
@@ -112,19 +113,32 @@ function primeiraMensagemDeValidacao(error: ApiValidationError) {
   return Object.values(error.errors).flat()[0]
 }
 
-const tokenDoConvite = obterTokenDoConvite()
+function formatarDataHora(dataIso: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  }).format(new Date(dataIso))
+}
+
+let tokenInicialDoConvite = obterTokenDoConvite()
 
 export function FichaPublicaPage() {
+  const [tokenDoConvite, setTokenDoConvite] = useState(tokenInicialDoConvite)
   const [tentativa, setTentativa] = useState(0)
   const [estado, setEstado] = useState<EstadoAbertura>(
     tokenDoConvite ? { tipo: 'carregando' } : { tipo: 'sem-token' },
   )
   const [respostas, setRespostas] =
     useState<RespostasQuestionario>(respostasIniciais)
-  const [questionarioRespondido, setQuestionarioRespondido] =
-    useState<QuestionarioSaudeRespondido | null>(null)
+  const [questionarioRespondido, setQuestionarioRespondido] = useState(false)
   const [enviandoQuestionario, setEnviandoQuestionario] = useState(false)
   const [erroQuestionario, setErroQuestionario] = useState<string | null>(null)
+  const [nomeAssinante, setNomeAssinante] = useState('')
+  const [aceitouTermo, setAceitouTermo] = useState(false)
+  const [enviandoAceite, setEnviandoAceite] = useState(false)
+  const [erroAceite, setErroAceite] = useState<string | null>(null)
+  const [termoAceito, setTermoAceito] =
+    useState<TermoConsentimentoAceito | null>(null)
 
   useEffect(() => {
     if (!tokenDoConvite) return
@@ -133,7 +147,10 @@ export function FichaPublicaPage() {
     setEstado({ tipo: 'carregando' })
 
     abrirConviteFicha(tokenDoConvite, abortController.signal)
-      .then((convite) => setEstado({ tipo: 'aberto', convite }))
+      .then((convite) => {
+        setEstado({ tipo: 'aberto', convite })
+        setQuestionarioRespondido(convite.questionarioRespondido)
+      })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return
@@ -157,7 +174,7 @@ export function FichaPublicaPage() {
       })
 
     return () => abortController.abort()
-  }, [tentativa])
+  }, [tentativa, tokenDoConvite])
 
   function atualizarResposta<Campo extends keyof RespostasQuestionario>(
     campo: Campo,
@@ -214,7 +231,7 @@ export function FichaPublicaPage() {
     setErroQuestionario(null)
 
     try {
-      const questionario = await responderQuestionarioSaude(tokenDoConvite, {
+      await responderQuestionarioSaude(tokenDoConvite, {
         temDiabetes,
         tipoDiabetes: temDiabetes ? respostas.tipoDiabetes.trim() : null,
         possuiPressaoAlta,
@@ -229,7 +246,7 @@ export function FichaPublicaPage() {
         estaGravidaOuAmamentando,
       })
 
-      setQuestionarioRespondido(questionario)
+      setQuestionarioRespondido(true)
       setRespostas(respostasIniciais)
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -249,8 +266,69 @@ export function FichaPublicaPage() {
     }
   }
 
+  async function enviarAceite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (
+      !tokenDoConvite ||
+      estado.tipo !== 'aberto' ||
+      !questionarioRespondido
+    ) {
+      return
+    }
+
+    const nomeNormalizado = nomeAssinante.trim()
+
+    if (!nomeNormalizado) {
+      setErroAceite('Informe seu nome para registrar o aceite.')
+      return
+    }
+
+    if (!aceitouTermo) {
+      setErroAceite('Confirme que leu e aceita o termo para concluir a ficha.')
+      return
+    }
+
+    setEnviandoAceite(true)
+    setErroAceite(null)
+
+    const termo = estado.convite.termoConsentimento
+
+    try {
+      const aceite = await aceitarTermoConsentimento(tokenDoConvite, {
+        versaoTermo: termo.versao,
+        conteudoHash: termo.conteudoHash,
+        nomeAssinante: nomeNormalizado,
+        aceitouTermo,
+      })
+
+      setTermoAceito(aceite)
+      setNomeAssinante('')
+      setAceitouTermo(false)
+      setQuestionarioRespondido(false)
+      tokenInicialDoConvite = null
+      setTokenDoConvite(null)
+    } catch (error) {
+      if (error instanceof ApiValidationError) {
+        setErroAceite(
+          primeiraMensagemDeValidacao(error) ??
+            'Confira os dados do aceite e tente novamente.',
+        )
+      } else if (error instanceof ApiRequestError) {
+        setErroAceite(error.message)
+      } else {
+        setErroAceite(
+          'Não foi possível concluir a ficha. Tente novamente.',
+        )
+      }
+    } finally {
+      setEnviandoAceite(false)
+    }
+  }
+
   const conviteAberto = estado.tipo === 'aberto'
-  const questionarioConcluido = questionarioRespondido !== null
+  const questionarioConcluido = questionarioRespondido || termoAceito !== null
+  const fichaConcluida = termoAceito !== null
 
   return (
     <main className="public-page-shell">
@@ -295,10 +373,14 @@ export function FichaPublicaPage() {
           </li>
           <li
             className={`flow-progress__item ${
-              questionarioConcluido ? 'flow-progress__item--active' : ''
+              fichaConcluida
+                ? 'flow-progress__item--complete'
+                : questionarioConcluido
+                  ? 'flow-progress__item--active'
+                  : ''
             }`}
           >
-            <span>3</span>
+            <span>{fichaConcluida ? '✓' : '3'}</span>
             Consentimento
           </li>
         </ol>
@@ -348,7 +430,9 @@ export function FichaPublicaPage() {
             </div>
           )}
 
-          {estado.tipo === 'aberto' && !questionarioRespondido && (
+          {estado.tipo === 'aberto' &&
+            !questionarioRespondido &&
+            !termoAceito && (
             <form className="health-form" onSubmit={enviarQuestionario}>
               <div className="section-heading">
                 <p className="eyebrow">Etapa 2 de 3</p>
@@ -491,34 +575,115 @@ export function FichaPublicaPage() {
             </form>
           )}
 
-          {estado.tipo === 'aberto' && questionarioRespondido && (
-            <div className="questionnaire-complete">
-              <div className="opening-state opening-state--success" role="status">
-                <span className="state-symbol" aria-hidden="true">
-                  ✓
-                </span>
-                <div>
-                  <p className="eyebrow">Questionário salvo</p>
-                  <h2>Respostas recebidas com sucesso</h2>
+          {estado.tipo === 'aberto' &&
+            questionarioRespondido &&
+            !termoAceito && (
+              <form className="consent-form" onSubmit={enviarAceite}>
+                <div className="section-heading">
+                  <p className="eyebrow">Etapa 3 de 3</p>
+                  <h2>Termo de consentimento</h2>
                   <p>
-                    Agora falta revisar e aceitar o termo de consentimento para
-                    concluir a ficha.
+                    Leia o conteúdo completo antes de confirmar. O sistema
+                    registrará esta versão exata do termo junto ao seu aceite.
                   </p>
                 </div>
-              </div>
 
-              <details className="term-preview">
-                <summary>Visualizar o termo da etapa final</summary>
-                <div className="term-preview__content">
+                <div className="health-notice">
+                  Este é um termo provisório de desenvolvimento. Continue
+                  somente com informações fictícias.
+                </div>
+
+                <article
+                  className="term-document"
+                  aria-label="Conteúdo do termo de consentimento"
+                  tabIndex={0}
+                >
                   <p className="term-version">
                     Versão {estado.convite.termoConsentimento.versao}
                   </p>
-                  <p>{estado.convite.termoConsentimento.conteudo}</p>
-                </div>
-              </details>
+                  <p className="term-document__content">
+                    {estado.convite.termoConsentimento.conteudo}
+                  </p>
+                </article>
 
-              <p className="development-note">
-                O aceite do termo será conectado ao backend na próxima entrega.
+                <label className="consent-name-field">
+                  <span>Seu nome completo *</span>
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    maxLength={150}
+                    required
+                    value={nomeAssinante}
+                    onChange={(event) => {
+                      setNomeAssinante(event.target.value)
+                      setErroAceite(null)
+                    }}
+                  />
+                  <small>
+                    Digite o nome da pessoa que está declarando o aceite.
+                  </small>
+                </label>
+
+                <label className="consent-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={aceitouTermo}
+                    required
+                    onChange={(event) => {
+                      setAceitouTermo(event.target.checked)
+                      setErroAceite(null)
+                    }}
+                  />
+                  <span>
+                    Declaro que li o termo acima e confirmo seu aceite para
+                    concluir esta ficha.
+                  </span>
+                </label>
+
+                {erroAceite && (
+                  <p className="form-error" role="alert">
+                    {erroAceite}
+                  </p>
+                )}
+
+                <div className="questionnaire-actions">
+                  <p>
+                    Ao concluir, a ficha ficará fechada para novas respostas
+                    por este convite.
+                  </p>
+                  <button type="submit" disabled={enviandoAceite}>
+                    {enviandoAceite
+                      ? 'Registrando aceite...'
+                      : 'Aceitar e concluir ficha'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+          {termoAceito && (
+            <div className="completion-panel" role="status">
+              <span className="completion-symbol" aria-hidden="true">
+                ✓
+              </span>
+              <p className="eyebrow">Ficha concluída</p>
+              <h2>Obrigado. Suas informações foram recebidas.</h2>
+              <p>
+                O questionário e o aceite foram registrados. O profissional
+                responsável poderá consultar a confirmação no sistema.
+              </p>
+              <dl className="completion-details">
+                <div>
+                  <dt>Status</dt>
+                  <dd>{termoAceito.statusFicha}</dd>
+                </div>
+                <div>
+                  <dt>Concluída em</dt>
+                  <dd>{formatarDataHora(termoAceito.aceitoEmUtc)}</dd>
+                </div>
+              </dl>
+              <p className="completion-guidance">
+                Você já pode fechar esta página. Não é necessário enviar uma
+                captura de tela pelo aplicativo de mensagens.
               </p>
             </div>
           )}

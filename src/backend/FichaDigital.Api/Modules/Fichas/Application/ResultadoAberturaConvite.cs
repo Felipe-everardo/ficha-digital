@@ -5,4 +5,5 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 public sealed record ResultadoAberturaConvite(
     StatusAberturaConvite Resultado,
     Guid? FichaId = null,
-    StatusFicha? StatusFicha = null);
+    StatusFicha? StatusFicha = null,
+    bool QuestionarioRespondido = false);

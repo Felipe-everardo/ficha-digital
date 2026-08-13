@@ -56,9 +56,16 @@ public sealed class AbrirConviteFichaService(
                 StatusAberturaConvite.Indisponivel);
         }
 
+        var questionarioRespondido = await dbContext.QuestionariosSaude
+            .AsNoTracking()
+            .AnyAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+
         return new ResultadoAberturaConvite(
             StatusAberturaConvite.Aberto,
             ficha.Id,
-            ficha.Status);
+            ficha.Status,
+            questionarioRespondido);
     }
 }

@@ -30,6 +30,7 @@ export type TermoConsentimento = {
 export type ConviteFichaAberto = {
   fichaId: string
   status: string
+  questionarioRespondido: boolean
   termoConsentimento: TermoConsentimento
 }
 
@@ -51,6 +52,21 @@ export type QuestionarioSaudeRespondido = {
   fichaId: string
   versao: number
   respondidoEmUtc: string
+}
+
+export type AceitarTermoConsentimentoInput = {
+  versaoTermo: number
+  conteudoHash: string
+  nomeAssinante: string
+  aceitouTermo: boolean
+}
+
+export type TermoConsentimentoAceito = {
+  aceiteId: string
+  fichaId: string
+  versaoTermo: number
+  aceitoEmUtc: string
+  statusFicha: string
 }
 
 export type ProblemDetails = {
@@ -195,4 +211,44 @@ export async function responderQuestionarioSaude(
   }
 
   return response.json() as Promise<QuestionarioSaudeRespondido>
+}
+
+export async function aceitarTermoConsentimento(
+  token: string,
+  aceite: AceitarTermoConsentimentoInput,
+): Promise<TermoConsentimentoAceito> {
+  const response = await fetch('/api/fichas/termo-consentimento/aceitar', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token, ...aceite }),
+  })
+
+  if (response.status === 400) {
+    const problem = (await response.json()) as ValidationProblemDetails
+
+    if (problem.errors) {
+      throw new ApiValidationError(problem.errors)
+    }
+  }
+
+  if (!response.ok) {
+    let problem: ProblemDetails | null = null
+
+    try {
+      problem = (await response.json()) as ProblemDetails
+    } catch {
+      // Algumas falhas de infraestrutura podem não retornar JSON.
+    }
+
+    throw new ApiRequestError(
+      response.status,
+      problem?.detail ??
+        problem?.title ??
+        'Não foi possível registrar o aceite do termo.',
+    )
+  }
+
+  return response.json() as Promise<TermoConsentimentoAceito>
 }
