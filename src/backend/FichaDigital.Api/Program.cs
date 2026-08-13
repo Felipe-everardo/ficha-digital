@@ -14,9 +14,11 @@ builder.Services.AddDbContext<FichaDigitalDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<GeradorTokenConvite>();
+builder.Services.AddSingleton<CalculadorHashConteudo>();
 builder.Services.AddScoped<EmitirConviteFichaService>();
 builder.Services.AddScoped<AbrirConviteFichaService>();
 builder.Services.AddScoped<ResponderQuestionarioSaudeService>();
+builder.Services.AddScoped<AceitarTermoConsentimentoService>();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

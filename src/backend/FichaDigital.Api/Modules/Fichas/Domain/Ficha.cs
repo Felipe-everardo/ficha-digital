@@ -50,4 +50,15 @@ public sealed class Ficha
 
         Status = StatusFicha.EmPreenchimento;
     }
+
+    public void Concluir()
+    {
+        if (Status != StatusFicha.EmPreenchimento)
+        {
+            throw new InvalidOperationException(
+                "Somente uma ficha em preenchimento pode ser concluída.");
+        }
+
+        Status = StatusFicha.Concluida;
+    }
 }

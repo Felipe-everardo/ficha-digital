@@ -16,6 +16,9 @@ public sealed class FichaDigitalDbContext(
 
     public DbSet<QuestionarioSaude> QuestionariosSaude => Set<QuestionarioSaude>();
 
+    public DbSet<AceiteTermoConsentimento> AceitesTermoConsentimento =>
+        Set<AceiteTermoConsentimento>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(

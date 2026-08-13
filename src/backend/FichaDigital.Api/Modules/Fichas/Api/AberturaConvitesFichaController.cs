@@ -1,4 +1,6 @@
 using FichaDigital.Api.Modules.Fichas.Application;
+using FichaDigital.Api.Modules.Fichas.Domain;
+using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +10,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [Route("api/fichas/convites")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class AberturaConvitesFichaController(
-    AbrirConviteFichaService service) : ControllerBase
+    AbrirConviteFichaService service,
+    CalculadorHashConteudo calculadorHash) : ControllerBase
 {
     [HttpPost("abrir")]
     [ProducesResponseType<ConviteFichaAbertoResponse>(
@@ -36,7 +39,12 @@ public sealed class AberturaConvitesFichaController(
             StatusAberturaConvite.Aberto => Ok(
                 new ConviteFichaAbertoResponse(
                     resultado.FichaId!.Value,
-                    resultado.StatusFicha!.Value.ToString())),
+                    resultado.StatusFicha!.Value.ToString(),
+                    new TermoConsentimentoResponse(
+                        TermoConsentimentoAtual.Versao,
+                        TermoConsentimentoAtual.Conteudo,
+                        calculadorHash.Calcular(
+                            TermoConsentimentoAtual.Conteudo)))),
 
             StatusAberturaConvite.Expirado => Problem(
                 statusCode: StatusCodes.Status410Gone,

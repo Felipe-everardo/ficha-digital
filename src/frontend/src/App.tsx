@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import './App.css'
+import { FichaPublicaPage } from './pages/FichaPublicaPage'
 import {
   ApiValidationError,
   criarCliente,
@@ -37,7 +38,7 @@ function formatarDataParaInput(data: Date) {
   return `${ano}-${mes}-${dia}`
 }
 
-function App() {
+function CadastroClientePage() {
   const dataMaximaNascimento = formatarDataParaInput(new Date())
   const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
@@ -334,6 +335,14 @@ function App() {
       </section>
     </main>
   )
+}
+
+function App() {
+  const paginaPublica = window.location.pathname.startsWith(
+    '/fichas/preencher',
+  )
+
+  return paginaPublica ? <FichaPublicaPage /> : <CadastroClientePage />
 }
 
 export default App

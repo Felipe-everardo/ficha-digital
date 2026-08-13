@@ -22,6 +22,7 @@ Já estão implementados:
 
 - API REST com ASP.NET Core;
 - frontend React integrado à API;
+- página pública que valida o convite, oculta o token da URL e registra o questionário de saúde;
 - formulário inicial com cadastro dos dados obrigatórios do cliente;
 - módulo de clientes com entidade protegida por regras de negócio;
 - validação de requisições com DTOs;
@@ -31,6 +32,7 @@ Já estão implementados:
 - endpoint `POST /api/clientes/{clienteId}/fichas/convites`;
 - endpoint `POST /api/fichas/convites/abrir` para validar o token e iniciar o preenchimento;
 - endpoint `POST /api/fichas/questionario-saude` para registrar respostas pelo token;
+- endpoint `POST /api/fichas/termo-consentimento/aceitar` para registrar o aceite e concluir a ficha;
 - limitação de requisições por IP nos endpoints públicos que recebem tokens;
 - respostas HTTP separadas das entidades de domínio;
 - primeiros testes unitários das regras de domínio;
@@ -38,6 +40,8 @@ Já estão implementados:
 - modelagem e persistência inicial de fichas com vínculo ao cliente e estados controlados;
 - geração criptográfica e persistência inicial de convites seguros;
 - questionário de saúde versionado, com validações condicionais e condições clínicas;
+- aceite eletrônico com versão, cópia exata do termo, hash do conteúdo, nome declarado e data em UTC;
+- conclusão da ficha somente depois do questionário e do aceite do termo;
 - pipeline de integração contínua para backend e frontend.
 
 O sistema ainda não está pronto para produção e não deve receber dados pessoais
@@ -223,10 +227,14 @@ Os valores acima são fictícios.
 - [x] Formulário responsivo para o cadastro inicial;
 - [x] Primeiros testes unitários e de integração;
 - [x] Modelagem e persistência inicial do módulo de fichas;
+- [x] Convites com tokens aleatórios armazenados como hash;
+- [x] Questionário de saúde versionado;
+- [x] Fluxo técnico de aceite eletrônico e conclusão da ficha;
+- [x] Abertura do convite e questionário de saúde na página pública React;
 - [ ] Consulta de clientes;
-- [ ] Convites com links seguros;
-- [ ] ário de saúde versionado;
-- [ ] Termo de consentimento versionado;
+- [ ] Aceite do termo e conclusão na página pública React;
+- [ ] Modelagem do histórico de procedimentos validada com o estúdio;
+- [ ] Revisão jurídica e publicação do termo de consentimento definitivo;
 - [ ] Autenticação e autorização do estúdio;
 - [ ] Ampliação da cobertura de testes automatizados;
 - [ ] Auditoria, backup e preparação para produção.

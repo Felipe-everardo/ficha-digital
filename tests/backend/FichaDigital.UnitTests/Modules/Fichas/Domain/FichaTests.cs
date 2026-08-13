@@ -79,4 +79,30 @@ public sealed class FichaTests
             exception.Message);
         Assert.Equal(StatusFicha.Rascunho, ficha.Status);
     }
+
+    [Fact]
+    public void Concluir_QuandoFichaEstaEmPreenchimento_DeveAlterarStatus()
+    {
+        var ficha = new Ficha(Guid.NewGuid());
+        ficha.EnviarConvite();
+        ficha.IniciarPreenchimento();
+
+        ficha.Concluir();
+
+        Assert.Equal(StatusFicha.Concluida, ficha.Status);
+    }
+
+    [Fact]
+    public void Concluir_QuandoFichaEstaEmRascunho_DeveLancarInvalidOperationException()
+    {
+        var ficha = new Ficha(Guid.NewGuid());
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            ficha.Concluir);
+
+        Assert.Equal(
+            "Somente uma ficha em preenchimento pode ser concluída.",
+            exception.Message);
+        Assert.Equal(StatusFicha.Rascunho, ficha.Status);
+    }
 }
