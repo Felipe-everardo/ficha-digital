@@ -21,6 +21,92 @@ export type ClienteCriado = {
   criadoEmUtc: string
 }
 
+export type ClienteResumo = {
+  id: string
+  nomeCompleto: string
+  nomeParaExibicao: string
+  pronomes: string | null
+  celular: string
+  email: string | null
+  criadoEmUtc: string
+}
+
+export type ClientesPaginados = {
+  itens: ClienteResumo[]
+  pagina: number
+  tamanhoPagina: number
+  totalItens: number
+  totalPaginas: number
+}
+
+export type ConviteFichaCriado = {
+  fichaId: string
+  conviteId: string
+  linkPreenchimento: string
+  expiraEmUtc: string
+}
+
+export type FichaResumo = {
+  id: string
+  clienteId: string
+  clienteNome: string
+  status: string
+  criadaEmUtc: string
+  conviteExpiraEmUtc: string | null
+  conviteExpirado: boolean
+}
+
+export type FichasPaginadas = {
+  itens: FichaResumo[]
+  pagina: number
+  tamanhoPagina: number
+  totalItens: number
+  totalPaginas: number
+}
+
+export type ClienteFichaDetalhe = {
+  id: string
+  nomeCompleto: string
+  nomeSocial: string | null
+  nomeParaExibicao: string
+  pronomes: string | null
+  dataNascimento: string
+  celular: string
+  email: string | null
+}
+
+export type QuestionarioSaudeDetalhe = {
+  versao: number
+  temDiabetes: boolean
+  tipoDiabetes: string | null
+  possuiPressaoAlta: boolean
+  temAlergia: boolean
+  descricaoAlergia: string | null
+  possuiCondicaoCardiaca: boolean
+  temEpilepsia: boolean
+  temHemofilia: boolean
+  usaMarcaPasso: boolean
+  estaGravidaOuAmamentando: boolean
+  respondidoEmUtc: string
+}
+
+export type AceiteTermoResumo = {
+  versaoTermo: number
+  nomeAssinante: string
+  aceitoEmUtc: string
+}
+
+export type FichaDetalhe = {
+  id: string
+  status: string
+  criadaEmUtc: string
+  conviteExpiraEmUtc: string | null
+  conviteExpirado: boolean
+  cliente: ClienteFichaDetalhe
+  questionarioSaude: QuestionarioSaudeDetalhe | null
+  aceiteTermo: AceiteTermoResumo | null
+}
+
 export type TermoConsentimento = {
   versao: number
   conteudo: string
@@ -113,11 +199,14 @@ export async function getApiStatus(): Promise<ApiStatus> {
 
 export async function criarCliente(
   cliente: CriarClienteInput,
+  antiforgeryToken: string,
 ): Promise<ClienteCriado> {
   const response = await fetch('/api/clientes', {
     method: 'POST',
+    credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': antiforgeryToken,
     },
     body: JSON.stringify({
       ...cliente,
@@ -138,6 +227,119 @@ export async function criarCliente(
   }
 
   return response.json() as Promise<ClienteCriado>
+}
+
+export async function listarClientes(
+  pagina: number,
+  tamanhoPagina: number,
+  signal?: AbortSignal,
+): Promise<ClientesPaginados> {
+  const parametros = new URLSearchParams({
+    pagina: pagina.toString(),
+    tamanhoPagina: tamanhoPagina.toString(),
+  })
+  const response = await fetch(`/api/clientes?${parametros}`, {
+    credentials: 'same-origin',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : 'Não foi possível consultar os clientes.',
+    )
+  }
+
+  return response.json() as Promise<ClientesPaginados>
+}
+
+export async function emitirConviteFicha(
+  clienteId: string,
+  antiforgeryToken: string,
+): Promise<ConviteFichaCriado> {
+  const response = await fetch(
+    `/api/clientes/${encodeURIComponent(clienteId)}/fichas/convites`,
+    {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'X-CSRF-TOKEN': antiforgeryToken,
+      },
+    },
+  )
+
+  if (!response.ok) {
+    let problem: ProblemDetails | null = null
+
+    try {
+      problem = (await response.json()) as ProblemDetails
+    } catch {
+      // Algumas falhas de infraestrutura podem não retornar JSON.
+    }
+
+    throw new ApiRequestError(
+      response.status,
+      problem?.detail ??
+        problem?.title ??
+        'Não foi possível gerar o convite.',
+    )
+  }
+
+  return response.json() as Promise<ConviteFichaCriado>
+}
+
+export async function listarFichas(
+  pagina: number,
+  tamanhoPagina: number,
+  signal?: AbortSignal,
+): Promise<FichasPaginadas> {
+  const parametros = new URLSearchParams({
+    pagina: pagina.toString(),
+    tamanhoPagina: tamanhoPagina.toString(),
+  })
+  const response = await fetch(`/api/fichas?${parametros}`, {
+    credentials: 'same-origin',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : 'Não foi possível consultar as fichas.',
+    )
+  }
+
+  return response.json() as Promise<FichasPaginadas>
+}
+
+export async function obterDetalheFicha(
+  fichaId: string,
+  signal?: AbortSignal,
+): Promise<FichaDetalhe> {
+  const response = await fetch(
+    `/api/fichas/${encodeURIComponent(fichaId)}`,
+    {
+      credentials: 'same-origin',
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : response.status === 404
+          ? 'A ficha informada não foi encontrada.'
+          : 'Não foi possível consultar os detalhes da ficha.',
+    )
+  }
+
+  return response.json() as Promise<FichaDetalhe>
 }
 
 export async function abrirConviteFicha(

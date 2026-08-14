@@ -290,9 +290,15 @@ public sealed class ResponderQuestionarioSaudeTests
         PrepararFichaEmPreenchimentoAsync(
             FichaDigitalApiFactory factory,
             HttpClient client)
-    {
+        {
         var clienteId = await CriarClienteAsync(factory);
-        using var emitirResponse = await client.PostAsync(
+        using var clientProfissional = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+        using var emitirResponse = await AutenticacaoProfissionalTestHelper
+            .PostProtegidoAsync(
+            clientProfissional,
             $"/api/clientes/{clienteId}/fichas/convites",
             content: null,
             TestContext.Current.CancellationToken);

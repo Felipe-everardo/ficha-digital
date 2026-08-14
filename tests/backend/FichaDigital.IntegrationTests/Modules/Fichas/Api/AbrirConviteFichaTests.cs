@@ -20,7 +20,7 @@ public sealed class AbrirConviteFichaTests
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
-        var conviteEmitido = await EmitirConviteAsync(factory, client);
+        var conviteEmitido = await EmitirConviteAsync(factory);
 
         using var httpResponse = await client.PostAsJsonAsync(
             "/api/fichas/convites/abrir",
@@ -58,7 +58,7 @@ public sealed class AbrirConviteFichaTests
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
-        var conviteEmitido = await EmitirConviteAsync(factory, client);
+        var conviteEmitido = await EmitirConviteAsync(factory);
         var request = new AbrirConviteFichaRequest
         {
             Token = ObterToken(conviteEmitido.LinkPreenchimento)
@@ -91,7 +91,7 @@ public sealed class AbrirConviteFichaTests
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
-        var conviteEmitido = await EmitirConviteAsync(factory, client);
+        var conviteEmitido = await EmitirConviteAsync(factory);
         var token = ObterToken(conviteEmitido.LinkPreenchimento);
 
         using var aberturaInicial = await client.PostAsJsonAsync(
@@ -245,11 +245,16 @@ public sealed class AbrirConviteFichaTests
     }
 
     private static async Task<ConviteFichaCriadoResponse> EmitirConviteAsync(
-        FichaDigitalApiFactory factory,
-        HttpClient client)
+        FichaDigitalApiFactory factory)
     {
         var clienteId = await CriarClienteAsync(factory);
-        using var response = await client.PostAsync(
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+        using var response = await AutenticacaoProfissionalTestHelper
+            .PostProtegidoAsync(
+            client,
             $"/api/clientes/{clienteId}/fichas/convites",
             content: null,
             TestContext.Current.CancellationToken);

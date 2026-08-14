@@ -1,6 +1,14 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import './App.css'
+import { AreaProfissionalPage } from './pages/AreaProfissionalPage'
+import { ClientesPage } from './pages/ClientesPage'
 import { FichaPublicaPage } from './pages/FichaPublicaPage'
+import { FichaDetalhePage } from './pages/FichaDetalhePage'
+import { FichasPage } from './pages/FichasPage'
+import {
+  obterAntiforgeryToken,
+  obterSessaoProfissional,
+} from './services/autenticacao'
 import {
   ApiValidationError,
   criarCliente,
@@ -96,7 +104,8 @@ function CadastroClientePage() {
     setIsSubmitting(true)
 
     try {
-      const response = await criarCliente(formulario)
+      const antiforgeryToken = await obterAntiforgeryToken()
+      const response = await criarCliente(formulario, antiforgeryToken)
       setClienteCriado(response)
       setFormulario(formularioInicial)
     } catch (error) {
@@ -122,11 +131,11 @@ function CadastroClientePage() {
           </div>
 
           <div>
-            <p className="eyebrow">Estúdio de tatuagem</p>
-            <h1 id="page-title">Ficha Digital</h1>
+            <p className="eyebrow">Área profissional</p>
+            <h1 id="page-title">Cadastrar cliente</h1>
             <p className="intro">
-              Comece informando seus dados principais. Eles serão utilizados
-              para identificar sua ficha e manter contato sobre o atendimento.
+              Informe os dados iniciais usados para identificar o cliente e
+              manter contato sobre o atendimento.
             </p>
           </div>
         </header>
@@ -146,18 +155,18 @@ function CadastroClientePage() {
 
         {clienteCriado ? (
           <div className="success-panel" role="status">
-            <p className="eyebrow">Cadastro recebido</p>
-            <h2>Obrigado, {clienteCriado.nomeParaExibicao}.</h2>
+            <p className="eyebrow">Cliente cadastrado</p>
+            <h2>{clienteCriado.nomeParaExibicao} foi cadastrado.</h2>
             <p>
-              Seus dados principais foram salvos. As próximas partes da ficha
-              serão adicionadas nas próximas etapas do projeto.
+              Os dados iniciais foram salvos. A geração do convite será
+              conectada a esta área em uma próxima etapa.
             </p>
             <button
               className="secondary-button"
               type="button"
               onClick={() => setClienteCriado(null)}
             >
-              Cadastrar outra pessoa
+              Cadastrar outro cliente
             </button>
           </div>
         ) : (
@@ -337,12 +346,99 @@ function CadastroClientePage() {
   )
 }
 
+function CadastroClienteProtegidoPage() {
+  const [estadoSessao, setEstadoSessao] = useState<
+    'verificando' | 'autenticado' | 'erro'
+  >('verificando')
+
+  useEffect(() => {
+    const abortController = new AbortController()
+
+    obterSessaoProfissional(abortController.signal)
+      .then((sessao) => {
+        if (!sessao) {
+          window.location.replace('/profissional/entrar')
+          return
+        }
+
+        setEstadoSessao('autenticado')
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
+
+        setEstadoSessao('erro')
+      })
+
+    return () => abortController.abort()
+  }, [])
+
+  if (estadoSessao === 'verificando') {
+    return (
+      <main className="page-shell">
+        <p className="status-message" aria-live="polite">
+          Verificando sua sessão profissional...
+        </p>
+      </main>
+    )
+  }
+
+  if (estadoSessao === 'erro') {
+    return (
+      <main className="page-shell">
+        <section className="form-card" role="alert">
+          <p className="eyebrow">Área profissional</p>
+          <h1>Não foi possível verificar sua sessão.</h1>
+          <button type="button" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  return <CadastroClientePage />
+}
+
 function App() {
+  const detalheFichaMatch = window.location.pathname.match(
+    /^\/profissional\/fichas\/([0-9a-fA-F-]{36})\/?$/,
+  )
+  const paginaListaFichas =
+    window.location.pathname === '/profissional/fichas'
+  const paginaListaClientes =
+    window.location.pathname === '/profissional/clientes'
+  const paginaCadastroCliente =
+    window.location.pathname === '/profissional/clientes/novo'
+  const paginaProfissional = window.location.pathname.startsWith(
+    '/profissional',
+  )
   const paginaPublica = window.location.pathname.startsWith(
     '/fichas/preencher',
   )
 
-  return paginaPublica ? <FichaPublicaPage /> : <CadastroClientePage />
+  if (detalheFichaMatch) {
+    return <FichaDetalhePage fichaId={detalheFichaMatch[1]} />
+  }
+
+  if (paginaListaFichas) {
+    return <FichasPage />
+  }
+
+  if (paginaListaClientes) {
+    return <ClientesPage />
+  }
+
+  if (paginaCadastroCliente) {
+    return <CadastroClienteProtegidoPage />
+  }
+
+  if (paginaProfissional) {
+    return <AreaProfissionalPage />
+  }
+
+  return paginaPublica ? <FichaPublicaPage /> : <AreaProfissionalPage />
 }
 
 export default App

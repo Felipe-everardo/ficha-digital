@@ -34,7 +34,15 @@ Já estão implementados:
 - endpoint `POST /api/fichas/convites/abrir` para validar o token e iniciar o preenchimento;
 - endpoint `POST /api/fichas/questionario-saude` para registrar respostas pelo token;
 - endpoint `POST /api/fichas/termo-consentimento/aceitar` para registrar o aceite e concluir a ficha;
+- endpoints de entrada, saída e consulta da sessão profissional;
+- cadastro de clientes e emissão de convites restritos a profissionais autenticados e protegidos contra requisições antifalsificadas;
+- consulta paginada e protegida de clientes, sem incluir respostas de saúde;
+- geração de convite pela lista de clientes, com link completo pronto para cópia;
+- acompanhamento paginado e protegido dos estados das fichas, sem expor respostas clínicas na visão geral;
+- detalhe protegido da ficha com identificação, questionário de saúde e resumo do aceite, sem cache no navegador;
 - limitação de requisições por IP nos endpoints públicos que recebem tokens;
+- autenticação profissional com ASP.NET Core Identity, cookie `HttpOnly`, bloqueio por tentativas e proteção antifalsificação;
+- tela de login e estrutura inicial da área protegida do profissional;
 - respostas HTTP separadas das entidades de domínio;
 - primeiros testes unitários das regras de domínio;
 - primeiro teste de integração do cadastro via HTTP;
@@ -84,6 +92,7 @@ expor propriedades internas ou dados sensíveis por acidente.
 - .NET 10;
 - ASP.NET Core Web API;
 - Entity Framework Core 10;
+- ASP.NET Core Identity;
 - xUnit v3;
 - SQL Server LocalDB no desenvolvimento.
 
@@ -148,7 +157,29 @@ dotnet tool run dotnet-ef database update `
 
 A configuração padrão cria o banco local `FichaDigitalDb`.
 
-### 3. Executar a API
+### 3. Configurar uma conta profissional local
+
+Em desenvolvimento, a primeira conta pode ser provisionada com o gerenciador
+de segredos do .NET. Assim, a senha fica fora do `appsettings.json` e não é
+enviada ao GitHub:
+
+```powershell
+dotnet user-secrets set "ProfissionalDesenvolvimento:NomeCompleto" "Profissional de Teste" `
+  --project src/backend/FichaDigital.Api
+
+dotnet user-secrets set "ProfissionalDesenvolvimento:Email" "profissional@example.com" `
+  --project src/backend/FichaDigital.Api
+
+dotnet user-secrets set "ProfissionalDesenvolvimento:Senha" "Substitua-Esta-Senha-123!" `
+  --project src/backend/FichaDigital.Api
+```
+
+Os dados acima são fictícios. Escolha uma senha diferente para o seu ambiente.
+Ela deve ter ao menos 12 caracteres, letras maiúsculas e minúsculas, número e
+caractere especial. A conta é criada na próxima inicialização da API, se ainda
+não existir, e esse provisionamento só funciona no ambiente de desenvolvimento.
+
+### 4. Executar a API
 
 ```powershell
 dotnet run --project src/backend/FichaDigital.Api --launch-profile http
@@ -160,7 +191,7 @@ A API ficará disponível em:
 http://localhost:5057
 ```
 
-### 4. Executar o frontend
+### 5. Executar o frontend
 
 Em outro terminal:
 
@@ -175,9 +206,37 @@ Abra o endereço informado pelo Vite, normalmente:
 http://localhost:5173
 ```
 
+A tela de acesso profissional fica em:
+
+```text
+http://localhost:5173/profissional/entrar
+```
+
+Depois do login, o painel permite acessar o cadastro protegido de clientes em
+`/profissional/clientes/novo` e a lista paginada em
+`/profissional/clientes`.
+
+Na lista, a ação **Gerar novo convite** cria uma nova ficha com link válido por
+48 horas. O token original é exibido apenas na resposta dessa emissão e pode ser
+copiado para envio ao cliente; no banco de dados permanece somente o hash do
+token.
+
+O painel de fichas fica em `/profissional/fichas` e apresenta cliente, estado,
+data de criação e validade do convite. Respostas de saúde e dados do aceite não
+são incluídos nessa listagem resumida.
+
+O profissional pode abrir `/profissional/fichas/{fichaId}` para consultar o
+detalhe da ficha. Essa resposta exige autenticação, usa `Cache-Control:
+no-store` e não inclui o token do convite, hashes ou a cópia integral do termo.
+Enquanto o projeto estiver em demonstração, essa tela deve ser usada somente
+com dados fictícios.
+
 ## Exemplo da API
 
 ### Criar cliente
+
+Esta é uma operação administrativa. Ela exige o cookie da sessão profissional
+e o cabeçalho `X-CSRF-TOKEN`; o frontend obtém e envia ambos automaticamente.
 
 ```http
 POST /api/clientes
@@ -233,10 +292,17 @@ Os valores acima são fictícios.
 - [x] Fluxo técnico de aceite eletrônico e conclusão da ficha;
 - [x] Abertura do convite e questionário de saúde na página pública React;
 - [x] Aceite do termo e confirmação final na página pública React;
-- [ ] Consulta de clientes;
+- [x] Base de autenticação profissional e sessão protegida no backend;
+- [x] Tela de login e estrutura inicial da área profissional;
+- [x] Proteção das operações administrativas de clientes e convites;
+- [x] Consulta paginada de clientes na área profissional;
+- [x] Geração e cópia do convite a partir da lista de clientes;
+- [x] Acompanhamento das fichas e de seus estados na área profissional;
+- [x] Detalhe protegido da ficha para o ambiente de demonstração;
+- [ ] Demonstração do MVP ao estúdio usando somente dados fictícios;
+- [ ] Perfis de acesso e autorização por função;
 - [ ] Modelagem do histórico de procedimentos validada com o estúdio;
 - [ ] Revisão jurídica e publicação do termo de consentimento definitivo;
-- [ ] Autenticação e autorização do estúdio;
 - [ ] Ampliação da cobertura de testes automatizados;
 - [ ] Auditoria, backup e preparação para produção.
 
@@ -250,14 +316,9 @@ Este repositório usa apenas dados fictícios e não representa, no estado atual
 uma solução pronta ou juridicamente validada para tratamento de dados reais.
 Consulte também a [política de segurança](SECURITY.md).
 
-## Documentação do aprendizado
+## Documentação
 
-- [Especificação inicial do MVP](docs/01-especificacao-mvp.md);
-- [Primeira integração](docs/02-etapa-1-primeira-integracao.md);
-- [Modelo de domínio](docs/03-etapa-2a-modelo-cliente.md);
-- [Entity Framework e SQL Server](docs/04-etapa-2b-entity-framework.md);
-- [Endpoint de cadastro](docs/05-etapa-2c-cadastrar-cliente.md);
-- [Decisão sobre o SQL Server](docs/decisoes/001-sql-server.md).
+- [Roteiro de demonstração do MVP](docs/roteiro-demonstracao-mvp.md).
 
 ## Sobre o desenvolvimento
 

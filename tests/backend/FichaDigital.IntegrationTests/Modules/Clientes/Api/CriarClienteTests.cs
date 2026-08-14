@@ -16,11 +16,10 @@ public sealed class CriarClienteTests
     {
         // Arrange
         using var factory = new FichaDigitalApiFactory();
-        using var client = factory.CreateClient(
-            new WebApplicationFactoryClientOptions
-            {
-                BaseAddress = new Uri("https://localhost")
-            });
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
 
         var request = new CriarClienteRequest
         {
@@ -33,7 +32,9 @@ public sealed class CriarClienteTests
         };
 
         // Act
-        using var httpResponse = await client.PostAsJsonAsync(
+        using var httpResponse = await AutenticacaoProfissionalTestHelper
+            .PostComoJsonProtegidoAsync(
+            client,
             "/api/clientes",
             request,
             TestContext.Current.CancellationToken);
@@ -69,5 +70,50 @@ public sealed class CriarClienteTests
         Assert.Equal("ela/dela", clientePersistido.Pronomes);
         Assert.Equal("(21) 99999-9999", clientePersistido.Celular);
         Assert.Equal("ana@example.com", clientePersistido.Email);
+    }
+
+    [Fact]
+    public async Task Criar_SemAutenticacao_DeveRetornarUnauthorized()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                BaseAddress = new Uri("https://localhost")
+            });
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/clientes",
+            CriarRequestValido(),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Criar_SemAntiforgeryToken_DeveRetornarBadRequest()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/clientes",
+            CriarRequestValido(),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    private static CriarClienteRequest CriarRequestValido()
+    {
+        return new CriarClienteRequest
+        {
+            NomeCompleto = "Ana Silva",
+            DataNascimento = new DateOnly(1995, 6, 15),
+            Celular = "(21) 99999-9999"
+        };
     }
 }

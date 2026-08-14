@@ -18,9 +18,14 @@ public sealed class EmitirConviteFichaTests
     {
         using var factory = new FichaDigitalApiFactory();
         var clienteId = await CriarClienteAsync(factory);
-        using var client = CriarHttpClient(factory);
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
 
-        using var httpResponse = await client.PostAsync(
+        using var httpResponse = await AutenticacaoProfissionalTestHelper
+            .PostProtegidoAsync(
+            client,
             $"/api/clientes/{clienteId}/fichas/convites",
             content: null,
             TestContext.Current.CancellationToken);
@@ -47,9 +52,14 @@ public sealed class EmitirConviteFichaTests
     public async Task Emitir_ComClienteInexistente_DeveRetornarNotFound()
     {
         using var factory = new FichaDigitalApiFactory();
-        using var client = CriarHttpClient(factory);
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
 
-        using var httpResponse = await client.PostAsync(
+        using var httpResponse = await AutenticacaoProfissionalTestHelper
+            .PostProtegidoAsync(
+            client,
             $"/api/clientes/{Guid.NewGuid()}/fichas/convites",
             content: null,
             TestContext.Current.CancellationToken);
@@ -67,14 +77,41 @@ public sealed class EmitirConviteFichaTests
         Assert.Equal("Cliente não encontrado.", problemDetails.Title);
     }
 
-    private static HttpClient CriarHttpClient(
-        FichaDigitalApiFactory factory)
+    [Fact]
+    public async Task Emitir_SemAutenticacao_DeveRetornarUnauthorized()
     {
-        return factory.CreateClient(
+        using var factory = new FichaDigitalApiFactory();
+        var clienteId = await CriarClienteAsync(factory);
+        using var client = factory.CreateClient(
             new WebApplicationFactoryClientOptions
             {
                 BaseAddress = new Uri("https://localhost")
             });
+
+        using var response = await client.PostAsync(
+            $"/api/clientes/{clienteId}/fichas/convites",
+            content: null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Emitir_SemAntiforgeryToken_DeveRetornarBadRequest()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        var clienteId = await CriarClienteAsync(factory);
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+
+        using var response = await client.PostAsync(
+            $"/api/clientes/{clienteId}/fichas/convites",
+            content: null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private static async Task<Guid> CriarClienteAsync(

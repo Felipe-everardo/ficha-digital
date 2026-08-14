@@ -1,0 +1,211 @@
+.record-detail-shell {
+  width: min(100% - 40px, 1040px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(36px, 7vw, 76px) 0 80px;
+}
+
+.record-detail-header > a,
+.record-detail-state a {
+  display: inline-block;
+  margin-bottom: 30px;
+  color: var(--moss-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.record-detail-header > a:hover,
+.record-detail-header > a:focus-visible,
+.record-detail-state a:hover,
+.record-detail-state a:focus-visible {
+  text-decoration: underline;
+}
+
+.record-detail-title-row {
+  display: flex;
+  gap: 30px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.record-detail-title-row h1 {
+  font-size: clamp(2.8rem, 7vw, 5rem);
+}
+
+.record-detail-title-row p {
+  margin: 18px 0 0;
+  color: var(--muted);
+}
+
+.record-detail-title-row > .record-status {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+
+.sensitive-data-notice {
+  margin-top: 36px;
+  padding: 18px 20px;
+  border: 1px solid rgba(125, 86, 54, 0.28);
+  border-radius: 14px;
+  color: #685038;
+  background: #f7efe3;
+}
+
+.sensitive-data-notice strong,
+.sensitive-data-notice p {
+  display: block;
+  margin: 0;
+}
+
+.sensitive-data-notice p {
+  margin-top: 5px;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.record-detail-section {
+  margin-top: 26px;
+  padding: clamp(25px, 5vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 254, 249, 0.94);
+  box-shadow: 0 18px 48px rgba(53, 72, 50, 0.06);
+}
+
+.record-detail-section-heading h2 {
+  margin: 0;
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 400;
+}
+
+.record-detail-section-heading > p:last-child:not(.eyebrow) {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.record-detail-grid,
+.health-answer-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 28px 0 0;
+}
+
+.record-detail-grid > div,
+.health-answer-list > div {
+  min-width: 0;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-detail-grid > div:nth-child(odd),
+.health-answer-list > div:nth-child(odd) {
+  padding-right: 24px;
+}
+
+.record-detail-grid > div:nth-child(even),
+.health-answer-list > div:nth-child(even) {
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.record-detail-grid dt,
+.health-answer-list dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.record-detail-grid dd,
+.health-answer-list dd {
+  overflow-wrap: anywhere;
+  margin: 7px 0 0;
+  color: var(--text);
+  font-size: 0.91rem;
+  line-height: 1.55;
+}
+
+.record-detail-pending {
+  margin: 28px 0 0;
+  padding: 18px 20px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  line-height: 1.6;
+}
+
+.record-detail-state {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 36px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--muted);
+  background: rgba(255, 254, 249, 0.9);
+}
+
+.record-detail-loading {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(83, 107, 74, 0.2);
+  border-top-color: var(--moss);
+  border-radius: 50%;
+  animation: record-detail-loading-spin 0.8s linear infinite;
+}
+
+@keyframes record-detail-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.record-detail-state--error {
+  align-items: flex-start;
+  flex-direction: column;
+  border-color: rgba(152, 78, 72, 0.3);
+  color: var(--error);
+  background: #fbefed;
+}
+
+.record-detail-state--error p {
+  margin: 0;
+}
+
+.record-detail-state--error a {
+  margin: 0;
+  color: inherit;
+}
+
+@media (max-width: 680px) {
+  .record-detail-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .record-detail-title-row > .record-status {
+    margin: 0;
+  }
+
+  .record-detail-grid,
+  .health-answer-list {
+    grid-template-columns: 1fr;
+  }
+
+  .record-detail-grid > div:nth-child(odd),
+  .record-detail-grid > div:nth-child(even),
+  .health-answer-list > div:nth-child(odd),
+  .health-answer-list > div:nth-child(even) {
+    padding-right: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+}
