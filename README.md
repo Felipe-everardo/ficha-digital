@@ -315,14 +315,3 @@ auditoria e retenção de dados fazem parte da arquitetura desde a concepção.
 Este repositório usa apenas dados fictícios e não representa, no estado atual,
 uma solução pronta ou juridicamente validada para tratamento de dados reais.
 Consulte também a [política de segurança](SECURITY.md).
-
-## Documentação
-
-- [Roteiro de demonstração do MVP](docs/roteiro-demonstracao-mvp.md).
-
-## Sobre o desenvolvimento
-
-O projeto está sendo construído em entregas pequenas. Cada etapa registra as
-decisões, os conceitos estudados e exercícios implementados no código real.
-Essa abordagem permite demonstrar não apenas o resultado, mas também a evolução
-do raciocínio técnico.
