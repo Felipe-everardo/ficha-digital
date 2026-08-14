@@ -63,6 +63,10 @@ builder.Services.Configure<ProfissionalDesenvolvimentoOptions>(
     builder.Configuration.GetSection(
         ProfissionalDesenvolvimentoOptions.Secao));
 builder.Services.AddScoped<ProvisionadorProfissionalDesenvolvimento>();
+builder.Services.Configure<ProfissionalInicialOptions>(
+    builder.Configuration.GetSection(
+        ProfissionalInicialOptions.Secao));
+builder.Services.AddScoped<ProvisionadorProfissionalInicial>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<GeradorTokenConvite>();
 builder.Services.AddSingleton<CalculadorHashConteudo>();
@@ -111,25 +115,63 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+await using (var scope = app.Services.CreateAsyncScope())
 {
-    await using var scope = app.Services.CreateAsyncScope();
-    var provisionador = scope.ServiceProvider
-        .GetRequiredService<ProvisionadorProfissionalDesenvolvimento>();
+    if (app.Environment.IsDevelopment())
+    {
+        var provisionadorDesenvolvimento = scope.ServiceProvider
+            .GetRequiredService<ProvisionadorProfissionalDesenvolvimento>();
 
-    await provisionador.ProvisionarAsync();
+        await provisionadorDesenvolvimento.ProvisionarAsync();
+    }
+
+    var provisionadorInicial = scope.ServiceProvider
+        .GetRequiredService<ProvisionadorProfissionalInicial>();
+
+    await provisionadorInicial.ProvisionarAsync();
 }
 
 if (!app.Environment.IsDevelopment())
 {
+    app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.Append(
+            "X-Content-Type-Options",
+            "nosniff");
+        context.Response.Headers.Append(
+            "Referrer-Policy",
+            "no-referrer");
+        context.Response.Headers.Append(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()");
+        context.Response.Headers.Append(
+            "Content-Security-Policy",
+            "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; " +
+            "form-action 'self'; object-src 'none'; img-src 'self' data:; " +
+            "font-src 'self'; script-src 'self'; style-src 'self'; " +
+            "connect-src 'self'; upgrade-insecure-requests");
+
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

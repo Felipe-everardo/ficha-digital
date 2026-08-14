@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ficha-digital-api-56f35f60-6f61-4c24-bc25-bf823829d445</UserSecretsId>
+    <FrontendRoot>$(MSBuildProjectDirectory)/../../frontend</FrontendRoot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,5 +16,21 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
   </ItemGroup>
+
+  <Target Name="BuildFrontendForPublish" AfterTargets="ComputeFilesToPublish">
+    <Exec WorkingDirectory="$(FrontendRoot)" Command="npm ci" />
+    <Exec WorkingDirectory="$(FrontendRoot)" Command="npm run build" />
+
+    <ItemGroup>
+      <FrontendDistFiles Include="$(FrontendRoot)/dist/**" />
+      <ResolvedFileToPublish
+        Include="@(FrontendDistFiles->'%(FullPath)')"
+        Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot/%(RecursiveDir)%(FileName)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>
