@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - fichaDigital
+name: Publicar no Azure App Service
 
 on:
   push:
@@ -9,57 +6,84 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  SOLUTION_PATH: FichaDigital.sln
+  API_PROJECT_PATH: src/backend/FichaDigital.Api/FichaDigital.Api.csproj
+  PUBLISH_PATH: ${{ github.workspace }}/publish
+
 jobs:
   build:
+    name: Testar e preparar aplicação
     runs-on: windows-latest
-    permissions:
-      contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Obter código
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Configurar .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          dotnet-version: 10.x
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Restaurar dependências
+        run: dotnet restore "${{ env.SOLUTION_PATH }}"
 
-      - name: Upload artifact for deployment job
+      - name: Compilar solução
+        run: dotnet build "${{ env.SOLUTION_PATH }}" --configuration Release --no-restore
+
+      - name: Executar testes
+        run: dotnet test "${{ env.SOLUTION_PATH }}" --configuration Release --no-build
+
+      - name: Publicar API e frontend
+        run: >-
+          dotnet publish "${{ env.API_PROJECT_PATH }}"
+          --configuration Release
+          --no-build
+          --no-restore
+          --output "${{ env.PUBLISH_PATH }}"
+
+      - name: Armazenar pacote da aplicação
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: fichadigital-app
+          path: ${{ env.PUBLISH_PATH }}
+          if-no-files-found: error
 
   deploy:
+    name: Implantar no Azure
     runs-on: windows-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Baixar pacote da aplicação
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
-      - name: Login to Azure
+          name: fichadigital-app
+          path: ./publish
+
+      - name: Autenticar no Azure sem senha
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_33448E77B0FF4583BD698196CAE0C13C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5CACC9EA6D5E4E06BC45F690A8D75296 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FEE4F91E60CB41ABB64C6779B91ED2E5 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Implantar no App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fichaDigital'
-          slot-name: 'Production'
-          package: .
-          
+          app-name: fichaDigital
+          slot-name: Production
+          package: ./publish
