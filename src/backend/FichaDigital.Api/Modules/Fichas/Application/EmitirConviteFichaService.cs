@@ -11,7 +11,7 @@ public sealed class EmitirConviteFichaService(
     TimeProvider timeProvider)
 {
     private static readonly TimeSpan DuracaoConvite =
-        TimeSpan.FromHours(48);
+        TimeSpan.FromHours(1);
 
     public async Task<ConviteFichaEmitido?> EmitirAsync(
         Guid clienteId,

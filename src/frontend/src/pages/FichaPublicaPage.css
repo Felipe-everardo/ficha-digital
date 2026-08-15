@@ -188,7 +188,8 @@
 
 .binary-question legend {
   width: 100%;
-  padding: 0 0 13px;
+  padding: 0;
+  margin-bottom: 18px;
   color: var(--text);
   font-size: 0.94rem;
   font-weight: 700;

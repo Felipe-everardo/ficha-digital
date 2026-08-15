@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { StudioBrand } from '../components/StudioBrand'
 import { ApiRequestError } from '../services/api'
 import {
   entrarProfissional,
@@ -115,9 +116,12 @@ export function AreaProfissionalPage() {
   if (estado.tipo === 'carregando') {
     return (
       <main className="professional-shell">
-        <div className="professional-loading" aria-live="polite">
-          <span className="loading-indicator" aria-hidden="true" />
-          Verificando sessão protegida...
+        <div className="professional-loading-panel" aria-live="polite">
+          <StudioBrand contexto="Área profissional" />
+          <div className="professional-loading">
+            <span className="loading-indicator" aria-hidden="true" />
+            Verificando sessão protegida...
+          </div>
         </div>
       </main>
     )
@@ -127,9 +131,7 @@ export function AreaProfissionalPage() {
     return (
       <main className="professional-shell">
         <section className="professional-auth-card" role="alert">
-          <div className="brand-mark" aria-hidden="true">
-            FD
-          </div>
+          <StudioBrand contexto="Área profissional" />
           <p className="eyebrow">Área profissional</p>
           <h1>Não foi possível carregar</h1>
           <p className="professional-copy">{estado.mensagem}</p>
@@ -148,9 +150,7 @@ export function AreaProfissionalPage() {
           className="professional-auth-card"
           aria-labelledby="professional-login-title"
         >
-          <div className="brand-mark" aria-hidden="true">
-            FD
-          </div>
+          <StudioBrand contexto="Área profissional" />
           <p className="eyebrow">Acesso reservado</p>
           <h1 id="professional-login-title">Área profissional</h1>
           <p className="professional-copy">
@@ -211,15 +211,10 @@ export function AreaProfissionalPage() {
   return (
     <main className="professional-dashboard-shell">
       <header className="professional-topbar">
-        <div className="professional-brand">
-          <div className="brand-mark" aria-hidden="true">
-            FD
-          </div>
-          <div>
-            <p>Ficha Digital</p>
-            <span>Área profissional</span>
-          </div>
-        </div>
+        <StudioBrand
+          className="professional-brand"
+          contexto="Área profissional"
+        />
 
         <div className="professional-account">
           <div>

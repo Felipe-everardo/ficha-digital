@@ -24,20 +24,6 @@
   align-items: start;
 }
 
-.brand-mark {
-  display: grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  border: 1px solid var(--moss);
-  border-radius: 50%;
-  color: var(--moss-dark);
-  background: var(--moss-soft);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 15px;
-  letter-spacing: 0.08em;
-}
-
 .eyebrow {
   margin: 0 0 12px;
   color: var(--moss);
@@ -262,7 +248,7 @@ button:focus-visible {
 }
 
 button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.6;
 }
 
@@ -274,6 +260,84 @@ button:disabled {
 
 .secondary-button:hover:not(:disabled) {
   color: #fffef9;
+}
+
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.success-actions .secondary-button {
+  margin-top: 0;
+}
+
+.page-back-link {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page-back-link:focus-visible {
+  outline: 3px solid rgba(83, 107, 74, 0.28);
+  outline-offset: 3px;
+}
+
+.page-back-link {
+  display: inline-block;
+  margin-bottom: 28px;
+  color: var(--moss-dark);
+  font-size: 0.82rem;
+}
+
+.page-back-link:hover {
+  text-decoration: underline;
+}
+
+.registration-invitation {
+  margin-top: 26px;
+  padding: 22px;
+  border: 1px solid rgba(83, 107, 74, 0.34);
+  border-radius: 16px;
+  background: var(--moss-soft);
+}
+
+.registration-invitation h3 {
+  margin: 0;
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.registration-invitation-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.registration-invitation-link input {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid rgba(83, 107, 74, 0.4);
+  border-radius: 10px;
+  outline: none;
+  color: var(--text);
+  background: #fffef9;
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.registration-invitation-link input:focus {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px rgba(83, 107, 74, 0.15);
+}
+
+.registration-copy-message {
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
@@ -311,6 +375,14 @@ button:disabled {
   }
 
   .form-actions button {
+    width: 100%;
+  }
+
+  .registration-invitation-link {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-invitation-link button {
     width: 100%;
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { StudioBrand } from '../components/StudioBrand'
 import {
   ApiRequestError,
   obterDetalheFicha,
@@ -82,6 +83,7 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
     return (
       <main className="record-detail-shell">
         <section className="record-detail-state record-detail-state--error">
+          <StudioBrand contexto="Área profissional" />
           <p>{erro}</p>
           <a href="/profissional/fichas">Voltar para as fichas</a>
         </section>
@@ -92,7 +94,11 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
   if (!ficha) {
     return (
       <main className="record-detail-shell">
-        <div className="record-detail-state" aria-live="polite">
+        <div
+          className="record-detail-state record-detail-state--branded"
+          aria-live="polite"
+        >
+          <StudioBrand contexto="Área profissional" />
           <span className="record-detail-loading" aria-hidden="true" />
           Carregando detalhes da ficha...
         </div>
@@ -106,6 +112,10 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
   return (
     <main className="record-detail-shell">
       <header className="record-detail-header">
+        <StudioBrand
+          className="record-detail-brand"
+          contexto="Área profissional"
+        />
         <a href="/profissional/fichas">← Voltar para as fichas</a>
         <p className="eyebrow">Área profissional</p>
         <div className="record-detail-title-row">
@@ -118,14 +128,6 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
           </span>
         </div>
       </header>
-
-      <aside className="sensitive-data-notice">
-        <strong>Dados de saúde</strong>
-        <p>
-          Esta tela contém informações sensíveis. Durante a demonstração, use
-          somente dados fictícios.
-        </p>
-      </aside>
 
       <section className="record-detail-section">
         <div className="record-detail-section-heading">

@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { StudioBrand } from '../components/StudioBrand'
 import {
   ApiRequestError,
   ApiValidationError,
@@ -334,9 +335,7 @@ export function FichaPublicaPage() {
     <main className="public-page-shell">
       <section className="public-card" aria-labelledby="public-page-title">
         <header className="public-header">
-          <div className="brand-mark" aria-hidden="true">
-            FD
-          </div>
+          <StudioBrand compacta />
 
           <div>
             <p className="eyebrow">Área segura do cliente</p>
@@ -441,10 +440,6 @@ export function FichaPublicaPage() {
                   Todas as perguntas precisam ser respondidas. Quando você
                   marcar “Sim”, poderão aparecer informações complementares.
                 </p>
-              </div>
-
-              <div className="health-notice">
-                Use somente dados fictícios nesta versão de desenvolvimento.
               </div>
 
               <div className="questions-list">
@@ -589,8 +584,7 @@ export function FichaPublicaPage() {
                 </div>
 
                 <div className="health-notice">
-                  Este é um termo provisório de desenvolvimento. Continue
-                  somente com informações fictícias.
+                  Este é um termo provisório de desenvolvimento.
                 </div>
 
                 <article

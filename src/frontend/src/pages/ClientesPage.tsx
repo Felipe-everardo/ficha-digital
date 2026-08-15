@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { StudioBrand } from '../components/StudioBrand'
 import {
   ApiRequestError,
   emitirConviteFicha,
@@ -141,6 +142,10 @@ export function ClientesPage() {
     <main className="clients-shell">
       <header className="clients-header">
         <div>
+          <StudioBrand
+            className="clients-brand"
+            contexto="Área profissional"
+          />
           <a className="clients-back-link" href="/profissional">
             ← Voltar ao painel
           </a>

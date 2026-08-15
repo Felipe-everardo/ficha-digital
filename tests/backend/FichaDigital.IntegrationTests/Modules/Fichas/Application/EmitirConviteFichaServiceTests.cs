@@ -14,7 +14,9 @@ public sealed class EmitirConviteFichaServiceTests
     [Fact]
     public async Task Emitir_ComClienteExistente_DevePersistirFichaEConvite()
     {
-        using var factory = new FichaDigitalApiFactory();
+        var instanteEmissao = DateTimeOffset.UtcNow;
+        using var factory = new FichaDigitalApiFactory(
+            new FixedTimeProvider(instanteEmissao));
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
@@ -36,7 +38,7 @@ public sealed class EmitirConviteFichaServiceTests
         Assert.NotEqual(Guid.Empty, resultado.FichaId);
         Assert.NotEqual(Guid.Empty, resultado.ConviteId);
         Assert.NotEmpty(resultado.TokenOriginal);
-        Assert.True(resultado.ExpiraEmUtc > DateTimeOffset.UtcNow);
+        Assert.Equal(instanteEmissao.AddHours(1), resultado.ExpiraEmUtc);
 
         dbContext.ChangeTracker.Clear();
 

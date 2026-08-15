@@ -5,6 +5,10 @@
   padding: clamp(36px, 7vw, 76px) 0 80px;
 }
 
+.record-detail-brand {
+  margin-bottom: 28px;
+}
+
 .record-detail-header > a,
 .record-detail-state a {
   display: inline-block;
@@ -41,27 +45,6 @@
 .record-detail-title-row > .record-status {
   flex: 0 0 auto;
   margin-bottom: 8px;
-}
-
-.sensitive-data-notice {
-  margin-top: 36px;
-  padding: 18px 20px;
-  border: 1px solid rgba(125, 86, 54, 0.28);
-  border-radius: 14px;
-  color: #685038;
-  background: #f7efe3;
-}
-
-.sensitive-data-notice strong,
-.sensitive-data-notice p {
-  display: block;
-  margin: 0;
-}
-
-.sensitive-data-notice p {
-  margin-top: 5px;
-  font-size: 0.84rem;
-  line-height: 1.55;
 }
 
 .record-detail-section {
@@ -151,6 +134,11 @@
   border-radius: 18px;
   color: var(--muted);
   background: rgba(255, 254, 249, 0.9);
+}
+
+.record-detail-state--branded {
+  flex-direction: column;
+  gap: 22px;
 }
 
 .record-detail-loading {

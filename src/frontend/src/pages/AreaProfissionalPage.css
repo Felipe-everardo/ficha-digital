@@ -16,7 +16,7 @@
     0 4px 18px rgba(53, 72, 50, 0.06);
 }
 
-.professional-auth-card .brand-mark {
+.professional-auth-card .studio-brand {
   margin-bottom: 30px;
 }
 
@@ -94,6 +94,12 @@
   font-weight: 600;
 }
 
+.professional-loading-panel {
+  display: grid;
+  gap: 28px;
+  justify-items: center;
+}
+
 .professional-loading .loading-indicator {
   width: 22px;
   height: 22px;
@@ -131,21 +137,11 @@
   align-items: center;
 }
 
-.professional-brand p,
 .professional-account strong,
-.professional-brand span,
 .professional-account span {
   display: block;
 }
 
-.professional-brand p {
-  margin: 0;
-  color: var(--moss-dark);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.15rem;
-}
-
-.professional-brand span,
 .professional-account span {
   margin-top: 3px;
   color: var(--muted);

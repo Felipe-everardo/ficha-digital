@@ -1,5 +1,6 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import './App.css'
+import { StudioBrand } from './components/StudioBrand'
 import { AreaProfissionalPage } from './pages/AreaProfissionalPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { FichaPublicaPage } from './pages/FichaPublicaPage'
@@ -10,11 +11,14 @@ import {
   obterSessaoProfissional,
 } from './services/autenticacao'
 import {
+  ApiRequestError,
   ApiValidationError,
   criarCliente,
+  emitirConviteFicha,
   getApiStatus,
   type ApiStatus,
   type ClienteCriado,
+  type ConviteFichaCriado,
   type CriarClienteInput,
 } from './services/api'
 
@@ -55,6 +59,12 @@ function CadastroClientePage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<ErrosFormulario>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [conviteGerado, setConviteGerado] =
+    useState<ConviteFichaCriado | null>(null)
+  const [gerandoConvite, setGerandoConvite] = useState(false)
+  const [erroConvite, setErroConvite] = useState<string | null>(null)
+  const [mensagemCopia, setMensagemCopia] = useState<string | null>(null)
+  const conviteInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     getApiStatus()
@@ -107,6 +117,9 @@ function CadastroClientePage() {
       const antiforgeryToken = await obterAntiforgeryToken()
       const response = await criarCliente(formulario, antiforgeryToken)
       setClienteCriado(response)
+      setConviteGerado(null)
+      setErroConvite(null)
+      setMensagemCopia(null)
       setFormulario(formularioInicial)
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -122,13 +135,71 @@ function CadastroClientePage() {
     }
   }
 
+  async function handleGerarConvite() {
+    if (!clienteCriado) {
+      return
+    }
+
+    setGerandoConvite(true)
+    setErroConvite(null)
+    setMensagemCopia(null)
+
+    try {
+      const antiforgeryToken = await obterAntiforgeryToken()
+      const convite = await emitirConviteFicha(
+        clienteCriado.id,
+        antiforgeryToken,
+      )
+
+      setConviteGerado({
+        ...convite,
+        linkPreenchimento: new URL(
+          convite.linkPreenchimento,
+          window.location.origin,
+        ).toString(),
+      })
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) {
+        window.location.replace('/profissional/entrar')
+        return
+      }
+
+      setErroConvite(
+        error instanceof ApiRequestError
+          ? error.message
+          : 'Não foi possível gerar o convite.',
+      )
+    } finally {
+      setGerandoConvite(false)
+    }
+  }
+
+  async function handleCopiarConvite() {
+    if (!conviteGerado) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(conviteGerado.linkPreenchimento)
+      setMensagemCopia('Link copiado. Agora você pode enviá-lo ao cliente.')
+    } catch {
+      conviteInputRef.current?.focus()
+      conviteInputRef.current?.select()
+      setMensagemCopia(
+        'O link foi selecionado para você copiar manualmente.',
+      )
+    }
+  }
+
   return (
     <main className="page-shell">
       <section className="form-card" aria-labelledby="page-title">
+        <a className="page-back-link" href="/profissional">
+          ← Voltar para a área profissional
+        </a>
+
         <header className="page-header">
-          <div className="brand-mark" aria-hidden="true">
-            FD
-          </div>
+          <StudioBrand compacta />
 
           <div>
             <p className="eyebrow">Área profissional</p>
@@ -158,16 +229,80 @@ function CadastroClientePage() {
             <p className="eyebrow">Cliente cadastrado</p>
             <h2>{clienteCriado.nomeParaExibicao} foi cadastrado.</h2>
             <p>
-              Os dados iniciais foram salvos. A geração do convite será
-              conectada a esta área em uma próxima etapa.
+              Os dados iniciais foram salvos. Você já pode gerar o link de
+              preenchimento para enviar ao cliente.
             </p>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setClienteCriado(null)}
-            >
-              Cadastrar outro cliente
-            </button>
+            <div className="success-actions">
+              <button
+                type="button"
+                disabled={gerandoConvite || conviteGerado !== null}
+                onClick={handleGerarConvite}
+              >
+                {gerandoConvite
+                  ? 'Gerando convite...'
+                  : conviteGerado
+                    ? 'Convite gerado'
+                    : 'Gerar convite agora'}
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  setClienteCriado(null)
+                  setConviteGerado(null)
+                  setErroConvite(null)
+                  setMensagemCopia(null)
+                }}
+              >
+                Cadastrar outro cliente
+              </button>
+            </div>
+
+            {erroConvite && (
+              <p className="form-error" role="alert">
+                {erroConvite}
+              </p>
+            )}
+
+            {conviteGerado && (
+              <section
+                className="registration-invitation"
+                aria-labelledby="registration-invitation-title"
+              >
+                <p className="eyebrow">Convite pronto</p>
+                <h3 id="registration-invitation-title">
+                  Envie este link para {clienteCriado.nomeParaExibicao}
+                </h3>
+                <p>
+                  Válido até{' '}
+                  <strong>
+                    {new Intl.DateTimeFormat('pt-BR', {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    }).format(new Date(conviteGerado.expiraEmUtc))}
+                  </strong>
+                  .
+                </p>
+                <div className="registration-invitation-link">
+                  <input
+                    ref={conviteInputRef}
+                    type="text"
+                    readOnly
+                    aria-label="Link de preenchimento"
+                    value={conviteGerado.linkPreenchimento}
+                    onFocus={(event) => event.target.select()}
+                  />
+                  <button type="button" onClick={handleCopiarConvite}>
+                    Copiar link
+                  </button>
+                </div>
+                {mensagemCopia && (
+                  <p className="registration-copy-message" role="status">
+                    {mensagemCopia}
+                  </p>
+                )}
+              </section>
+            )}
           </div>
         ) : (
           <form className="client-form" onSubmit={handleSubmit}>
@@ -377,9 +512,12 @@ function CadastroClienteProtegidoPage() {
   if (estadoSessao === 'verificando') {
     return (
       <main className="page-shell">
-        <p className="status-message" aria-live="polite">
-          Verificando sua sessão profissional...
-        </p>
+        <div aria-live="polite">
+          <StudioBrand contexto="Área profissional" />
+          <p className="status-message">
+            Verificando sua sessão profissional...
+          </p>
+        </div>
       </main>
     )
   }
@@ -388,6 +526,7 @@ function CadastroClienteProtegidoPage() {
     return (
       <main className="page-shell">
         <section className="form-card" role="alert">
+          <StudioBrand contexto="Área profissional" />
           <p className="eyebrow">Área profissional</p>
           <h1>Não foi possível verificar sua sessão.</h1>
           <button type="button" onClick={() => window.location.reload()}>
