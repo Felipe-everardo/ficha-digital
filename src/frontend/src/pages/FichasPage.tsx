@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { StudioBrand } from '../components/StudioBrand'
 import {
   ApiRequestError,
   listarFichas,
@@ -89,10 +88,6 @@ export function FichasPage() {
     <main className="records-shell">
       <header className="records-header">
         <div>
-          <StudioBrand
-            className="records-brand"
-            contexto="Área profissional"
-          />
           <a className="records-back-link" href="/profissional">
             ← Voltar ao painel
           </a>

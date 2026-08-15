@@ -19,7 +19,7 @@
 
 .page-header {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   gap: 28px;
   align-items: start;
 }

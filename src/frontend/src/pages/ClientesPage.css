@@ -16,10 +16,6 @@
   font-size: clamp(2.8rem, 7vw, 5.3rem);
 }
 
-.clients-brand {
-  margin-bottom: 28px;
-}
-
 .clients-header > div > p:last-child {
   max-width: 650px;
   margin: 20px 0 0;

@@ -1,6 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import './App.css'
-import { StudioBrand } from './components/StudioBrand'
 import { AreaProfissionalPage } from './pages/AreaProfissionalPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { FichaPublicaPage } from './pages/FichaPublicaPage'
@@ -199,8 +198,6 @@ function CadastroClientePage() {
         </a>
 
         <header className="page-header">
-          <StudioBrand compacta />
-
           <div>
             <p className="eyebrow">Área profissional</p>
             <h1 id="page-title">Cadastrar cliente</h1>
@@ -512,12 +509,9 @@ function CadastroClienteProtegidoPage() {
   if (estadoSessao === 'verificando') {
     return (
       <main className="page-shell">
-        <div aria-live="polite">
-          <StudioBrand contexto="Área profissional" />
-          <p className="status-message">
-            Verificando sua sessão profissional...
-          </p>
-        </div>
+        <p className="status-message" aria-live="polite">
+          Verificando sua sessão profissional...
+        </p>
       </main>
     )
   }
@@ -526,7 +520,6 @@ function CadastroClienteProtegidoPage() {
     return (
       <main className="page-shell">
         <section className="form-card" role="alert">
-          <StudioBrand contexto="Área profissional" />
           <p className="eyebrow">Área profissional</p>
           <h1>Não foi possível verificar sua sessão.</h1>
           <button type="button" onClick={() => window.location.reload()}>
