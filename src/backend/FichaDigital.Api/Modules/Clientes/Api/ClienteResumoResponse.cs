@@ -2,9 +2,12 @@ namespace FichaDigital.Api.Modules.Clientes.Api;
 
 public sealed record ClienteResumoResponse(
     Guid Id,
-    string NomeCompleto,
+    string NomeReferencia,
+    string? NomeCompleto,
     string NomeParaExibicao,
     string? Pronomes,
-    string Celular,
+    string? Celular,
     string? Email,
+    string? Instagram,
+    bool DadosPessoaisPreenchidos,
     DateTimeOffset CriadoEmUtc);

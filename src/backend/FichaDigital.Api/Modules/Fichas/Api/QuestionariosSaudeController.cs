@@ -75,6 +75,11 @@ public sealed class QuestionariosSaudeController(
                 title: "Questionário já respondido.",
                 detail: "Esta ficha já possui um questionário de saúde."),
 
+            StatusRespostaQuestionarioSaude.DadosPessoaisPendentes => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Dados pessoais pendentes.",
+                detail: "Preencha seus dados pessoais antes do questionário de saúde."),
+
             _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Convite inválido.",

@@ -76,6 +76,7 @@ builder.Services.AddSingleton<GeradorTokenConvite>();
 builder.Services.AddSingleton<CalculadorHashConteudo>();
 builder.Services.AddScoped<EmitirConviteFichaService>();
 builder.Services.AddScoped<AbrirConviteFichaService>();
+builder.Services.AddScoped<PreencherDadosPessoaisService>();
 builder.Services.AddScoped<ResponderQuestionarioSaudeService>();
 builder.Services.AddScoped<AceitarTermoConsentimentoService>();
 builder.Services.AddRateLimiter(options =>

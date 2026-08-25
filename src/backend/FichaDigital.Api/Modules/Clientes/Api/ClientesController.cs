@@ -25,17 +25,25 @@ public sealed class ClientesController(
         var totalPaginas = (int)Math.Ceiling(
             totalItens / (double)request.TamanhoPagina);
         var itens = await consulta
-            .OrderBy(cliente => cliente.NomeSocial ?? cliente.NomeCompleto)
+            .OrderBy(cliente =>
+                cliente.NomeSocial ??
+                cliente.NomeCompleto ??
+                cliente.NomeReferencia)
             .ThenBy(cliente => cliente.Id)
             .Skip((request.Pagina - 1) * request.TamanhoPagina)
             .Take(request.TamanhoPagina)
             .Select(cliente => new ClienteResumoResponse(
                 cliente.Id,
+                cliente.NomeReferencia,
                 cliente.NomeCompleto,
-                cliente.NomeSocial ?? cliente.NomeCompleto,
+                cliente.NomeSocial ??
+                    cliente.NomeCompleto ??
+                    cliente.NomeReferencia,
                 cliente.Pronomes,
                 cliente.Celular,
                 cliente.Email,
+                cliente.Instagram,
+                cliente.DadosPessoaisPreenchidosEmUtc != null,
                 cliente.CriadoEmUtc))
             .ToListAsync(cancellationToken);
 
@@ -56,24 +64,7 @@ public sealed class ClientesController(
         [FromBody] CriarClienteRequest request,
         CancellationToken cancellationToken)
     {
-        var dataNascimento = request.DataNascimento!.Value;
-
-        if (dataNascimento > DateOnly.FromDateTime(DateTime.UtcNow))
-        {
-            ModelState.AddModelError(
-                nameof(request.DataNascimento),
-                "A data de nascimento não pode estar no futuro.");
-
-            return ValidationProblem(ModelState);
-        }
-
-        var cliente = new Cliente(
-            request.NomeCompleto,
-            request.NomeSocial,
-            request.Pronomes,
-            dataNascimento,
-            request.Celular,
-            request.Email);
+        var cliente = new Cliente(request.NomeReferencia);
 
         dbContext.Clientes.Add(cliente);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -81,7 +72,6 @@ public sealed class ClientesController(
         var response = new ClienteCriadoResponse(
             cliente.Id,
             cliente.NomeParaExibicao,
-            cliente.Pronomes,
             cliente.CriadoEmUtc);
 
         return Created($"/api/clientes/{cliente.Id}", response);

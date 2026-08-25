@@ -15,33 +15,47 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(cliente => cliente.Id)
             .ValueGeneratedNever();
 
-        builder.Property(cliente => cliente.NomeCompleto)
+        builder.Property(cliente => cliente.NomeReferencia)
             .HasMaxLength(150)
             .IsRequired();
+
+        builder.Property(cliente => cliente.NomeCompleto)
+            .HasMaxLength(150);
 
         builder.Property(cliente => cliente.NomeSocial)
             .HasMaxLength(150);
 
         builder.Ignore(cliente => cliente.NomeParaExibicao);
 
+        builder.Ignore(cliente => cliente.DadosPessoaisPreenchidos);
+
         builder.Property(cliente => cliente.Pronomes)
             .HasMaxLength(50);
 
         builder.Property(cliente => cliente.DataNascimento)
-            .HasColumnType("date")
-            .IsRequired();
+            .HasColumnType("date");
 
         builder.Property(cliente => cliente.Celular)
-            .HasMaxLength(25)
-            .IsRequired();
+            .HasMaxLength(25);
 
         builder.Property(cliente => cliente.Email)
             .HasMaxLength(254);
+
+        builder.Property(cliente => cliente.Instagram)
+            .HasMaxLength(100);
+
+        builder.Property(cliente => cliente.ContatoEmergenciaNome)
+            .HasMaxLength(150);
+
+        builder.Property(cliente => cliente.ContatoEmergenciaCelular)
+            .HasMaxLength(25);
 
         builder.Property(cliente => cliente.CriadoEmUtc)
             .IsRequired();
 
         builder.HasIndex(cliente => cliente.NomeCompleto);
+
+        builder.HasIndex(cliente => cliente.NomeReferencia);
 
         builder.HasIndex(cliente => cliente.Celular);
     }

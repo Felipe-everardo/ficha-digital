@@ -232,6 +232,25 @@
   font-size: 0.77rem;
 }
 
+.clients-table-wrapper td .client-data-status {
+  display: inline-block;
+  margin: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.client-data-status--complete {
+  color: var(--success);
+  background: #edf4e9;
+}
+
+.client-data-status--pending {
+  color: #765f31;
+  background: #f6edd7;
+}
+
 .clients-pagination {
   display: flex;
   gap: 20px;

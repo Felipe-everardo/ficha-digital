@@ -18,19 +18,21 @@ O projeto nasceu de um problema real: o estúdio utilizava formulários em papel
 o que dificultava a leitura, a localização de fichas antigas e a preservação do
 histórico de cada cliente.
 
-A solução permite que o profissional cadastre o cliente, gere um link
-temporário e o envie pelo aplicativo de mensagens de sua preferência. O cliente
-abre o link no celular, responde ao histórico de saúde e registra o aceite do
-termo. Ao final, o profissional acompanha a confirmação em uma área protegida.
+A solução permite que o profissional cadastre apenas um nome de referência,
+gere um link temporário e o envie pelo aplicativo de mensagens de sua
+preferência. O cliente abre o link no celular, completa os próprios dados,
+responde ao histórico de saúde e registra o aceite do termo. Ao final, o
+profissional acompanha a confirmação em uma área protegida.
 
 ```mermaid
 flowchart LR
-    A["Profissional autenticado"] --> B["Cadastra o cliente"]
+    A["Profissional autenticado"] --> B["Informa um nome de referência"]
     B --> C["Gera convite válido por 1 hora"]
     C --> D["Cliente recebe o link"]
-    D --> E["Responde à ficha pelo celular"]
-    E --> F["Registra o aceite"]
-    F --> G["Profissional consulta a ficha concluída"]
+    D --> E["Cliente completa os dados pessoais"]
+    E --> F["Responde à ficha pelo celular"]
+    F --> G["Registra o aceite"]
+    G --> H["Profissional consulta a ficha concluída"]
 ```
 
 ## Demonstração visual
@@ -59,7 +61,7 @@ Adicione os arquivos em docs/screenshots e remova este comentário.
 ### Área profissional
 
 - autenticação com sessão protegida;
-- cadastro de clientes;
+- cadastro inicial do cliente somente por nome de referência;
 - listagem paginada de clientes;
 - geração de convite com validade de 1 hora;
 - link completo pronto para cópia e compartilhamento;
@@ -71,6 +73,7 @@ Adicione os arquivos em docs/screenshots e remova este comentário.
 
 - abertura da ficha por link temporário;
 - validação segura do convite;
+- preenchimento dos próprios dados pessoais e de contato;
 - questionário de saúde com perguntas condicionais;
 - retomada do fluxo pelo link original;
 - apresentação e aceite do termo de consentimento;
@@ -195,9 +198,10 @@ em `http://localhost:5057`.
 | --- | --- | --- |
 | `POST` | `/api/autenticacao/entrar` | Iniciar a sessão profissional |
 | `GET` | `/api/clientes` | Listar clientes com paginação |
-| `POST` | `/api/clientes` | Cadastrar um cliente |
+| `POST` | `/api/clientes` | Cadastrar o nome de referência do cliente |
 | `POST` | `/api/clientes/{clienteId}/fichas/convites` | Gerar uma ficha e seu convite |
 | `POST` | `/api/fichas/convites/abrir` | Validar o convite público |
+| `POST` | `/api/fichas/dados-pessoais` | Registrar os dados informados pelo cliente |
 | `POST` | `/api/fichas/questionario-saude` | Registrar o questionário |
 | `POST` | `/api/fichas/termo-consentimento/aceitar` | Registrar o aceite e concluir a ficha |
 | `GET` | `/api/fichas` | Acompanhar fichas com paginação |

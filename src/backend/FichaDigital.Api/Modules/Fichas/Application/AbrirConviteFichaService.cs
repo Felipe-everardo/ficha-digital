@@ -62,10 +62,24 @@ public sealed class AbrirConviteFichaService(
                 item => item.FichaId == ficha.Id,
                 cancellationToken);
 
+        var cliente = await dbContext.Clientes
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                item => item.Id == ficha.ClienteId,
+                cancellationToken);
+
+        if (cliente is null)
+        {
+            return new ResultadoAberturaConvite(
+                StatusAberturaConvite.NaoEncontrado);
+        }
+
         return new ResultadoAberturaConvite(
             StatusAberturaConvite.Aberto,
             ficha.Id,
             ficha.Status,
-            questionarioRespondido);
+            questionarioRespondido,
+            cliente.DadosPessoaisPreenchidos,
+            cliente.NomeReferencia);
     }
 }

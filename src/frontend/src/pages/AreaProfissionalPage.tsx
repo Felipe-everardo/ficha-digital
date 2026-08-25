@@ -195,7 +195,7 @@ export function AreaProfissionalPage() {
             )}
 
             <button type="submit" disabled={autenticando}>
-              {autenticando ? 'Entrando...' : 'Entrar com segurança'}
+              {autenticando ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 

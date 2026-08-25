@@ -9,12 +9,25 @@ POST {FichaDigital.Api_HostAddress}/api/clientes
 Content-Type: application/json
 
 {
+  "nomeReferencia": "Ana"
+}
+
+###
+
+POST {FichaDigital.Api_HostAddress}/api/fichas/dados-pessoais
+Content-Type: application/json
+
+{
+  "token": "SUBSTITUA_PELO_TOKEN_DO_CONVITE",
   "nomeCompleto": "Ana Silva",
   "nomeSocial": "Ana",
   "pronomes": "ela/dela",
   "dataNascimento": "1995-06-15",
   "celular": "(21) 99999-9999",
-  "email": "ana@example.com"
+  "email": "ana@example.com",
+  "instagram": "@ana",
+  "contatoEmergenciaNome": "Maria Silva",
+  "contatoEmergenciaCelular": "(21) 98888-8888"
 }
 
 ###

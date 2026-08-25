@@ -41,6 +41,8 @@ public sealed class AberturaConvitesFichaController(
                     resultado.FichaId!.Value,
                     resultado.StatusFicha!.Value.ToString(),
                     resultado.QuestionarioRespondido,
+                    resultado.DadosPessoaisPreenchidos,
+                    resultado.NomeReferencia!,
                     new TermoConsentimentoResponse(
                         TermoConsentimentoAtual.Versao,
                         TermoConsentimentoAtual.Conteudo,

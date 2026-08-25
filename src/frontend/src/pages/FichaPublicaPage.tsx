@@ -5,8 +5,10 @@ import {
   ApiValidationError,
   abrirConviteFicha,
   aceitarTermoConsentimento,
+  preencherDadosPessoais,
   responderQuestionarioSaude,
   type ConviteFichaAberto,
+  type PreencherDadosPessoaisInput,
   type TermoConsentimentoAceito,
 } from '../services/api'
 import './FichaPublicaPage.css'
@@ -30,6 +32,8 @@ type RespostasQuestionario = {
   estaGravidaOuAmamentando: boolean | null
 }
 
+type DadosPessoaisFormulario = PreencherDadosPessoaisInput
+
 type PerguntaSimNaoProps = {
   nome: string
   pergunta: string
@@ -48,6 +52,26 @@ const respostasIniciais: RespostasQuestionario = {
   temHemofilia: null,
   usaMarcaPasso: null,
   estaGravidaOuAmamentando: null,
+}
+
+const dadosPessoaisIniciais: DadosPessoaisFormulario = {
+  nomeCompleto: '',
+  nomeSocial: '',
+  pronomes: '',
+  dataNascimento: '',
+  celular: '',
+  email: '',
+  instagram: '',
+  contatoEmergenciaNome: '',
+  contatoEmergenciaCelular: '',
+}
+
+function formatarDataParaInput(data: Date) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+
+  return `${ano}-${mes}-${dia}`
 }
 
 function PerguntaSimNao({
@@ -124,6 +148,7 @@ function formatarDataHora(dataIso: string) {
 let tokenInicialDoConvite = obterTokenDoConvite()
 
 export function FichaPublicaPage() {
+  const dataMaximaNascimento = formatarDataParaInput(new Date())
   const [tokenDoConvite, setTokenDoConvite] = useState(tokenInicialDoConvite)
   const [tentativa, setTentativa] = useState(0)
   const [estado, setEstado] = useState<EstadoAbertura>(
@@ -131,6 +156,14 @@ export function FichaPublicaPage() {
   )
   const [respostas, setRespostas] =
     useState<RespostasQuestionario>(respostasIniciais)
+  const [dadosPessoais, setDadosPessoais] =
+    useState<DadosPessoaisFormulario>(dadosPessoaisIniciais)
+  const [dadosPessoaisPreenchidos, setDadosPessoaisPreenchidos] =
+    useState(false)
+  const [enviandoDadosPessoais, setEnviandoDadosPessoais] = useState(false)
+  const [erroDadosPessoais, setErroDadosPessoais] = useState<string | null>(
+    null,
+  )
   const [questionarioRespondido, setQuestionarioRespondido] = useState(false)
   const [enviandoQuestionario, setEnviandoQuestionario] = useState(false)
   const [erroQuestionario, setErroQuestionario] = useState<string | null>(null)
@@ -150,6 +183,7 @@ export function FichaPublicaPage() {
     abrirConviteFicha(tokenDoConvite, abortController.signal)
       .then((convite) => {
         setEstado({ tipo: 'aberto', convite })
+        setDadosPessoaisPreenchidos(convite.dadosPessoaisPreenchidos)
         setQuestionarioRespondido(convite.questionarioRespondido)
       })
       .catch((error: unknown) => {
@@ -176,6 +210,79 @@ export function FichaPublicaPage() {
 
     return () => abortController.abort()
   }, [tentativa, tokenDoConvite])
+
+  function atualizarDadoPessoal(
+    campo: keyof DadosPessoaisFormulario,
+    valor: string,
+  ) {
+    setDadosPessoais((dadosAtuais) => ({
+      ...dadosAtuais,
+      [campo]: valor,
+    }))
+    setErroDadosPessoais(null)
+  }
+
+  async function enviarDadosPessoais(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!tokenDoConvite) return
+
+    const contatoNomeInformado = Boolean(
+      dadosPessoais.contatoEmergenciaNome.trim(),
+    )
+    const contatoCelularInformado = Boolean(
+      dadosPessoais.contatoEmergenciaCelular.trim(),
+    )
+
+    if (contatoNomeInformado !== contatoCelularInformado) {
+      setErroDadosPessoais(
+        'Para o contato de emergência, informe o nome e o celular juntos.',
+      )
+      return
+    }
+
+    setEnviandoDadosPessoais(true)
+    setErroDadosPessoais(null)
+
+    try {
+      const resultado = await preencherDadosPessoais(
+        tokenDoConvite,
+        dadosPessoais,
+      )
+
+      setDadosPessoaisPreenchidos(true)
+      setNomeAssinante(dadosPessoais.nomeCompleto.trim())
+      setDadosPessoais(dadosPessoaisIniciais)
+
+      setEstado((estadoAtual) =>
+        estadoAtual.tipo === 'aberto'
+          ? {
+              ...estadoAtual,
+              convite: {
+                ...estadoAtual.convite,
+                dadosPessoaisPreenchidos: true,
+                nomeReferencia: resultado.nomeParaExibicao,
+              },
+            }
+          : estadoAtual,
+      )
+    } catch (error) {
+      if (error instanceof ApiValidationError) {
+        setErroDadosPessoais(
+          primeiraMensagemDeValidacao(error) ??
+            'Confira os dados e tente novamente.',
+        )
+      } else if (error instanceof ApiRequestError) {
+        setErroDadosPessoais(error.message)
+      } else {
+        setErroDadosPessoais(
+          'Não foi possível salvar seus dados. Tente novamente.',
+        )
+      }
+    } finally {
+      setEnviandoDadosPessoais(false)
+    }
+  }
 
   function atualizarResposta<Campo extends keyof RespostasQuestionario>(
     campo: Campo,
@@ -328,6 +435,8 @@ export function FichaPublicaPage() {
   }
 
   const conviteAberto = estado.tipo === 'aberto'
+  const dadosPessoaisConcluidos =
+    dadosPessoaisPreenchidos || questionarioRespondido || termoAceito !== null
   const questionarioConcluido = questionarioRespondido || termoAceito !== null
   const fichaConcluida = termoAceito !== null
 
@@ -360,14 +469,26 @@ export function FichaPublicaPage() {
           </li>
           <li
             className={`flow-progress__item ${
-              questionarioConcluido
+              dadosPessoaisConcluidos
                 ? 'flow-progress__item--complete'
                 : conviteAberto
                   ? 'flow-progress__item--active'
                   : ''
             }`}
           >
-            <span>{questionarioConcluido ? '✓' : '2'}</span>
+            <span>{dadosPessoaisConcluidos ? '✓' : '2'}</span>
+            Dados pessoais
+          </li>
+          <li
+            className={`flow-progress__item ${
+              questionarioConcluido
+                ? 'flow-progress__item--complete'
+                : dadosPessoaisConcluidos
+                  ? 'flow-progress__item--active'
+                  : ''
+            }`}
+          >
+            <span>{questionarioConcluido ? '✓' : '3'}</span>
             Saúde
           </li>
           <li
@@ -379,7 +500,7 @@ export function FichaPublicaPage() {
                   : ''
             }`}
           >
-            <span>{fichaConcluida ? '✓' : '3'}</span>
+            <span>{fichaConcluida ? '✓' : '4'}</span>
             Consentimento
           </li>
         </ol>
@@ -430,11 +551,189 @@ export function FichaPublicaPage() {
           )}
 
           {estado.tipo === 'aberto' &&
+            !dadosPessoaisPreenchidos &&
+            !termoAceito && (
+              <form
+                className="personal-data-form"
+                onSubmit={enviarDadosPessoais}
+              >
+                <div className="section-heading">
+                  <p className="eyebrow">Etapa 2 de 4</p>
+                  <h2>Seus dados pessoais</h2>
+                  <p>
+                    Este convite foi criado para{' '}
+                    <strong>{estado.convite.nomeReferencia}</strong>. Complete
+                    seus dados para continuar para o histórico de saúde.
+                  </p>
+                </div>
+
+                <div className="personal-data-grid">
+                  <label className="personal-field personal-field--full">
+                    <span>Nome completo *</span>
+                    <input
+                      type="text"
+                      autoComplete="name"
+                      maxLength={150}
+                      required
+                      value={dadosPessoais.nomeCompleto}
+                      onChange={(event) =>
+                        atualizarDadoPessoal(
+                          'nomeCompleto',
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>Nome social (opcional)</span>
+                    <input
+                      type="text"
+                      autoComplete="nickname"
+                      maxLength={150}
+                      value={dadosPessoais.nomeSocial}
+                      onChange={(event) =>
+                        atualizarDadoPessoal('nomeSocial', event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>Pronomes (opcional)</span>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Ex.: ela/dela"
+                      value={dadosPessoais.pronomes}
+                      onChange={(event) =>
+                        atualizarDadoPessoal('pronomes', event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>Data de nascimento *</span>
+                    <input
+                      type="date"
+                      autoComplete="bday"
+                      max={dataMaximaNascimento}
+                      required
+                      value={dadosPessoais.dataNascimento}
+                      onChange={(event) =>
+                        atualizarDadoPessoal(
+                          'dataNascimento',
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>Celular / WhatsApp *</span>
+                    <input
+                      type="tel"
+                      autoComplete="tel"
+                      maxLength={25}
+                      placeholder="(21) 99999-9999"
+                      required
+                      value={dadosPessoais.celular}
+                      onChange={(event) =>
+                        atualizarDadoPessoal('celular', event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>E-mail (opcional)</span>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      maxLength={254}
+                      value={dadosPessoais.email}
+                      onChange={(event) =>
+                        atualizarDadoPessoal('email', event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <label className="personal-field">
+                    <span>Instagram (opcional)</span>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      placeholder="@usuario"
+                      value={dadosPessoais.instagram}
+                      onChange={(event) =>
+                        atualizarDadoPessoal('instagram', event.target.value)
+                      }
+                    />
+                  </label>
+
+                  <div className="personal-field-group personal-field--full">
+                    <div>
+                      <h3>Contato de emergência (opcional)</h3>
+                      <p>Se preencher, informe o nome e o celular.</p>
+                    </div>
+                    <div className="personal-data-grid">
+                      <label className="personal-field">
+                        <span>Nome do contato</span>
+                        <input
+                          type="text"
+                          maxLength={150}
+                          value={dadosPessoais.contatoEmergenciaNome}
+                          onChange={(event) =>
+                            atualizarDadoPessoal(
+                              'contatoEmergenciaNome',
+                              event.target.value,
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="personal-field">
+                        <span>Celular do contato</span>
+                        <input
+                          type="tel"
+                          maxLength={25}
+                          value={dadosPessoais.contatoEmergenciaCelular}
+                          onChange={(event) =>
+                            atualizarDadoPessoal(
+                              'contatoEmergenciaCelular',
+                              event.target.value,
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {erroDadosPessoais && (
+                  <p className="form-error" role="alert">
+                    {erroDadosPessoais}
+                  </p>
+                )}
+
+                <div className="questionnaire-actions">
+                  <p>
+                    Confira as informações antes de continuar. Elas ficarão
+                    associadas ao seu histórico no estúdio.
+                  </p>
+                  <button type="submit" disabled={enviandoDadosPessoais}>
+                    {enviandoDadosPessoais
+                      ? 'Salvando dados...'
+                      : 'Salvar e continuar'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+          {estado.tipo === 'aberto' &&
+            dadosPessoaisPreenchidos &&
             !questionarioRespondido &&
             !termoAceito && (
             <form className="health-form" onSubmit={enviarQuestionario}>
               <div className="section-heading">
-                <p className="eyebrow">Etapa 2 de 3</p>
+                <p className="eyebrow">Etapa 3 de 4</p>
                 <h2>Histórico de saúde</h2>
                 <p>
                   Todas as perguntas precisam ser respondidas. Quando você
@@ -575,7 +874,7 @@ export function FichaPublicaPage() {
             !termoAceito && (
               <form className="consent-form" onSubmit={enviarAceite}>
                 <div className="section-heading">
-                  <p className="eyebrow">Etapa 3 de 3</p>
+                  <p className="eyebrow">Etapa 4 de 4</p>
                   <h2>Termo de consentimento</h2>
                   <p>
                     Leia o conteúdo completo antes de confirmar. O sistema

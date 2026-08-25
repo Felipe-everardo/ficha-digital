@@ -5,6 +5,73 @@ namespace FichaDigital.UnitTests.Modules.Clientes.Domain;
 public sealed class ClienteTests
 {
     [Fact]
+    public void CriarApenasComNomeReferencia_DeveIniciarComDadosPessoaisPendentes()
+    {
+        var cliente = new Cliente("  Ana  ");
+
+        Assert.Equal("Ana", cliente.NomeReferencia);
+        Assert.Equal("Ana", cliente.NomeParaExibicao);
+        Assert.Null(cliente.NomeCompleto);
+        Assert.Null(cliente.Celular);
+        Assert.False(cliente.DadosPessoaisPreenchidos);
+    }
+
+    [Fact]
+    public void PreencherDadosPessoais_ComDadosValidos_DeveNormalizarEConcluir()
+    {
+        var cliente = new Cliente("Ana");
+        var preenchidosEmUtc = new DateTimeOffset(
+            2026,
+            8,
+            20,
+            12,
+            0,
+            0,
+            TimeSpan.Zero);
+
+        cliente.PreencherDadosPessoais(
+            "  Ana Silva  ",
+            "  Aninha  ",
+            "  ela/dela  ",
+            new DateOnly(1995, 6, 15),
+            "  (21) 99999-9999  ",
+            "  ana@example.com  ",
+            "  @ana  ",
+            "  Maria Silva  ",
+            "  (21) 98888-8888  ",
+            preenchidosEmUtc);
+
+        Assert.Equal("Ana Silva", cliente.NomeCompleto);
+        Assert.Equal("Aninha", cliente.NomeParaExibicao);
+        Assert.Equal("@ana", cliente.Instagram);
+        Assert.Equal("Maria Silva", cliente.ContatoEmergenciaNome);
+        Assert.Equal("(21) 98888-8888", cliente.ContatoEmergenciaCelular);
+        Assert.Equal(preenchidosEmUtc, cliente.DadosPessoaisPreenchidosEmUtc);
+        Assert.True(cliente.DadosPessoaisPreenchidos);
+    }
+
+    [Fact]
+    public void PreencherDadosPessoais_ComContatoEmergenciaIncompleto_DeveLancarArgumentException()
+    {
+        var cliente = new Cliente("Ana");
+
+        var exception = Assert.Throws<ArgumentException>(() =>
+            cliente.PreencherDadosPessoais(
+                "Ana Silva",
+                null,
+                null,
+                new DateOnly(1995, 6, 15),
+                "(21) 99999-9999",
+                null,
+                null,
+                "Maria Silva",
+                null,
+                DateTimeOffset.UtcNow));
+
+        Assert.Equal("contatoEmergenciaCelular", exception.ParamName);
+    }
+
+    [Fact]
     public void Criar_ComDadosValidos_DeveNormalizarEArmazenarOsDados()
     {
         // Arrange

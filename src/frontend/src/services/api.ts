@@ -6,28 +6,25 @@ export type ApiStatus = {
 }
 
 export type CriarClienteInput = {
-  nomeCompleto: string
-  nomeSocial: string
-  pronomes: string
-  dataNascimento: string
-  celular: string
-  email: string
+  nomeReferencia: string
 }
 
 export type ClienteCriado = {
   id: string
   nomeParaExibicao: string
-  pronomes: string | null
   criadoEmUtc: string
 }
 
 export type ClienteResumo = {
   id: string
-  nomeCompleto: string
+  nomeReferencia: string
+  nomeCompleto: string | null
   nomeParaExibicao: string
   pronomes: string | null
-  celular: string
+  celular: string | null
   email: string | null
+  instagram: string | null
+  dadosPessoaisPreenchidos: boolean
   criadoEmUtc: string
 }
 
@@ -66,13 +63,18 @@ export type FichasPaginadas = {
 
 export type ClienteFichaDetalhe = {
   id: string
-  nomeCompleto: string
+  nomeReferencia: string
+  nomeCompleto: string | null
   nomeSocial: string | null
   nomeParaExibicao: string
   pronomes: string | null
-  dataNascimento: string
-  celular: string
+  dataNascimento: string | null
+  celular: string | null
   email: string | null
+  instagram: string | null
+  contatoEmergenciaNome: string | null
+  contatoEmergenciaCelular: string | null
+  dadosPessoaisPreenchidosEmUtc: string | null
 }
 
 export type QuestionarioSaudeDetalhe = {
@@ -117,7 +119,28 @@ export type ConviteFichaAberto = {
   fichaId: string
   status: string
   questionarioRespondido: boolean
+  dadosPessoaisPreenchidos: boolean
+  nomeReferencia: string
   termoConsentimento: TermoConsentimento
+}
+
+export type PreencherDadosPessoaisInput = {
+  nomeCompleto: string
+  nomeSocial: string
+  pronomes: string
+  dataNascimento: string
+  celular: string
+  email: string
+  instagram: string
+  contatoEmergenciaNome: string
+  contatoEmergenciaCelular: string
+}
+
+export type DadosPessoaisPreenchidos = {
+  fichaId: string
+  clienteId: string
+  nomeParaExibicao: string
+  preenchidosEmUtc: string
 }
 
 export type ResponderQuestionarioSaudeInput = {
@@ -208,10 +231,7 @@ export async function criarCliente(
       'Content-Type': 'application/json',
       'X-CSRF-TOKEN': antiforgeryToken,
     },
-    body: JSON.stringify({
-      ...cliente,
-      email: cliente.email.trim() || null,
-    }),
+    body: JSON.stringify(cliente),
   })
 
   if (response.status === 400) {
@@ -227,6 +247,60 @@ export async function criarCliente(
   }
 
   return response.json() as Promise<ClienteCriado>
+}
+
+export async function preencherDadosPessoais(
+  token: string,
+  dados: PreencherDadosPessoaisInput,
+): Promise<DadosPessoaisPreenchidos> {
+  const opcionalOuNull = (valor: string) => valor.trim() || null
+  const response = await fetch('/api/fichas/dados-pessoais', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token,
+      nomeCompleto: dados.nomeCompleto,
+      nomeSocial: opcionalOuNull(dados.nomeSocial),
+      pronomes: opcionalOuNull(dados.pronomes),
+      dataNascimento: dados.dataNascimento,
+      celular: dados.celular,
+      email: opcionalOuNull(dados.email),
+      instagram: opcionalOuNull(dados.instagram),
+      contatoEmergenciaNome: opcionalOuNull(dados.contatoEmergenciaNome),
+      contatoEmergenciaCelular: opcionalOuNull(
+        dados.contatoEmergenciaCelular,
+      ),
+    }),
+  })
+
+  if (response.status === 400) {
+    const problem = (await response.json()) as ValidationProblemDetails
+
+    if (problem.errors) {
+      throw new ApiValidationError(problem.errors)
+    }
+  }
+
+  if (!response.ok) {
+    let problem: ProblemDetails | null = null
+
+    try {
+      problem = (await response.json()) as ProblemDetails
+    } catch {
+      // Algumas falhas de infraestrutura podem não retornar JSON.
+    }
+
+    throw new ApiRequestError(
+      response.status,
+      problem?.detail ??
+        problem?.title ??
+        'Não foi possível salvar seus dados pessoais.',
+    )
+  }
+
+  return response.json() as Promise<DadosPessoaisPreenchidos>
 }
 
 export async function listarClientes(

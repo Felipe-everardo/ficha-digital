@@ -29,7 +29,9 @@ public sealed class FichasController(
             {
                 ficha.Id,
                 ficha.ClienteId,
-                ClienteNome = cliente.NomeSocial ?? cliente.NomeCompleto,
+                ClienteNome = cliente.NomeSocial ??
+                    cliente.NomeCompleto ??
+                    cliente.NomeReferencia,
                 ficha.Status,
                 ficha.CriadaEmUtc,
                 ConviteExpiraEmUtc = dbContext.ConvitesFicha
@@ -126,13 +128,20 @@ public sealed class FichasController(
                 conviteExpiraEmUtc <= instanteAtual,
             new ClienteFichaDetalheResponse(
                 cliente.Id,
+                cliente.NomeReferencia,
                 cliente.NomeCompleto,
                 cliente.NomeSocial,
-                cliente.NomeSocial ?? cliente.NomeCompleto,
+                cliente.NomeSocial ??
+                    cliente.NomeCompleto ??
+                    cliente.NomeReferencia,
                 cliente.Pronomes,
                 cliente.DataNascimento,
                 cliente.Celular,
-                cliente.Email),
+                cliente.Email,
+                cliente.Instagram,
+                cliente.ContatoEmergenciaNome,
+                cliente.ContatoEmergenciaCelular,
+                cliente.DadosPessoaisPreenchidosEmUtc),
             questionario is null
                 ? null
                 : new QuestionarioSaudeDetalheResponse(

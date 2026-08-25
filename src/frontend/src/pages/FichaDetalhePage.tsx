@@ -17,7 +17,9 @@ function formatarDataHora(dataUtc: string) {
   }).format(new Date(dataUtc))
 }
 
-function formatarDataNascimento(data: string) {
+function formatarDataNascimento(data: string | null) {
+  if (!data) return 'Aguardando preenchimento'
+
   const [ano, mes, dia] = data.split('-').map(Number)
 
   return new Intl.DateTimeFormat('pt-BR').format(
@@ -126,8 +128,12 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
         </div>
         <dl className="record-detail-grid">
           <div>
+            <dt>Nome de referência</dt>
+            <dd>{ficha.cliente.nomeReferencia}</dd>
+          </div>
+          <div>
             <dt>Nome completo</dt>
-            <dd>{ficha.cliente.nomeCompleto}</dd>
+            <dd>{ficha.cliente.nomeCompleto ?? 'Aguardando preenchimento'}</dd>
           </div>
           <div>
             <dt>Nome social</dt>
@@ -143,11 +149,34 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
           </div>
           <div>
             <dt>Celular</dt>
-            <dd>{ficha.cliente.celular}</dd>
+            <dd>{ficha.cliente.celular ?? 'Aguardando preenchimento'}</dd>
           </div>
           <div>
             <dt>E-mail</dt>
             <dd>{ficha.cliente.email ?? 'Não informado'}</dd>
+          </div>
+          <div>
+            <dt>Instagram</dt>
+            <dd>{ficha.cliente.instagram ?? 'Não informado'}</dd>
+          </div>
+          <div>
+            <dt>Contato de emergência</dt>
+            <dd>
+              {ficha.cliente.contatoEmergenciaNome &&
+              ficha.cliente.contatoEmergenciaCelular
+                ? `${ficha.cliente.contatoEmergenciaNome} — ${ficha.cliente.contatoEmergenciaCelular}`
+                : 'Não informado'}
+            </dd>
+          </div>
+          <div>
+            <dt>Dados pessoais</dt>
+            <dd>
+              {ficha.cliente.dadosPessoaisPreenchidosEmUtc
+                ? `Preenchidos em ${formatarDataHora(
+                    ficha.cliente.dadosPessoaisPreenchidosEmUtc,
+                  )}`
+                : 'Aguardando preenchimento pelo cliente'}
+            </dd>
           </div>
           <div>
             <dt>Ficha criada em</dt>

@@ -1,11 +1,11 @@
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
-public enum StatusRespostaQuestionarioSaude
+public enum StatusPreenchimentoDadosPessoais
 {
-    Respondido = 1,
+    Preenchidos = 1,
     ConviteNaoEncontrado = 2,
     ConviteExpirado = 3,
     FichaIndisponivel = 4,
-    JaRespondido = 5,
-    DadosPessoaisPendentes = 6
+    ClienteNaoEncontrado = 5,
+    JaPreenchidos = 6
 }

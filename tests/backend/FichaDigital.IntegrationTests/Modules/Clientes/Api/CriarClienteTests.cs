@@ -12,7 +12,7 @@ namespace FichaDigital.IntegrationTests.Modules.Clientes.Api;
 public sealed class CriarClienteTests
 {
     [Fact]
-    public async Task Criar_ComDadosValidos_DeveRetornarCreatedEPersistirCliente()
+    public async Task Criar_ComNomeDeReferenciaValido_DeveRetornarCreatedEPersistirClientePendente()
     {
         // Arrange
         using var factory = new FichaDigitalApiFactory();
@@ -23,12 +23,7 @@ public sealed class CriarClienteTests
 
         var request = new CriarClienteRequest
         {
-            NomeCompleto = "Ana Silva",
-            NomeSocial = "Ana",
-            Pronomes = "ela/dela",
-            DataNascimento = new DateOnly(1995, 6, 15),
-            Celular = "(21) 99999-9999",
-            Email = "ana@example.com"
+            NomeReferencia = "  Ana  "
         };
 
         // Act
@@ -49,7 +44,6 @@ public sealed class CriarClienteTests
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.Id);
         Assert.Equal("Ana", response.NomeParaExibicao);
-        Assert.Equal("ela/dela", response.Pronomes);
         Assert.Equal(
             $"/api/clientes/{response.Id}",
             httpResponse.Headers.Location?.OriginalString);
@@ -65,11 +59,10 @@ public sealed class CriarClienteTests
                 cliente => cliente.Id == response.Id,
                 TestContext.Current.CancellationToken);
 
-        Assert.Equal("Ana Silva", clientePersistido.NomeCompleto);
-        Assert.Equal("Ana", clientePersistido.NomeSocial);
-        Assert.Equal("ela/dela", clientePersistido.Pronomes);
-        Assert.Equal("(21) 99999-9999", clientePersistido.Celular);
-        Assert.Equal("ana@example.com", clientePersistido.Email);
+        Assert.Equal("Ana", clientePersistido.NomeReferencia);
+        Assert.Null(clientePersistido.NomeCompleto);
+        Assert.Null(clientePersistido.Celular);
+        Assert.False(clientePersistido.DadosPessoaisPreenchidos);
     }
 
     [Fact]
@@ -111,9 +104,7 @@ public sealed class CriarClienteTests
     {
         return new CriarClienteRequest
         {
-            NomeCompleto = "Ana Silva",
-            DataNascimento = new DateOnly(1995, 6, 15),
-            Celular = "(21) 99999-9999"
+            NomeReferencia = "Ana"
         };
     }
 }

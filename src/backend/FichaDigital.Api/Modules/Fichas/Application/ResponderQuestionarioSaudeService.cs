@@ -52,6 +52,18 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.FichaIndisponivel);
         }
 
+        var dadosPessoaisPreenchidos = await dbContext.Clientes
+            .AsNoTracking()
+            .Where(cliente => cliente.Id == ficha.ClienteId)
+            .Select(cliente => cliente.DadosPessoaisPreenchidosEmUtc != null)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!dadosPessoaisPreenchidos)
+        {
+            return new ResultadoRespostaQuestionarioSaude(
+                StatusRespostaQuestionarioSaude.DadosPessoaisPendentes);
+        }
+
         var questionarioJaExiste = await dbContext.QuestionariosSaude
             .AnyAsync(
                 item => item.FichaId == ficha.Id,

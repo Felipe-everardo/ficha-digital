@@ -24,33 +24,14 @@ import {
 type ErrosFormulario = Partial<Record<keyof CriarClienteInput, string>>
 
 const camposPorNomeDaApi: Record<string, keyof CriarClienteInput> = {
-  nomecompleto: 'nomeCompleto',
-  nomesocial: 'nomeSocial',
-  pronomes: 'pronomes',
-  datanascimento: 'dataNascimento',
-  celular: 'celular',
-  email: 'email',
+  nomereferencia: 'nomeReferencia',
 }
 
 const formularioInicial: CriarClienteInput = {
-  nomeCompleto: '',
-  nomeSocial: '',
-  pronomes: '',
-  dataNascimento: '',
-  celular: '',
-  email: '',
-}
-
-function formatarDataParaInput(data: Date) {
-  const ano = data.getFullYear()
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const dia = String(data.getDate()).padStart(2, '0')
-
-  return `${ano}-${mes}-${dia}`
+  nomeReferencia: '',
 }
 
 function CadastroClientePage() {
-  const dataMaximaNascimento = formatarDataParaInput(new Date())
   const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [formulario, setFormulario] = useState<CriarClienteInput>(formularioInicial)
@@ -202,8 +183,8 @@ function CadastroClientePage() {
             <p className="eyebrow">Área profissional</p>
             <h1 id="page-title">Cadastrar cliente</h1>
             <p className="intro">
-              Informe os dados iniciais usados para identificar o cliente e
-              manter contato sobre o atendimento.
+              Informe apenas um nome para identificar o cliente. Os demais
+              dados serão preenchidos por ele no link do convite.
             </p>
           </div>
         </header>
@@ -226,8 +207,8 @@ function CadastroClientePage() {
             <p className="eyebrow">Cliente cadastrado</p>
             <h2>{clienteCriado.nomeParaExibicao} foi cadastrado.</h2>
             <p>
-              Os dados iniciais foram salvos. Você já pode gerar o link de
-              preenchimento para enviar ao cliente.
+              O nome de referência foi salvo. Agora gere o link para que o
+              cliente complete seus dados e a ficha.
             </p>
             <div className="success-actions">
               <button
@@ -304,157 +285,39 @@ function CadastroClientePage() {
         ) : (
           <form className="client-form" onSubmit={handleSubmit}>
             <div className="form-heading">
-              <span>Etapa 1</span>
+              <span>Cadastro inicial</span>
               <div>
-                <h2>Dados pessoais</h2>
-                <p>Os campos marcados com * são obrigatórios.</p>
+                <h2>Identificação do cliente</h2>
+                <p>O profissional precisa preencher somente este campo.</p>
               </div>
             </div>
 
             <div className="field-grid">
               <label className="field field--full">
-                <span>Nome completo *</span>
+                <span>Nome para identificar o cliente *</span>
                 <input
                   type="text"
-                  name="nomeCompleto"
-                  autoComplete="name"
+                  name="nomeReferencia"
                   maxLength={150}
                   required
-                  aria-invalid={Boolean(fieldErrors.nomeCompleto)}
+                  aria-invalid={Boolean(fieldErrors.nomeReferencia)}
                   aria-describedby={
-                    fieldErrors.nomeCompleto
-                      ? 'nomeCompleto-error'
+                    fieldErrors.nomeReferencia
+                      ? 'nomeReferencia-error'
                       : undefined
                   }
-                  value={formulario.nomeCompleto}
+                  value={formulario.nomeReferencia}
                   onChange={(event) =>
-                    atualizarCampo('nomeCompleto', event.target.value)
+                    atualizarCampo('nomeReferencia', event.target.value)
                   }
                 />
-                {fieldErrors.nomeCompleto && (
-                  <small className="field-error" id="nomeCompleto-error">
-                    {fieldErrors.nomeCompleto}
-                  </small>
-                )}
-              </label>
-
-              <label className="field">
-                <span>Nome social (opcional)</span>
-                <input
-                  type="text"
-                  name="nomeSocial"
-                  autoComplete="nickname"
-                  maxLength={150}
-                  aria-invalid={Boolean(fieldErrors.nomeSocial)}
-                  aria-describedby={
-                    fieldErrors.nomeSocial ? 'nomeSocial-error' : undefined
-                  }
-                  value={formulario.nomeSocial}
-                  onChange={(event) =>
-                    atualizarCampo('nomeSocial', event.target.value)
-                  }
-                />
-                {fieldErrors.nomeSocial && (
-                  <small className="field-error" id="nomeSocial-error">
-                    {fieldErrors.nomeSocial}
-                  </small>
-                )}
-              </label>
-
-              <label className="field">
-                <span>Pronomes (opcional)</span>
-                <input
-                  type="text"
-                  name="pronomes"
-                  maxLength={50}
-                  placeholder="Ex.: ela/dela"
-                  aria-invalid={Boolean(fieldErrors.pronomes)}
-                  aria-describedby={
-                    fieldErrors.pronomes ? 'pronomes-error' : undefined
-                  }
-                  value={formulario.pronomes}
-                  onChange={(event) =>
-                    atualizarCampo('pronomes', event.target.value)
-                  }
-                />
-                {fieldErrors.pronomes && (
-                  <small className="field-error" id="pronomes-error">
-                    {fieldErrors.pronomes}
-                  </small>
-                )}
-              </label>
-
-              <label className="field">
-                <span>Data de nascimento *</span>
-                <input
-                  type="date"
-                  name="dataNascimento"
-                  autoComplete="bday"
-                  max={dataMaximaNascimento}
-                  required
-                  aria-invalid={Boolean(fieldErrors.dataNascimento)}
-                  aria-describedby={
-                    fieldErrors.dataNascimento
-                      ? 'dataNascimento-error'
-                      : undefined
-                  }
-                  value={formulario.dataNascimento}
-                  onChange={(event) =>
-                    atualizarCampo('dataNascimento', event.target.value)
-                  }
-                />
-                {fieldErrors.dataNascimento && (
-                  <small className="field-error" id="dataNascimento-error">
-                    {fieldErrors.dataNascimento}
-                  </small>
-                )}
-              </label>
-
-              <label className="field">
-                <span>Celular *</span>
-                <input
-                  type="tel"
-                  name="celular"
-                  autoComplete="tel"
-                  maxLength={25}
-                  placeholder="(21) 99999-9999"
-                  required
-                  aria-invalid={Boolean(fieldErrors.celular)}
-                  aria-describedby={
-                    fieldErrors.celular ? 'celular-error' : undefined
-                  }
-                  value={formulario.celular}
-                  onChange={(event) =>
-                    atualizarCampo('celular', event.target.value)
-                  }
-                />
-                {fieldErrors.celular && (
-                  <small className="field-error" id="celular-error">
-                    {fieldErrors.celular}
-                  </small>
-                )}
-              </label>
-
-              <label className="field field--full">
-                <span>E-mail (opcional)</span>
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  maxLength={254}
-                  placeholder="nome@exemplo.com"
-                  aria-invalid={Boolean(fieldErrors.email)}
-                  aria-describedby={
-                    fieldErrors.email ? 'email-error' : undefined
-                  }
-                  value={formulario.email}
-                  onChange={(event) =>
-                    atualizarCampo('email', event.target.value)
-                  }
-                />
-                {fieldErrors.email && (
-                  <small className="field-error" id="email-error">
-                    {fieldErrors.email}
+                <small>
+                  Pode ser o primeiro nome ou a forma como você reconhece essa
+                  pessoa. O cliente informará o nome completo depois.
+                </small>
+                {fieldErrors.nomeReferencia && (
+                  <small className="field-error" id="nomeReferencia-error">
+                    {fieldErrors.nomeReferencia}
                   </small>
                 )}
               </label>
@@ -468,7 +331,7 @@ function CadastroClientePage() {
 
             <div className="form-actions">
               <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Enviando...' : 'Salvar e continuar'}
+                {isSubmitting ? 'Salvando...' : 'Cadastrar cliente'}
               </button>
             </div>
           </form>

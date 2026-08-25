@@ -147,8 +147,8 @@ export function ClientesPage() {
           <p className="eyebrow">Área profissional</p>
           <h1>Clientes</h1>
           <p>
-            Consulte os dados básicos cadastrados. Informações de saúde não
-            são exibidas nesta lista.
+            Consulte quem já preencheu os dados e gere novos convites.
+            Informações de saúde não são exibidas nesta lista.
           </p>
         </div>
 
@@ -270,6 +270,7 @@ export function ClientesPage() {
                 <thead>
                   <tr>
                     <th>Cliente</th>
+                    <th>Preenchimento</th>
                     <th>Pronomes</th>
                     <th>Contato</th>
                     <th>Cadastrado em</th>
@@ -282,9 +283,25 @@ export function ClientesPage() {
                       <td data-label="Cliente">
                         <div>
                           <strong>{cliente.nomeParaExibicao}</strong>
-                          {cliente.nomeParaExibicao !== cliente.nomeCompleto && (
+                          {cliente.nomeCompleto &&
+                            cliente.nomeParaExibicao !== cliente.nomeCompleto && (
                             <span>{cliente.nomeCompleto}</span>
                           )}
+                        </div>
+                      </td>
+                      <td data-label="Preenchimento">
+                        <div>
+                          <span
+                            className={`client-data-status client-data-status--${
+                              cliente.dadosPessoaisPreenchidos
+                                ? 'complete'
+                                : 'pending'
+                            }`}
+                          >
+                            {cliente.dadosPessoaisPreenchidos
+                              ? 'Dados preenchidos'
+                              : 'Aguardando cliente'}
+                          </span>
                         </div>
                       </td>
                       <td data-label="Pronomes">
@@ -292,7 +309,9 @@ export function ClientesPage() {
                       </td>
                       <td data-label="Contato">
                         <div>
-                          <strong>{cliente.celular}</strong>
+                          <strong>
+                            {cliente.celular ?? 'Aguardando cliente'}
+                          </strong>
                           <span>{cliente.email ?? 'E-mail não informado'}</span>
                         </div>
                       </td>

@@ -6,4 +6,6 @@ public sealed record ResultadoAberturaConvite(
     StatusAberturaConvite Resultado,
     Guid? FichaId = null,
     StatusFicha? StatusFicha = null,
-    bool QuestionarioRespondido = false);
+    bool QuestionarioRespondido = false,
+    bool DadosPessoaisPreenchidos = false,
+    string? NomeReferencia = null);
