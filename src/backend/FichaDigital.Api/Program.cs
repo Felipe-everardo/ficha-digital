@@ -122,7 +122,11 @@ var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    if (!app.Environment.IsEnvironment("Testing"))
+    var aplicarMigrationsAoIniciar = app.Configuration.GetValue<bool>(
+        "DatabaseInitialization:ApplyMigrationsOnStartup");
+
+    if (!app.Environment.IsEnvironment("Testing") &&
+        aplicarMigrationsAoIniciar)
     {
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();

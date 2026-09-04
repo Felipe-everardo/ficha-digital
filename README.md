@@ -206,9 +206,14 @@ em `http://localhost:5057`.
 
 ### Migrations e limpeza dos dados de demonstração
 
-Ao iniciar fora do ambiente de testes, a API aplica automaticamente as
-migrations pendentes antes de provisionar a conta profissional. Dessa forma, o
-código publicado e o schema do Azure SQL permanecem sincronizados.
+No ambiente local, a API aplica automaticamente as migrations pendentes antes
+de provisionar a conta profissional. Em produção, esse comportamento fica
+desativado por padrão para que uma falha de permissão ou conexão no Azure SQL
+não impeça a inicialização do App Service.
+
+Depois de validar as migrations separadamente no Azure SQL, a aplicação pode
+executá-las no startup por meio da configuração
+`DatabaseInitialization__ApplyMigrationsOnStartup=true` no App Service.
 
 Para apagar somente clientes e fichas fictícias, preservando contas
 profissionais e o histórico de migrations, execute o script
