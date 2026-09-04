@@ -9,6 +9,18 @@ tatuagem e piercing.
 
 [Acessar a aplicação publicada](https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/profissional/entrar)
 
+### Acesso de demonstração
+
+Para conhecer o fluxo da área profissional, utilize a conta de demonstração:
+
+```text
+E-mail: feeverardo@gmail.com
+Senha: @FePassword123
+```
+
+Essa conta e os dados disponíveis no ambiente são exclusivamente fictícios e
+destinados à avaliação do projeto.
+
 > O acesso profissional é protegido por autenticação. O projeto está publicado
 > como MVP de demonstração e ainda não deve receber dados pessoais reais.
 
@@ -192,11 +204,30 @@ npm --prefix src/frontend run dev
 O frontend será disponibilizado normalmente em `http://localhost:5173` e a API
 em `http://localhost:5057`.
 
+### Migrations e limpeza dos dados de demonstração
+
+Ao iniciar fora do ambiente de testes, a API aplica automaticamente as
+migrations pendentes antes de provisionar a conta profissional. Dessa forma, o
+código publicado e o schema do Azure SQL permanecem sincronizados.
+
+Para apagar somente clientes e fichas fictícias, preservando contas
+profissionais e o histórico de migrations, execute o script
+[`scripts/reset-demo-data.sql`](scripts/reset-demo-data.sql) no banco correto.
+O script usa uma transação, respeita a ordem das chaves estrangeiras e exibe a
+contagem final das tabelas afetadas.
+
+> Confirme o nome do servidor e do banco antes da execução. O script exclui
+> permanentemente todos os clientes, fichas, convites, questionários e aceites.
+
+O endpoint `GET /api/status/database` pode ser usado pelo Azure Health Check
+para confirmar que a aplicação consegue se conectar ao banco.
+
 ## Principais endpoints
 
 | Método | Rota | Finalidade |
 | --- | --- | --- |
 | `POST` | `/api/autenticacao/entrar` | Iniciar a sessão profissional |
+| `GET` | `/api/status/database` | Verificar a conexão da aplicação com o banco |
 | `GET` | `/api/clientes` | Listar clientes com paginação |
 | `POST` | `/api/clientes` | Cadastrar o nome de referência do cliente |
 | `POST` | `/api/clientes/{clienteId}/fichas/convites` | Gerar uma ficha e seu convite |

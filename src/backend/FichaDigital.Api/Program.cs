@@ -122,6 +122,14 @@ var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<FichaDigitalDbContext>();
+
+        await dbContext.Database.MigrateAsync();
+    }
+
     if (app.Environment.IsDevelopment())
     {
         var provisionadorDesenvolvimento = scope.ServiceProvider

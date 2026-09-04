@@ -5,6 +5,11 @@ Accept: application/json
 
 ###
 
+GET {FichaDigital.Api_HostAddress}/api/status/database
+Accept: application/json
+
+###
+
 POST {FichaDigital.Api_HostAddress}/api/clientes
 Content-Type: application/json
 
