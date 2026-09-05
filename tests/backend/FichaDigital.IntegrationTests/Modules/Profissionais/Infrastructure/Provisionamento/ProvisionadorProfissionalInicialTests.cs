@@ -67,6 +67,48 @@ public sealed class ProvisionadorProfissionalInicialTests
     }
 
     [Fact]
+    public async Task Provisionar_ComRedefinicaoHabilitada_DeveTrocarSenhaEDesbloquearConta()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var scope = factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ProfissionalUsuario>>();
+        var primeiroProvisionador = CriarProvisionador(
+            userManager,
+            SenhaInicial);
+
+        await primeiroProvisionador.ProvisionarAsync();
+
+        var profissional = await userManager.FindByEmailAsync(Email);
+        Assert.NotNull(profissional);
+
+        await userManager.SetLockoutEndDateAsync(
+            profissional,
+            DateTimeOffset.UtcNow.AddMinutes(15));
+
+        const string novaSenha = "Outra-Senha-456!";
+        var redefinidor = CriarProvisionador(
+            userManager,
+            novaSenha,
+            redefinirSenhaSeExistente: true);
+
+        await redefinidor.ProvisionarAsync();
+
+        profissional = await userManager.FindByEmailAsync(Email);
+
+        Assert.NotNull(profissional);
+        Assert.False(await userManager.CheckPasswordAsync(
+            profissional,
+            SenhaInicial));
+        Assert.True(await userManager.CheckPasswordAsync(
+            profissional,
+            novaSenha));
+        Assert.False(await userManager.IsLockedOutAsync(profissional));
+        Assert.Equal(0, await userManager.GetAccessFailedCountAsync(
+            profissional));
+    }
+
+    [Fact]
     public async Task Provisionar_Desabilitado_NaoDeveExigirCredenciais()
     {
         using var factory = new FichaDigitalApiFactory();
@@ -89,11 +131,13 @@ public sealed class ProvisionadorProfissionalInicialTests
 
     private static ProvisionadorProfissionalInicial CriarProvisionador(
         UserManager<ProfissionalUsuario> userManager,
-        string senha)
+        string senha,
+        bool redefinirSenhaSeExistente = false)
     {
         var options = Options.Create(new ProfissionalInicialOptions
         {
             Habilitado = true,
+            RedefinirSenhaSeExistente = redefinirSenhaSeExistente,
             NomeCompleto = " Profissional Inicial ",
             Email = $" {Email} ",
             Senha = senha

@@ -31,6 +31,14 @@ public sealed class ProvisionadorProfissionalInicial(
 
         if (profissionalExistente is not null)
         {
+            if (configuracao.RedefinirSenhaSeExistente)
+            {
+                await RedefinirSenhaAsync(
+                    profissionalExistente,
+                    configuracao.Senha);
+                return;
+            }
+
             logger.LogInformation(
                 "O profissional inicial já existe. O provisionamento não alterou a conta.");
             return;
@@ -60,5 +68,56 @@ public sealed class ProvisionadorProfissionalInicial(
         logger.LogInformation(
             "Profissional inicial {ProfissionalId} criado. Desabilite o provisionamento e remova a senha da configuração.",
             profissional.Id);
+    }
+
+    private async Task RedefinirSenhaAsync(
+        ProfissionalUsuario profissional,
+        string novaSenha)
+    {
+        var token = await userManager.GeneratePasswordResetTokenAsync(
+            profissional);
+        var redefinicao = await userManager.ResetPasswordAsync(
+            profissional,
+            token,
+            novaSenha);
+
+        ValidarResultado(
+            redefinicao,
+            "Não foi possível redefinir a senha do profissional inicial.");
+
+        var desbloqueio = await userManager.SetLockoutEndDateAsync(
+            profissional,
+            null);
+
+        ValidarResultado(
+            desbloqueio,
+            "A senha foi redefinida, mas não foi possível desbloquear a conta.");
+
+        var reinicioTentativas = await userManager.ResetAccessFailedCountAsync(
+            profissional);
+
+        ValidarResultado(
+            reinicioTentativas,
+            "A senha foi redefinida, mas não foi possível zerar as tentativas de acesso.");
+
+        logger.LogWarning(
+            "A senha do profissional inicial {ProfissionalId} foi redefinida. Desative a redefinição e remova a senha da configuração imediatamente.",
+            profissional.Id);
+    }
+
+    private static void ValidarResultado(
+        IdentityResult resultado,
+        string mensagem)
+    {
+        if (resultado.Succeeded)
+        {
+            return;
+        }
+
+        var erros = string.Join(
+            " ",
+            resultado.Errors.Select(erro => erro.Description));
+
+        throw new InvalidOperationException($"{mensagem} {erros}");
     }
 }

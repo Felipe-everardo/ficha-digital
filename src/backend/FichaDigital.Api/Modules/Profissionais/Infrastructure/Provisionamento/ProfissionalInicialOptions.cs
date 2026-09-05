@@ -6,6 +6,8 @@ public sealed class ProfissionalInicialOptions
 
     public bool Habilitado { get; init; }
 
+    public bool RedefinirSenhaSeExistente { get; init; }
+
     public string? NomeCompleto { get; init; }
 
     public string? Email { get; init; }

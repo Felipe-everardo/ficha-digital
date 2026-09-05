@@ -190,6 +190,25 @@ ProfissionalDesenvolvimento:Email
 ProfissionalDesenvolvimento:Senha
 ```
 
+### Redefinição administrativa da senha no Azure
+
+Se a conta profissional já existir e a senha precisar ser trocada, configure
+temporariamente estas variáveis no App Service:
+
+```text
+ProfissionalInicial__Habilitado=true
+ProfissionalInicial__RedefinirSenhaSeExistente=true
+ProfissionalInicial__NomeCompleto=Nome do profissional
+ProfissionalInicial__Email=email-da-conta
+ProfissionalInicial__Senha=nova-senha
+```
+
+Reinicie a aplicação e confirme o acesso com a nova senha. Em seguida,
+desabilite `ProfissionalInicial__Habilitado` e
+`ProfissionalInicial__RedefinirSenhaSeExistente`, remova
+`ProfissionalInicial__Senha` e reinicie novamente. A redefinição também remove
+um eventual bloqueio causado por tentativas de login inválidas.
+
 Inicie a API e o frontend em terminais separados:
 
 ```powershell
