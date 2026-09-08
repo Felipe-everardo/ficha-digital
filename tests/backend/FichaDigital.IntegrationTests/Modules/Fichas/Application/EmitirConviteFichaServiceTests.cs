@@ -3,7 +3,9 @@ using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
+using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.IntegrationTests.Infrastructure;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +26,7 @@ public sealed class EmitirConviteFichaServiceTests
             .GetRequiredService<EmitirConviteFichaService>();
         var geradorToken = scope.ServiceProvider
             .GetRequiredService<GeradorTokenConvite>();
+        var profissional = await CriarProfissionalAsync(scope);
 
         var cliente = CriarCliente();
         dbContext.Clientes.Add(cliente);
@@ -32,6 +35,9 @@ public sealed class EmitirConviteFichaServiceTests
 
         var resultado = await service.EmitirAsync(
             cliente.Id,
+            profissional.Id,
+            profissional.NomeCompleto,
+            TipoProcedimento.Tatuagem,
             TestContext.Current.CancellationToken);
 
         Assert.NotNull(resultado);
@@ -55,6 +61,9 @@ public sealed class EmitirConviteFichaServiceTests
                 TestContext.Current.CancellationToken);
 
         Assert.Equal(cliente.Id, ficha.ClienteId);
+        Assert.Equal(profissional.Id, ficha.ProfissionalResponsavelId);
+        Assert.Equal(profissional.NomeCompleto, ficha.ProfissionalResponsavelNome);
+        Assert.Equal(TipoProcedimento.Tatuagem, ficha.TipoProcedimento);
         Assert.Equal(StatusFicha.ConviteEnviado, ficha.Status);
         Assert.Equal(ficha.Id, convite.FichaId);
         Assert.Equal(
@@ -72,9 +81,13 @@ public sealed class EmitirConviteFichaServiceTests
             .GetRequiredService<FichaDigitalDbContext>();
         var service = scope.ServiceProvider
             .GetRequiredService<EmitirConviteFichaService>();
+        var profissional = await CriarProfissionalAsync(scope);
 
         var resultado = await service.EmitirAsync(
             Guid.NewGuid(),
+            profissional.Id,
+            profissional.NomeCompleto,
+            TipoProcedimento.Piercing,
             TestContext.Current.CancellationToken);
 
         Assert.Null(resultado);
@@ -93,5 +106,19 @@ public sealed class EmitirConviteFichaServiceTests
             new DateOnly(1995, 6, 15),
             "(21) 99999-9999",
             "ana@example.com");
+    }
+
+    private static async Task<ProfissionalUsuario> CriarProfissionalAsync(
+        IServiceScope scope)
+    {
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ProfissionalUsuario>>();
+        var profissional = new ProfissionalUsuario(
+            "Profissional Responsável",
+            $"responsavel-{Guid.NewGuid():N}@example.com");
+        var resultado = await userManager.CreateAsync(profissional);
+
+        Assert.True(resultado.Succeeded);
+        return profissional;
     }
 }

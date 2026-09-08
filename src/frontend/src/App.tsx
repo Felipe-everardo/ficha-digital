@@ -4,7 +4,10 @@ import { AreaProfissionalPage } from './pages/AreaProfissionalPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { FichaPublicaPage } from './pages/FichaPublicaPage'
 import { FichaDetalhePage } from './pages/FichaDetalhePage'
+import { ClienteDetalhePage } from './pages/ClienteDetalhePage'
 import { FichasPage } from './pages/FichasPage'
+import { FinanceiroPage } from './pages/FinanceiroPage'
+import { ProfessionalMobileLayout } from './components/ProfessionalMobileNav'
 import {
   obterAntiforgeryToken,
   obterSessaoProfissional,
@@ -19,7 +22,9 @@ import {
   type ClienteCriado,
   type ConviteFichaCriado,
   type CriarClienteInput,
+  type TipoProcedimento,
 } from './services/api'
+import './MobileExperience.css'
 
 type ErrosFormulario = Partial<Record<keyof CriarClienteInput, string>>
 
@@ -42,6 +47,9 @@ function CadastroClientePage() {
   const [conviteGerado, setConviteGerado] =
     useState<ConviteFichaCriado | null>(null)
   const [gerandoConvite, setGerandoConvite] = useState(false)
+  const [tipoProcedimento, setTipoProcedimento] = useState<
+    '' | Exclude<TipoProcedimento, 'NaoInformado'>
+  >('')
   const [erroConvite, setErroConvite] = useState<string | null>(null)
   const [mensagemCopia, setMensagemCopia] = useState<string | null>(null)
   const conviteInputRef = useRef<HTMLInputElement>(null)
@@ -100,6 +108,7 @@ function CadastroClientePage() {
       setConviteGerado(null)
       setErroConvite(null)
       setMensagemCopia(null)
+      setTipoProcedimento('')
       setFormulario(formularioInicial)
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -116,7 +125,7 @@ function CadastroClientePage() {
   }
 
   async function handleGerarConvite() {
-    if (!clienteCriado) {
+    if (!clienteCriado || !tipoProcedimento) {
       return
     }
 
@@ -128,6 +137,7 @@ function CadastroClientePage() {
       const antiforgeryToken = await obterAntiforgeryToken()
       const convite = await emitirConviteFicha(
         clienteCriado.id,
+        tipoProcedimento,
         antiforgeryToken,
       )
 
@@ -210,10 +220,31 @@ function CadastroClientePage() {
               O nome de referência foi salvo. Agora gere o link para que o
               cliente complete seus dados e a ficha.
             </p>
+            <label className="success-procedure-field">
+              <span>Procedimento *</span>
+              <select
+                required
+                disabled={conviteGerado !== null}
+                value={tipoProcedimento}
+                onChange={(event) =>
+                  setTipoProcedimento(
+                    event.target.value as
+                      | ''
+                      | Exclude<TipoProcedimento, 'NaoInformado'>,
+                  )
+                }
+              >
+                <option value="">Selecione</option>
+                <option value="Tatuagem">Tatuagem</option>
+                <option value="Piercing">Piercing</option>
+              </select>
+            </label>
             <div className="success-actions">
               <button
                 type="button"
-                disabled={gerandoConvite || conviteGerado !== null}
+                disabled={
+                  !tipoProcedimento || gerandoConvite || conviteGerado !== null
+                }
                 onClick={handleGerarConvite}
               >
                 {gerandoConvite
@@ -230,6 +261,7 @@ function CadastroClientePage() {
                   setConviteGerado(null)
                   setErroConvite(null)
                   setMensagemCopia(null)
+                  setTipoProcedimento('')
                 }}
               >
                 Cadastrar outro cliente
@@ -299,6 +331,7 @@ function CadastroClientePage() {
                   type="text"
                   name="nomeReferencia"
                   maxLength={150}
+                  placeholder="Ex.: Ana ou Cliente da Lia"
                   required
                   aria-invalid={Boolean(fieldErrors.nomeReferencia)}
                   aria-describedby={
@@ -397,6 +430,9 @@ function CadastroClienteProtegidoPage() {
 }
 
 function App() {
+  const detalheClienteMatch = window.location.pathname.match(
+    /^\/profissional\/clientes\/([0-9a-fA-F-]{36})\/?$/,
+  )
   const detalheFichaMatch = window.location.pathname.match(
     /^\/profissional\/fichas\/([0-9a-fA-F-]{36})\/?$/,
   )
@@ -406,6 +442,8 @@ function App() {
     window.location.pathname === '/profissional/clientes'
   const paginaCadastroCliente =
     window.location.pathname === '/profissional/clientes/novo'
+  const paginaFinanceiro =
+    window.location.pathname === '/profissional/financeiro'
   const paginaProfissional = window.location.pathname.startsWith(
     '/profissional',
   )
@@ -414,19 +452,51 @@ function App() {
   )
 
   if (detalheFichaMatch) {
-    return <FichaDetalhePage fichaId={detalheFichaMatch[1]} />
+    return (
+      <ProfessionalMobileLayout activeSection="fichas">
+        <FichaDetalhePage fichaId={detalheFichaMatch[1]} />
+      </ProfessionalMobileLayout>
+    )
+  }
+
+  if (detalheClienteMatch) {
+    return (
+      <ProfessionalMobileLayout activeSection="clientes">
+        <ClienteDetalhePage clienteId={detalheClienteMatch[1]} />
+      </ProfessionalMobileLayout>
+    )
   }
 
   if (paginaListaFichas) {
-    return <FichasPage />
+    return (
+      <ProfessionalMobileLayout activeSection="fichas">
+        <FichasPage />
+      </ProfessionalMobileLayout>
+    )
   }
 
   if (paginaListaClientes) {
-    return <ClientesPage />
+    return (
+      <ProfessionalMobileLayout activeSection="clientes">
+        <ClientesPage />
+      </ProfessionalMobileLayout>
+    )
   }
 
   if (paginaCadastroCliente) {
-    return <CadastroClienteProtegidoPage />
+    return (
+      <ProfessionalMobileLayout activeSection="clientes">
+        <CadastroClienteProtegidoPage />
+      </ProfessionalMobileLayout>
+    )
+  }
+
+  if (paginaFinanceiro) {
+    return (
+      <ProfessionalMobileLayout activeSection="financeiro">
+        <FinanceiroPage />
+      </ProfessionalMobileLayout>
+    )
   }
 
   if (paginaProfissional) {

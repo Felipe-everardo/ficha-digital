@@ -8,4 +8,7 @@ public sealed record ResultadoAberturaConvite(
     StatusFicha? StatusFicha = null,
     bool QuestionarioRespondido = false,
     bool DadosPessoaisPreenchidos = false,
-    string? NomeReferencia = null);
+    string? NomeReferencia = null,
+    string? ProfissionalResponsavelNome = null,
+    TipoProcedimento? TipoProcedimento = null,
+    DadosPessoaisConvite? DadosPessoais = null);

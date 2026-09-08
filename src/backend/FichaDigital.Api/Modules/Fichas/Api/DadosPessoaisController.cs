@@ -61,11 +61,6 @@ public sealed class DadosPessoaisController(
                 title: "Ficha indisponível.",
                 detail: "Esta ficha não está disponível para preenchimento."),
 
-            StatusPreenchimentoDadosPessoais.JaPreenchidos => Problem(
-                statusCode: StatusCodes.Status409Conflict,
-                title: "Dados pessoais já preenchidos.",
-                detail: "Os dados pessoais desta ficha já foram registrados."),
-
             _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Convite inválido.",

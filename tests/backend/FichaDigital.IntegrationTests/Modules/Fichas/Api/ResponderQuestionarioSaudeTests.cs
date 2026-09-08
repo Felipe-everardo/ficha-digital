@@ -290,17 +290,20 @@ public sealed class ResponderQuestionarioSaudeTests
         PrepararFichaEmPreenchimentoAsync(
             FichaDigitalApiFactory factory,
             HttpClient client)
-        {
+    {
         var clienteId = await CriarClienteAsync(factory);
         using var clientProfissional = await AutenticacaoProfissionalTestHelper
             .CriarClienteAutenticadoAsync(
                 factory,
                 TestContext.Current.CancellationToken);
         using var emitirResponse = await AutenticacaoProfissionalTestHelper
-            .PostProtegidoAsync(
+            .PostComoJsonProtegidoAsync(
             clientProfissional,
             $"/api/clientes/{clienteId}/fichas/convites",
-            content: null,
+            new EmitirConviteFichaRequest
+            {
+                TipoProcedimento = TipoProcedimento.Piercing
+            },
             TestContext.Current.CancellationToken);
         emitirResponse.EnsureSuccessStatusCode();
 

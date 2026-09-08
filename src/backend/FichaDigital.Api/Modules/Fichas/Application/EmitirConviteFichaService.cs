@@ -15,6 +15,9 @@ public sealed class EmitirConviteFichaService(
 
     public async Task<ConviteFichaEmitido?> EmitirAsync(
         Guid clienteId,
+        Guid profissionalResponsavelId,
+        string profissionalResponsavelNome,
+        TipoProcedimento tipoProcedimento,
         CancellationToken cancellationToken)
     {
         var clienteExiste = await dbContext.Clientes
@@ -27,7 +30,11 @@ public sealed class EmitirConviteFichaService(
             return null;
         }
 
-        var ficha = new Ficha(clienteId);
+        var ficha = new Ficha(
+            clienteId,
+            profissionalResponsavelId,
+            profissionalResponsavelNome,
+            tipoProcedimento);
         var tokenGerado = geradorToken.Gerar();
         var expiraEmUtc = timeProvider
             .GetUtcNow()

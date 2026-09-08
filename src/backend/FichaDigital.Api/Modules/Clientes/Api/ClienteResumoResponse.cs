@@ -9,5 +9,5 @@ public sealed record ClienteResumoResponse(
     string? Celular,
     string? Email,
     string? Instagram,
-    bool DadosPessoaisPreenchidos,
-    DateTimeOffset CriadoEmUtc);
+    DateTimeOffset CriadoEmUtc,
+    FichaClienteResumoResponse? UltimaFicha);

@@ -1,17 +1,44 @@
-import { useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import {
   ApiRequestError,
   emitirConviteFicha,
   listarClientes,
+  listarProfissionais,
   type ClientesPaginados,
+  type FiltrosClientes,
+  type ProfissionalResumo,
+  type TipoProcedimento,
 } from '../services/api'
 import { obterAntiforgeryToken } from '../services/autenticacao'
+import { CalendarInput } from '../components/CalendarInput'
 import './ClientesPage.css'
 
 const TAMANHO_PAGINA = 10
 
+type FiltrosFormulario = {
+  busca: string
+  profissionalId: string
+  tipoProcedimento: string
+  atendimentoDe: string
+  atendimentoAte: string
+}
+
+const FILTROS_VAZIOS: FiltrosFormulario = {
+  busca: '',
+  profissionalId: '',
+  tipoProcedimento: '',
+  atendimentoDe: '',
+  atendimentoAte: '',
+}
+
+type ConviteEmPreparacao = {
+  clienteId: string
+  clienteNome: string
+}
+
 type ConviteGerado = {
   clienteNome: string
+  procedimento: Exclude<TipoProcedimento, 'NaoInformado'>
   link: string
   expiraEmUtc: string
 }
@@ -24,11 +51,37 @@ function formatarData(dataUtc: string) {
   }).format(new Date(dataUtc))
 }
 
+function formatarProcedimento(tipo: TipoProcedimento) {
+  if (tipo === 'Tatuagem') return 'Tatuagem'
+  if (tipo === 'Piercing') return 'Piercing'
+  return 'Não informado'
+}
+
+function criarFiltros(formulario: FiltrosFormulario): FiltrosClientes {
+  return {
+    busca: formulario.busca.trim() || undefined,
+    profissionalId: formulario.profissionalId || undefined,
+    tipoProcedimento:
+      (formulario.tipoProcedimento as TipoProcedimento) || undefined,
+    atendimentoDe: formulario.atendimentoDe || undefined,
+    atendimentoAte: formulario.atendimentoAte || undefined,
+  }
+}
+
 export function ClientesPage() {
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState<ClientesPaginados | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const [profissionais, setProfissionais] = useState<ProfissionalResumo[]>([])
+  const [filtrosFormulario, setFiltrosFormulario] =
+    useState<FiltrosFormulario>(FILTROS_VAZIOS)
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosClientes>({})
+  const [conviteEmPreparacao, setConviteEmPreparacao] =
+    useState<ConviteEmPreparacao | null>(null)
+  const [tipoProcedimento, setTipoProcedimento] = useState<
+    '' | Exclude<TipoProcedimento, 'NaoInformado'>
+  >('')
   const [clienteEmitindoId, setClienteEmitindoId] = useState<string | null>(null)
   const [erroEmissao, setErroEmissao] = useState<string | null>(null)
   const [conviteGerado, setConviteGerado] = useState<ConviteGerado | null>(null)
@@ -39,16 +92,33 @@ export function ClientesPage() {
   useEffect(() => {
     const abortController = new AbortController()
 
+    listarProfissionais(abortController.signal)
+      .then(setProfissionais)
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        if (error instanceof ApiRequestError && error.status === 401) {
+          window.location.replace('/profissional/entrar')
+        }
+      })
+
+    return () => abortController.abort()
+  }, [])
+
+  useEffect(() => {
+    const abortController = new AbortController()
+
     setCarregando(true)
     setErro(null)
 
-    listarClientes(pagina, TAMANHO_PAGINA, abortController.signal)
+    listarClientes(
+      pagina,
+      TAMANHO_PAGINA,
+      filtrosAplicados,
+      abortController.signal,
+    )
       .then(setResultado)
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return
-        }
-
+        if (error instanceof DOMException && error.name === 'AbortError') return
         if (error instanceof ApiRequestError && error.status === 401) {
           window.location.replace('/profissional/entrar')
           return
@@ -61,47 +131,70 @@ export function ClientesPage() {
         )
       })
       .finally(() => {
-        if (!abortController.signal.aborted) {
-          setCarregando(false)
-        }
+        if (!abortController.signal.aborted) setCarregando(false)
       })
 
     return () => abortController.abort()
-  }, [pagina])
+  }, [pagina, filtrosAplicados])
 
   useEffect(() => {
-    if (conviteGerado) {
+    if (conviteGerado || conviteEmPreparacao) {
       convitePanelRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
       })
     }
-  }, [conviteGerado])
+  }, [conviteGerado, conviteEmPreparacao])
 
-  async function handleEmitirConvite(
-    clienteId: string,
-    clienteNome: string,
-  ) {
-    setClienteEmitindoId(clienteId)
+  function atualizarFiltro(campo: keyof FiltrosFormulario, valor: string) {
+    setFiltrosFormulario((atual) => ({ ...atual, [campo]: valor }))
+  }
+
+  function aplicarFiltros(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPagina(1)
+    setFiltrosAplicados(criarFiltros(filtrosFormulario))
+  }
+
+  function limparFiltros() {
+    setFiltrosFormulario(FILTROS_VAZIOS)
+    setPagina(1)
+    setFiltrosAplicados({})
+  }
+
+  function prepararConvite(clienteId: string, clienteNome: string) {
+    setConviteGerado(null)
+    setErroEmissao(null)
+    setTipoProcedimento('')
+    setConviteEmPreparacao({ clienteId, clienteNome })
+  }
+
+  async function handleEmitirConvite() {
+    if (!conviteEmPreparacao || !tipoProcedimento) return
+
+    setClienteEmitindoId(conviteEmPreparacao.clienteId)
     setErroEmissao(null)
     setMensagemCopia(null)
-    setConviteGerado(null)
 
     try {
       const antiforgeryToken = await obterAntiforgeryToken()
       const convite = await emitirConviteFicha(
-        clienteId,
+        conviteEmPreparacao.clienteId,
+        tipoProcedimento,
         antiforgeryToken,
       )
 
       setConviteGerado({
-        clienteNome,
+        clienteNome: conviteEmPreparacao.clienteNome,
+        procedimento: tipoProcedimento,
         link: new URL(
           convite.linkPreenchimento,
           window.location.origin,
         ).toString(),
         expiraEmUtc: convite.expiraEmUtc,
       })
+      setConviteEmPreparacao(null)
+      setFiltrosAplicados((atuais) => ({ ...atuais }))
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) {
         window.location.replace('/profissional/entrar')
@@ -119,9 +212,7 @@ export function ClientesPage() {
   }
 
   async function handleCopiarConvite() {
-    if (!conviteGerado) {
-      return
-    }
+    if (!conviteGerado) return
 
     try {
       await navigator.clipboard.writeText(conviteGerado.link)
@@ -141,14 +232,17 @@ export function ClientesPage() {
     <main className="clients-shell">
       <header className="clients-header">
         <div>
-          <a className="clients-back-link" href="/profissional">
+          <a
+            className="clients-back-link desktop-section-navigation"
+            href="/profissional"
+          >
             ← Voltar ao painel
           </a>
           <p className="eyebrow">Área profissional</p>
           <h1>Clientes</h1>
           <p>
-            Consulte quem já preencheu os dados e gere novos convites.
-            Informações de saúde não são exibidas nesta lista.
+            Encontre rapidamente um cliente, veja seu último atendimento e
+            acesse o histórico completo.
           </p>
         </div>
 
@@ -157,7 +251,131 @@ export function ClientesPage() {
         </a>
       </header>
 
+      <form className="clients-filters" onSubmit={aplicarFiltros}>
+        <div className="filters-heading">
+          <div>
+            <p className="eyebrow">Busca principal</p>
+            <h2>Encontrar clientes</h2>
+          </div>
+          <button type="button" className="filters-clear" onClick={limparFiltros}>
+            Limpar filtros
+          </button>
+        </div>
+
+        <div className="filters-grid">
+          <label className="filter-field filter-field--wide">
+            <span>Nome do cliente</span>
+            <input
+              type="search"
+              maxLength={150}
+              placeholder="Ex.: Ana"
+              autoComplete="off"
+              value={filtrosFormulario.busca}
+              onChange={(event) => atualizarFiltro('busca', event.target.value)}
+            />
+          </label>
+          <label className="filter-field">
+            <span>Último procedimento</span>
+            <select
+              value={filtrosFormulario.tipoProcedimento}
+              onChange={(event) =>
+                atualizarFiltro('tipoProcedimento', event.target.value)
+              }
+            >
+              <option value="">Todos</option>
+              <option value="Tatuagem">Tatuagem</option>
+              <option value="Piercing">Piercing</option>
+            </select>
+          </label>
+          <label className="filter-field">
+            <span>Último profissional</span>
+            <select
+              value={filtrosFormulario.profissionalId}
+              onChange={(event) =>
+                atualizarFiltro('profissionalId', event.target.value)
+              }
+            >
+              <option value="">Todos</option>
+              {profissionais.map((profissional) => (
+                <option key={profissional.id} value={profissional.id}>
+                  {profissional.nomeCompleto}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="filter-field">
+            <span>Último atendimento de</span>
+            <CalendarInput
+              type="date"
+              max={filtrosFormulario.atendimentoAte || undefined}
+              value={filtrosFormulario.atendimentoDe}
+              onChange={(event) =>
+                atualizarFiltro('atendimentoDe', event.target.value)
+              }
+            />
+          </label>
+          <label className="filter-field">
+            <span>Último atendimento até</span>
+            <CalendarInput
+              type="date"
+              min={filtrosFormulario.atendimentoDe || undefined}
+              value={filtrosFormulario.atendimentoAte}
+              onChange={(event) =>
+                atualizarFiltro('atendimentoAte', event.target.value)
+              }
+            />
+          </label>
+        </div>
+
+        <button type="submit" className="filters-submit" disabled={carregando}>
+          {carregando ? 'Atualizando...' : 'Buscar clientes'}
+        </button>
+      </form>
+
       <section className="clients-content" aria-live="polite">
+        {conviteEmPreparacao && (
+          <section className="invitation-result" ref={convitePanelRef}>
+            <div className="invitation-result-heading">
+              <div>
+                <p className="eyebrow">Novo procedimento</p>
+                <h2>Convite para {conviteEmPreparacao.clienteNome}</h2>
+              </div>
+              <button
+                className="invitation-close-button"
+                type="button"
+                onClick={() => setConviteEmPreparacao(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+            <label className="invitation-procedure-field">
+              <span>Qual procedimento será realizado?</span>
+              <select
+                required
+                value={tipoProcedimento}
+                onChange={(event) =>
+                  setTipoProcedimento(
+                    event.target.value as
+                      | ''
+                      | Exclude<TipoProcedimento, 'NaoInformado'>,
+                  )
+                }
+              >
+                <option value="">Selecione</option>
+                <option value="Tatuagem">Tatuagem</option>
+                <option value="Piercing">Piercing</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={!tipoProcedimento || clienteEmitindoId !== null}
+              onClick={handleEmitirConvite}
+            >
+              {clienteEmitindoId ? 'Gerando...' : 'Gerar convite'}
+            </button>
+          </section>
+        )}
+
         {conviteGerado && (
           <section
             className="invitation-result"
@@ -168,13 +386,12 @@ export function ClientesPage() {
               <div>
                 <p className="eyebrow">Convite gerado</p>
                 <h2 id="invitation-result-title">
-                  Link para {conviteGerado.clienteNome}
+                  {conviteGerado.procedimento} para {conviteGerado.clienteNome}
                 </h2>
               </div>
               <button
                 className="invitation-close-button"
                 type="button"
-                aria-label="Fechar resultado do convite"
                 onClick={() => {
                   setConviteGerado(null)
                   setMensagemCopia(null)
@@ -183,7 +400,6 @@ export function ClientesPage() {
                 Fechar
               </button>
             </div>
-
             <p>
               Este link expira em{' '}
               <strong>
@@ -194,7 +410,6 @@ export function ClientesPage() {
               </strong>
               . Envie-o somente para a pessoa indicada.
             </p>
-
             <div className="invitation-link-row">
               <label>
                 <span>Link de preenchimento</span>
@@ -210,7 +425,6 @@ export function ClientesPage() {
                 Copiar link
               </button>
             </div>
-
             {mensagemCopia && (
               <p className="invitation-copy-message" role="status">
                 {mensagemCopia}
@@ -243,15 +457,11 @@ export function ClientesPage() {
 
         {!erro && resultado && resultado.itens.length === 0 && (
           <div className="clients-state clients-state--empty">
-            <p className="eyebrow">Nenhum cadastro</p>
-            <h2>A lista de clientes está vazia.</h2>
-            <p>Cadastre o primeiro cliente para começar.</p>
-            <a
-              className="clients-primary-link"
-              href="/profissional/clientes/novo"
-            >
-              Cadastrar primeiro cliente
-            </a>
+            <p className="eyebrow">Nenhum resultado</p>
+            <h2>Nenhum cliente foi encontrado.</h2>
+            <button type="button" onClick={limparFiltros}>
+              Limpar filtros
+            </button>
           </div>
         )}
 
@@ -260,8 +470,8 @@ export function ClientesPage() {
             <div className="clients-summary">
               <strong>{resultado.totalItens}</strong>{' '}
               {resultado.totalItens === 1
-                ? 'cliente cadastrado'
-                : 'clientes cadastrados'}
+                ? 'cliente encontrado'
+                : 'clientes encontrados'}
               {carregando && <span>Atualizando...</span>}
             </div>
 
@@ -270,10 +480,9 @@ export function ClientesPage() {
                 <thead>
                   <tr>
                     <th>Cliente</th>
-                    <th>Preenchimento</th>
-                    <th>Pronomes</th>
                     <th>Contato</th>
-                    <th>Cadastrado em</th>
+                    <th>Último procedimento</th>
+                    <th>Profissional</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
@@ -285,55 +494,50 @@ export function ClientesPage() {
                           <strong>{cliente.nomeParaExibicao}</strong>
                           {cliente.nomeCompleto &&
                             cliente.nomeParaExibicao !== cliente.nomeCompleto && (
-                            <span>{cliente.nomeCompleto}</span>
-                          )}
+                              <span>{cliente.nomeCompleto}</span>
+                            )}
                         </div>
-                      </td>
-                      <td data-label="Preenchimento">
-                        <div>
-                          <span
-                            className={`client-data-status client-data-status--${
-                              cliente.dadosPessoaisPreenchidos
-                                ? 'complete'
-                                : 'pending'
-                            }`}
-                          >
-                            {cliente.dadosPessoaisPreenchidos
-                              ? 'Dados preenchidos'
-                              : 'Aguardando cliente'}
-                          </span>
-                        </div>
-                      </td>
-                      <td data-label="Pronomes">
-                        <div>{cliente.pronomes ?? 'Não informado'}</div>
                       </td>
                       <td data-label="Contato">
                         <div>
-                          <strong>
-                            {cliente.celular ?? 'Aguardando cliente'}
-                          </strong>
+                          <strong>{cliente.celular ?? 'Aguardando cliente'}</strong>
                           <span>{cliente.email ?? 'E-mail não informado'}</span>
                         </div>
                       </td>
-                      <td data-label="Cadastrado em">
-                        <div>{formatarData(cliente.criadoEmUtc)}</div>
+                      <td data-label="Último procedimento">
+                        {cliente.ultimaFicha ? (
+                          <div>
+                            <strong>
+                              {formatarProcedimento(
+                                cliente.ultimaFicha.tipoProcedimento,
+                              )}
+                            </strong>
+                            <span>
+                              {formatarData(cliente.ultimaFicha.criadaEmUtc)}
+                            </span>
+                          </div>
+                        ) : (
+                          'Ficha ainda não gerada'
+                        )}
+                      </td>
+                      <td data-label="Profissional">
+                        {cliente.ultimaFicha?.profissionalResponsavelNome ??
+                          'Não informado'}
                       </td>
                       <td data-label="Ações">
-                        <div>
+                        <div className="client-actions">
+                          <a href={`/profissional/clientes/${cliente.id}`}>
+                            Ver cliente
+                          </a>
                           <button
                             className="client-invitation-button"
                             type="button"
                             disabled={clienteEmitindoId !== null}
                             onClick={() =>
-                              handleEmitirConvite(
-                                cliente.id,
-                                cliente.nomeParaExibicao,
-                              )
+                              prepararConvite(cliente.id, cliente.nomeParaExibicao)
                             }
                           >
-                            {clienteEmitindoId === cliente.id
-                              ? 'Gerando...'
-                              : 'Gerar novo convite'}
+                            Novo atendimento
                           </button>
                         </div>
                       </td>
@@ -348,7 +552,7 @@ export function ClientesPage() {
                 className="secondary-button"
                 type="button"
                 disabled={pagina === 1 || carregando}
-                onClick={() => setPagina((paginaAtual) => paginaAtual - 1)}
+                onClick={() => setPagina((atual) => atual - 1)}
               >
                 Anterior
               </button>
@@ -358,10 +562,8 @@ export function ClientesPage() {
               <button
                 className="secondary-button"
                 type="button"
-                disabled={
-                  pagina >= resultado.totalPaginas || carregando
-                }
-                onClick={() => setPagina((paginaAtual) => paginaAtual + 1)}
+                disabled={pagina >= resultado.totalPaginas || carregando}
+                onClick={() => setPagina((atual) => atual + 1)}
               >
                 Próxima
               </button>

@@ -269,6 +269,36 @@ button:disabled {
   margin-top: 26px;
 }
 
+.success-procedure-field {
+  display: grid;
+  max-width: 420px;
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.success-procedure-field span {
+  color: var(--text);
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.success-procedure-field select {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  color: var(--text);
+  background: #fbfcf8;
+  font: inherit;
+}
+
+.success-procedure-field select:focus {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px rgba(83, 107, 74, 0.13);
+}
+
 .success-actions .secondary-button {
   margin-top: 0;
 }

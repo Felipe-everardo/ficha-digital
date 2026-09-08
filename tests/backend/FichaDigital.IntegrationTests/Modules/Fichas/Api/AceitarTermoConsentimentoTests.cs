@@ -148,10 +148,13 @@ public sealed class AceitarTermoConsentimentoTests
                 factory,
                 TestContext.Current.CancellationToken);
         using var emitirResponse = await AutenticacaoProfissionalTestHelper
-            .PostProtegidoAsync(
+            .PostComoJsonProtegidoAsync(
             clientProfissional,
             $"/api/clientes/{clienteId}/fichas/convites",
-            content: null,
+            new EmitirConviteFichaRequest
+            {
+                TipoProcedimento = TipoProcedimento.Tatuagem
+            },
             TestContext.Current.CancellationToken);
         emitirResponse.EnsureSuccessStatusCode();
 

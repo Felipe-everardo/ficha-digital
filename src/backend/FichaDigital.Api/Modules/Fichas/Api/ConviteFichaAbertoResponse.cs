@@ -6,4 +6,7 @@ public sealed record ConviteFichaAbertoResponse(
     bool QuestionarioRespondido,
     bool DadosPessoaisPreenchidos,
     string NomeReferencia,
+    string ProfissionalResponsavelNome,
+    string TipoProcedimento,
+    DadosPessoaisConviteResponse DadosPessoais,
     TermoConsentimentoResponse TermoConsentimento);

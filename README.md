@@ -31,15 +31,17 @@ o que dificultava a leitura, a localização de fichas antigas e a preservação
 histórico de cada cliente.
 
 A solução permite que o profissional cadastre apenas um nome de referência,
-gere um link temporário e o envie pelo aplicativo de mensagens de sua
-preferência. O cliente abre o link no celular, completa os próprios dados,
-responde ao histórico de saúde e registra o aceite do termo. Ao final, o
-profissional acompanha a confirmação em uma área protegida.
+informe se o procedimento é uma tatuagem ou um piercing e gere um link
+temporário para envio pelo aplicativo de mensagens de sua preferência. O
+cliente abre o link no celular, confere o procedimento e o profissional
+responsável, completa os próprios dados, responde ao histórico de saúde e
+registra o aceite do termo. Ao final, o profissional acompanha a confirmação e
+o histórico do cliente em uma área protegida.
 
 ```mermaid
 flowchart LR
     A["Profissional autenticado"] --> B["Informa um nome de referência"]
-    B --> C["Gera convite válido por 1 hora"]
+    B --> C["Seleciona o procedimento e gera o convite"]
     C --> D["Cliente recebe o link"]
     D --> E["Cliente completa os dados pessoais"]
     E --> F["Responde à ficha pelo celular"]
@@ -74,18 +76,30 @@ Adicione os arquivos em docs/screenshots e remova este comentário.
 
 - autenticação com sessão protegida;
 - cadastro inicial do cliente somente por nome de referência;
-- listagem paginada de clientes;
-- geração de convite com validade de 1 hora;
+- busca de clientes por nome, contato e dados do atendimento mais recente;
+- histórico de fichas e procedimentos por cliente;
+- geração de convite com validade de 1 hora, procedimento e profissional
+  responsável registrados automaticamente;
 - link completo pronto para cópia e compartilhamento;
-- acompanhamento do estado das fichas;
+- histórico completo das fichas, mantendo o atendimento mais recente em
+  destaque na listagem de clientes;
 - consulta protegida dos dados preenchidos e do resumo do aceite;
+- registro do valor, desconto e forma de pagamento de cada
+  atendimento;
+- painel financeiro por dia, mês, ano ou período completo, com valores
+  recebidos, saídas e saldo real;
+- cadastro e edição de despesas por categoria, mantendo o profissional que
+  registrou cada lançamento;
 - separação entre listagens administrativas e informações sensíveis.
 
 ### Experiência do cliente
 
 - abertura da ficha por link temporário;
 - validação segura do convite;
+- identificação do procedimento e do profissional responsável;
 - preenchimento dos próprios dados pessoais e de contato;
+- revisão e atualização dos dados anteriores quando o cliente retorna para um
+  novo atendimento;
 - questionário de saúde com perguntas condicionais;
 - retomada do fluxo pelo link original;
 - apresentação e aceite do termo de consentimento;
@@ -132,6 +146,8 @@ Modules/
 │   ├── Domain/          # Entidades e regras de negócio
 │   └── Infrastructure/  # Persistência e mapeamentos
 ├── Fichas/
+├── Atendimentos/
+├── Financeiro/
 └── Profissionais/
 ```
 
@@ -240,8 +256,25 @@ profissionais e o histórico de migrations, execute o script
 O script usa uma transação, respeita a ordem das chaves estrangeiras e exibe a
 contagem final das tabelas afetadas.
 
-> Confirme o nome do servidor e do banco antes da execução. O script exclui
-> permanentemente todos os clientes, fichas, convites, questionários e aceites.
+Para substituir os registros por uma base de demonstração mais completa,
+execute [`scripts/seed-demo-data.sql`](scripts/seed-demo-data.sql). A carga é
+repetível e cria 12 clientes, 16 fichas em diferentes dias, meses e anos, 14
+atendimentos, 5 despesas e alguns clientes com mais de uma ficha. As datas são
+calculadas a partir do dia da execução para facilitar o teste dos filtros.
+
+A carga também garante os perfis fictícios Lia e Taty, com especialidade em
+tatuagem, e Thais, com especialidade em body piercing. Esses perfis não recebem
+senha e não podem entrar no aplicativo; a conta profissional já configurada é
+preservada.
+
+```powershell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -d FichaDigitalDb `
+  -b -i "scripts\seed-demo-data.sql"
+```
+
+> Confirme o nome do servidor e do banco antes da execução. Os dois scripts
+> excluem permanentemente clientes, fichas, convites, questionários, aceites,
+> atendimentos e despesas existentes no banco selecionado.
 
 O endpoint `GET /api/status/database` pode ser usado pelo Azure Health Check
 para confirmar que a aplicação consegue se conectar ao banco.
@@ -252,19 +285,21 @@ para confirmar que a aplicação consegue se conectar ao banco.
 | --- | --- | --- |
 | `POST` | `/api/autenticacao/entrar` | Iniciar a sessão profissional |
 | `GET` | `/api/status/database` | Verificar a conexão da aplicação com o banco |
-| `GET` | `/api/clientes` | Listar clientes com paginação |
+| `GET` | `/api/clientes` | Listar e filtrar clientes com paginação |
+| `GET` | `/api/clientes/{clienteId}` | Consultar dados e histórico do cliente |
 | `POST` | `/api/clientes` | Cadastrar o nome de referência do cliente |
-| `POST` | `/api/clientes/{clienteId}/fichas/convites` | Gerar uma ficha e seu convite |
+| `POST` | `/api/clientes/{clienteId}/fichas/convites` | Gerar ficha e convite com o procedimento informado |
 | `POST` | `/api/fichas/convites/abrir` | Validar o convite público |
 | `POST` | `/api/fichas/dados-pessoais` | Registrar os dados informados pelo cliente |
 | `POST` | `/api/fichas/questionario-saude` | Registrar o questionário |
 | `POST` | `/api/fichas/termo-consentimento/aceitar` | Registrar o aceite e concluir a ficha |
-| `GET` | `/api/fichas` | Acompanhar fichas com paginação |
+| `GET` | `/api/fichas` | Acompanhar e filtrar fichas com paginação |
+| `GET` | `/api/profissionais` | Listar profissionais para os filtros |
 
 ## Próximas evoluções
 
 - histórico de procedimentos preenchido pelo profissional;
-- perfis de acesso e autorização por função;
+- gestão de contas, especialidades e autorização por função;
 - decisões de negócio do módulo de procedimentos validadas com o estúdio;
 - auditoria de acessos quando o sistema entrar em operação real;
 - revisão jurídica do termo de consentimento;

@@ -101,6 +101,24 @@ public static class AutenticacaoProfissionalTestHelper
             cancellationToken);
     }
 
+    public static async Task<HttpResponseMessage> PutComoJsonProtegidoAsync<T>(
+        HttpClient client,
+        string requestUri,
+        T value,
+        CancellationToken cancellationToken)
+    {
+        var antiforgeryToken = await ObterAntiforgeryTokenAsync(
+            client,
+            cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Put, requestUri)
+        {
+            Content = JsonContent.Create(value)
+        };
+        request.Headers.Add("X-CSRF-TOKEN", antiforgeryToken);
+
+        return await client.SendAsync(request, cancellationToken);
+    }
+
     private static async Task<string> ObterAntiforgeryTokenAsync(
         HttpClient client,
         CancellationToken cancellationToken)

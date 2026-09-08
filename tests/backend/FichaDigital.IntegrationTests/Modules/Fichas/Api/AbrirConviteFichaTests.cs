@@ -40,6 +40,12 @@ public sealed class AbrirConviteFichaTests
         Assert.Equal(conviteEmitido.FichaId, response.FichaId);
         Assert.Equal("EmPreenchimento", response.Status);
         Assert.False(response.QuestionarioRespondido);
+        Assert.Equal("Tatuagem", response.TipoProcedimento);
+        Assert.Equal("Ana Silva", response.DadosPessoais.NomeCompleto);
+        Assert.Equal("(21) 99999-9999", response.DadosPessoais.Celular);
+        Assert.Equal(
+            "Profissional de Teste",
+            response.ProfissionalResponsavelNome);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
@@ -253,10 +259,13 @@ public sealed class AbrirConviteFichaTests
                 factory,
                 TestContext.Current.CancellationToken);
         using var response = await AutenticacaoProfissionalTestHelper
-            .PostProtegidoAsync(
+            .PostComoJsonProtegidoAsync(
             client,
             $"/api/clientes/{clienteId}/fichas/convites",
-            content: null,
+            new EmitirConviteFichaRequest
+            {
+                TipoProcedimento = TipoProcedimento.Tatuagem
+            },
             TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();

@@ -24,8 +24,96 @@ export type ClienteResumo = {
   celular: string | null
   email: string | null
   instagram: string | null
-  dadosPessoaisPreenchidos: boolean
   criadoEmUtc: string
+  ultimaFicha: FichaClienteResumo | null
+}
+
+export type TipoProcedimento = 'NaoInformado' | 'Tatuagem' | 'Piercing'
+
+export type FormaPagamento =
+  | 'Dinheiro'
+  | 'Pix'
+  | 'CartaoDebito'
+  | 'CartaoCredito'
+  | 'Transferencia'
+  | 'Outro'
+
+export type SituacaoPagamento = 'Pago'
+
+export type CategoriaDespesa =
+  | 'Materiais'
+  | 'Aluguel'
+  | 'Contas'
+  | 'Manutencao'
+  | 'Marketing'
+  | 'ImpostosETaxas'
+  | 'PagamentoProfissional'
+  | 'Outro'
+
+export type Atendimento = {
+  id: string
+  fichaId: string
+  dataRealizacao: string
+  valorCobrado: number
+  desconto: number
+  valorFinal: number
+  formaPagamento: FormaPagamento
+  situacaoPagamento: SituacaoPagamento
+  registradoEmUtc: string
+  atualizadoEmUtc: string
+}
+
+export type RegistrarAtendimentoInput = {
+  dataRealizacao: string
+  valorCobrado: number
+  desconto: number
+  formaPagamento: FormaPagamento
+}
+
+export type Despesa = {
+  id: string
+  data: string
+  categoria: CategoriaDespesa
+  descricao: string
+  valor: number
+  profissionalId: string
+  profissionalNome: string
+  registradaEmUtc: string
+  atualizadaEmUtc: string
+}
+
+export type SalvarDespesaInput = {
+  data: string
+  categoria: CategoriaDespesa
+  descricao: string
+  valor: number
+}
+
+export type FiltrosFinanceiro = {
+  dataDe?: string
+  dataAte?: string
+}
+
+export type FinanceiroResultado = {
+  resumo: {
+    totalRecebido: number
+    totalSaidas: number
+    saldo: number
+    atendimentosPagos: number
+  }
+  despesas: Despesa[]
+  pagina: number
+  tamanhoPagina: number
+  totalDespesas: number
+  totalPaginas: number
+}
+
+export type FiltrosClientes = {
+  busca?: string
+  profissionalId?: string
+  tipoProcedimento?: TipoProcedimento
+  atendimentoDe?: string
+  atendimentoAte?: string
 }
 
 export type ClientesPaginados = {
@@ -47,10 +135,59 @@ export type FichaResumo = {
   id: string
   clienteId: string
   clienteNome: string
+  profissionalResponsavelId: string | null
+  profissionalResponsavelNome: string
+  tipoProcedimento: TipoProcedimento
   status: string
   criadaEmUtc: string
+  concluidaEmUtc: string | null
+  atendimento: Atendimento | null
   conviteExpiraEmUtc: string | null
   conviteExpirado: boolean
+}
+
+export type FiltrosFichas = {
+  busca?: string
+  profissionalId?: string
+  tipoProcedimento?: TipoProcedimento
+  status?: string
+  criadaDe?: string
+  criadaAte?: string
+  atendimentoDe?: string
+  atendimentoAte?: string
+}
+
+export type ProfissionalResumo = {
+  id: string
+  nomeCompleto: string
+  especialidades: string[]
+}
+
+export type FichaClienteResumo = {
+  id: string
+  status: string
+  tipoProcedimento: TipoProcedimento
+  profissionalResponsavelId: string | null
+  profissionalResponsavelNome: string
+  criadaEmUtc: string
+}
+
+export type ClienteDetalhe = {
+  id: string
+  nomeReferencia: string
+  nomeCompleto: string | null
+  nomeSocial: string | null
+  nomeParaExibicao: string
+  pronomes: string | null
+  dataNascimento: string | null
+  celular: string | null
+  email: string | null
+  instagram: string | null
+  contatoEmergenciaNome: string | null
+  contatoEmergenciaCelular: string | null
+  dadosPessoaisPreenchidosEmUtc: string | null
+  criadoEmUtc: string
+  fichas: FichaClienteResumo[]
 }
 
 export type FichasPaginadas = {
@@ -59,6 +196,11 @@ export type FichasPaginadas = {
   tamanhoPagina: number
   totalItens: number
   totalPaginas: number
+  resumoFinanceiro: {
+    totalRecebido: number
+    atendimentosRegistrados: number
+    fichasSemRegistro: number
+  }
 }
 
 export type ClienteFichaDetalhe = {
@@ -104,9 +246,13 @@ export type FichaDetalhe = {
   criadaEmUtc: string
   conviteExpiraEmUtc: string | null
   conviteExpirado: boolean
+  profissionalResponsavelId: string | null
+  profissionalResponsavelNome: string
+  tipoProcedimento: TipoProcedimento
   cliente: ClienteFichaDetalhe
   questionarioSaude: QuestionarioSaudeDetalhe | null
   aceiteTermo: AceiteTermoResumo | null
+  atendimento: Atendimento | null
 }
 
 export type TermoConsentimento = {
@@ -121,6 +267,19 @@ export type ConviteFichaAberto = {
   questionarioRespondido: boolean
   dadosPessoaisPreenchidos: boolean
   nomeReferencia: string
+  profissionalResponsavelNome: string
+  tipoProcedimento: TipoProcedimento
+  dadosPessoais: {
+    nomeCompleto: string | null
+    nomeSocial: string | null
+    pronomes: string | null
+    dataNascimento: string | null
+    celular: string | null
+    email: string | null
+    instagram: string | null
+    contatoEmergenciaNome: string | null
+    contatoEmergenciaCelular: string | null
+  }
   termoConsentimento: TermoConsentimento
 }
 
@@ -306,12 +465,14 @@ export async function preencherDadosPessoais(
 export async function listarClientes(
   pagina: number,
   tamanhoPagina: number,
+  filtros: FiltrosClientes = {},
   signal?: AbortSignal,
 ): Promise<ClientesPaginados> {
   const parametros = new URLSearchParams({
     pagina: pagina.toString(),
     tamanhoPagina: tamanhoPagina.toString(),
   })
+  adicionarFiltros(parametros, filtros)
   const response = await fetch(`/api/clientes?${parametros}`, {
     credentials: 'same-origin',
     signal,
@@ -329,8 +490,55 @@ export async function listarClientes(
   return response.json() as Promise<ClientesPaginados>
 }
 
+export async function obterDetalheCliente(
+  clienteId: string,
+  signal?: AbortSignal,
+): Promise<ClienteDetalhe> {
+  const response = await fetch(
+    `/api/clientes/${encodeURIComponent(clienteId)}`,
+    {
+      credentials: 'same-origin',
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : response.status === 404
+          ? 'O cliente informado não foi encontrado.'
+          : 'Não foi possível consultar o cliente.',
+    )
+  }
+
+  return response.json() as Promise<ClienteDetalhe>
+}
+
+export async function listarProfissionais(
+  signal?: AbortSignal,
+): Promise<ProfissionalResumo[]> {
+  const response = await fetch('/api/profissionais', {
+    credentials: 'same-origin',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : 'Não foi possível consultar os profissionais.',
+    )
+  }
+
+  return response.json() as Promise<ProfissionalResumo[]>
+}
+
 export async function emitirConviteFicha(
   clienteId: string,
+  tipoProcedimento: Exclude<TipoProcedimento, 'NaoInformado'>,
   antiforgeryToken: string,
 ): Promise<ConviteFichaCriado> {
   const response = await fetch(
@@ -339,8 +547,10 @@ export async function emitirConviteFicha(
       method: 'POST',
       credentials: 'same-origin',
       headers: {
+        'Content-Type': 'application/json',
         'X-CSRF-TOKEN': antiforgeryToken,
       },
+      body: JSON.stringify({ tipoProcedimento }),
     },
   )
 
@@ -367,12 +577,14 @@ export async function emitirConviteFicha(
 export async function listarFichas(
   pagina: number,
   tamanhoPagina: number,
+  filtros: FiltrosFichas = {},
   signal?: AbortSignal,
 ): Promise<FichasPaginadas> {
   const parametros = new URLSearchParams({
     pagina: pagina.toString(),
     tamanhoPagina: tamanhoPagina.toString(),
   })
+  adicionarFiltros(parametros, filtros)
   const response = await fetch(`/api/fichas?${parametros}`, {
     credentials: 'same-origin',
     signal,
@@ -388,6 +600,17 @@ export async function listarFichas(
   }
 
   return response.json() as Promise<FichasPaginadas>
+}
+
+function adicionarFiltros(
+  parametros: URLSearchParams,
+  filtros: Record<string, string | boolean | undefined>,
+) {
+  Object.entries(filtros).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== '') {
+      parametros.set(chave, String(valor))
+    }
+  })
 }
 
 export async function obterDetalheFicha(
@@ -414,6 +637,142 @@ export async function obterDetalheFicha(
   }
 
   return response.json() as Promise<FichaDetalhe>
+}
+
+export async function registrarAtendimento(
+  fichaId: string,
+  atendimento: RegistrarAtendimentoInput,
+  antiforgeryToken: string,
+): Promise<Atendimento> {
+  const response = await fetch(
+    `/api/fichas/${encodeURIComponent(fichaId)}/atendimento`,
+    {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': antiforgeryToken,
+      },
+      body: JSON.stringify(atendimento),
+    },
+  )
+
+  if (response.status === 400) {
+    const problem = (await response.json()) as ValidationProblemDetails
+
+    if (problem.errors) {
+      throw new ApiValidationError(problem.errors)
+    }
+  }
+
+  if (!response.ok) {
+    let problem: ProblemDetails | null = null
+
+    try {
+      problem = (await response.json()) as ProblemDetails
+    } catch {
+      // Algumas falhas de infraestrutura podem não retornar JSON.
+    }
+
+    throw new ApiRequestError(
+      response.status,
+      problem?.detail ??
+        problem?.title ??
+        'Não foi possível registrar os dados do atendimento.',
+    )
+  }
+
+  return response.json() as Promise<Atendimento>
+}
+
+export async function obterFinanceiro(
+  pagina: number,
+  tamanhoPagina: number,
+  filtros: FiltrosFinanceiro = {},
+  signal?: AbortSignal,
+): Promise<FinanceiroResultado> {
+  const parametros = new URLSearchParams({
+    pagina: pagina.toString(),
+    tamanhoPagina: tamanhoPagina.toString(),
+  })
+  adicionarFiltros(parametros, filtros)
+  const response = await fetch(`/api/financeiro?${parametros}`, {
+    credentials: 'same-origin',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      response.status,
+      response.status === 401
+        ? 'Sua sessão profissional expirou.'
+        : 'Não foi possível consultar o financeiro.',
+    )
+  }
+
+  return response.json() as Promise<FinanceiroResultado>
+}
+
+export async function criarDespesa(
+  despesa: SalvarDespesaInput,
+  antiforgeryToken: string,
+): Promise<Despesa> {
+  return salvarDespesa('/api/financeiro/despesas', 'POST', despesa, antiforgeryToken)
+}
+
+export async function atualizarDespesa(
+  despesaId: string,
+  despesa: SalvarDespesaInput,
+  antiforgeryToken: string,
+): Promise<Despesa> {
+  return salvarDespesa(
+    `/api/financeiro/despesas/${encodeURIComponent(despesaId)}`,
+    'PUT',
+    despesa,
+    antiforgeryToken,
+  )
+}
+
+async function salvarDespesa(
+  url: string,
+  metodo: 'POST' | 'PUT',
+  despesa: SalvarDespesaInput,
+  antiforgeryToken: string,
+): Promise<Despesa> {
+  const response = await fetch(url, {
+    method: metodo,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': antiforgeryToken,
+    },
+    body: JSON.stringify(despesa),
+  })
+
+  if (response.status === 400) {
+    const problem = (await response.json()) as ValidationProblemDetails
+
+    if (problem.errors) {
+      throw new ApiValidationError(problem.errors)
+    }
+  }
+
+  if (!response.ok) {
+    let problem: ProblemDetails | null = null
+
+    try {
+      problem = (await response.json()) as ProblemDetails
+    } catch {
+      // Algumas falhas de infraestrutura podem não retornar JSON.
+    }
+
+    throw new ApiRequestError(
+      response.status,
+      problem?.detail ?? problem?.title ?? 'Não foi possível salvar a despesa.',
+    )
+  }
+
+  return response.json() as Promise<Despesa>
 }
 
 export async function abrirConviteFicha(

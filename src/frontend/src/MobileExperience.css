@@ -1,0 +1,565 @@
+@media (max-width: 760px) {
+  html {
+    font-size: 15px;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 10px 18px;
+  }
+
+  .professional-mobile-layout {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .professional-mobile-nav {
+    min-height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 5px 8px calc(5px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .professional-mobile-nav a {
+    min-height: 52px;
+    padding: 5px 3px;
+    border-radius: 14px;
+    font-size: 0.67rem;
+  }
+
+  .professional-mobile-nav svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .clients-shell,
+  .records-shell,
+  .finance-shell,
+  .client-detail-shell,
+  .record-detail-shell {
+    width: min(100% - 24px, 1180px);
+    padding-top: 22px;
+    padding-bottom: 28px;
+  }
+
+  .clients-header,
+  .records-header,
+  .finance-header {
+    gap: 18px;
+  }
+
+  .clients-header h1,
+  .records-header h1,
+  .finance-header h1,
+  .client-detail-header h1,
+  .record-detail-title-row h1 {
+    font-size: clamp(2.25rem, 11vw, 2.75rem);
+    line-height: 1;
+  }
+
+  .clients-header > div > p:last-child,
+  .records-header > div > p:last-child,
+  .finance-header > div > p:last-child,
+  .record-detail-title-row p,
+  .client-detail-header > p:last-child {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .clients-primary-link,
+  .records-primary-link {
+    min-height: 44px;
+    padding: 10px 18px;
+  }
+
+  .clients-filters,
+  .records-period-filter,
+  .finance-period {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .filters-heading h2,
+  .records-period-filter__intro h2,
+  .finance-period h2,
+  .finance-form-card h2,
+  .finance-section-heading h2 {
+    font-size: 1.55rem;
+    line-height: 1.08;
+  }
+
+  .filters-grid {
+    gap: 12px;
+    margin-top: 17px;
+  }
+
+  .filter-field input,
+  .filter-field select,
+  .invitation-procedure-field select,
+  .records-period-filter select,
+  .records-period-filter input,
+  .finance-period select,
+  .finance-period input,
+  .finance-form-card select,
+  .finance-form-card input,
+  .record-financial-grid input,
+  .record-financial-grid select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .filters-submit {
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .clients-content,
+  .records-content,
+  .finance-content {
+    margin-top: 20px;
+  }
+
+  .invitation-result {
+    margin-bottom: 18px;
+    padding: 18px;
+  }
+
+  .invitation-result h2 {
+    font-size: 1.65rem;
+  }
+
+  .clients-table-wrapper tr,
+  .records-table-wrapper tr {
+    margin-bottom: 10px;
+    padding: 14px;
+  }
+
+  .clients-table-wrapper td,
+  .clients-table-wrapper tbody tr:last-child td,
+  .records-table-wrapper td,
+  .records-table-wrapper tbody tr:last-child td {
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .clients-pagination,
+  .records-pagination {
+    margin-top: 16px;
+  }
+
+  .records-period-filter__intro > p:last-child:not(.eyebrow) {
+    margin-top: 8px;
+    line-height: 1.45;
+  }
+
+  .records-financial-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .records-financial-summary article {
+    min-height: 96px;
+    padding: 14px;
+  }
+
+  .records-financial-summary strong {
+    font-size: 1.35rem;
+  }
+
+  .finance-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .finance-summary article {
+    min-height: 96px;
+    padding: 14px;
+  }
+
+  .finance-summary article.finance-summary--balance {
+    grid-column: 1 / -1;
+  }
+
+  .finance-summary strong {
+    font-size: 1.35rem;
+  }
+
+  .finance-form-card,
+  .finance-expenses {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .finance-form-card form {
+    gap: 12px;
+    margin-top: 17px;
+  }
+
+  .finance-section-heading {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .finance-table-wrapper tr {
+    margin-bottom: 10px;
+    padding: 14px;
+  }
+
+  .finance-table-wrapper td,
+  .finance-table-wrapper tbody tr:last-child td {
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .client-detail-header > a,
+  .record-detail-header > a {
+    margin-bottom: 20px;
+  }
+
+  .client-detail-section,
+  .record-detail-section {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .client-detail-section-heading h2,
+  .record-detail-section-heading h2 {
+    font-size: 1.65rem;
+    line-height: 1.08;
+  }
+
+  .client-detail-grid,
+  .record-detail-grid,
+  .health-answer-list {
+    margin-top: 16px;
+  }
+
+  .client-detail-grid > div,
+  .record-detail-grid > div,
+  .health-answer-list > div {
+    padding: 12px 0;
+  }
+
+  .client-history-table {
+    margin-top: 18px;
+  }
+
+  .client-history-table tr {
+    margin-bottom: 10px;
+    padding: 12px 14px;
+  }
+
+  .client-history-table td {
+    gap: 10px;
+    padding: 8px 0;
+  }
+
+  .record-detail-section-toggle {
+    padding: 18px;
+  }
+
+  .record-detail-collapsible[open] .record-detail-section-toggle {
+    padding-bottom: 14px;
+  }
+
+  .record-detail-collapsible > .record-detail-grid,
+  .record-detail-collapsible > .health-answer-list,
+  .record-detail-collapsible > .record-detail-pending {
+    margin-right: 18px;
+    margin-bottom: 18px;
+    margin-left: 18px;
+  }
+
+  .record-financial-form {
+    margin-top: 18px;
+  }
+
+  .record-financial-grid {
+    gap: 12px;
+  }
+
+  .record-financial-total {
+    min-height: 60px;
+    padding: 9px 14px;
+  }
+
+  .record-financial-actions {
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .professional-topbar {
+    align-items: center;
+    flex-direction: row;
+    padding: 12px 16px;
+  }
+
+  .professional-account {
+    width: auto;
+  }
+
+  .professional-account > div {
+    display: none;
+  }
+
+  .professional-logout {
+    min-height: 38px;
+    padding: 7px 14px;
+  }
+
+  .professional-dashboard {
+    width: min(100% - 28px, 1120px);
+    padding-top: 28px;
+  }
+
+  .professional-dashboard h1 {
+    font-size: clamp(2.2rem, 11vw, 2.7rem);
+  }
+
+  .professional-dashboard > .professional-copy {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .professional-auth-card {
+    padding: 24px 20px;
+  }
+
+  .professional-auth-card h1 {
+    font-size: clamp(2.25rem, 11vw, 2.8rem);
+  }
+
+  .professional-copy {
+    margin-top: 13px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .professional-login-form {
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 20px;
+  }
+
+  .professional-login-form input {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-card {
+    padding: 22px 18px;
+  }
+
+  .form-card h1 {
+    font-size: clamp(2.25rem, 11vw, 2.75rem);
+  }
+
+  .intro {
+    margin-top: 13px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .status-card {
+    margin: 20px 0;
+    padding: 12px 14px;
+  }
+
+  .client-form,
+  .success-panel {
+    padding-top: 20px;
+  }
+
+  .form-heading {
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .form-heading h2,
+  .success-panel h2 {
+    font-size: 1.7rem;
+  }
+
+  .field-grid {
+    gap: 14px;
+  }
+
+  .field input,
+  .success-procedure-field select {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .form-actions {
+    margin-top: 22px;
+    padding-top: 18px;
+  }
+
+  .registration-invitation {
+    margin-top: 20px;
+    padding: 16px;
+  }
+
+  .public-header,
+  .public-content {
+    padding: 20px 18px;
+  }
+
+  .public-header {
+    gap: 14px;
+    padding-bottom: 18px;
+  }
+
+  .public-header h1 {
+    font-size: clamp(2.2rem, 11vw, 2.7rem);
+  }
+
+  .flow-progress {
+    gap: 6px 10px;
+    padding: 12px 18px;
+  }
+
+  .flow-progress__item {
+    align-items: center;
+    flex-direction: row;
+    gap: 7px;
+    font-size: 0.72rem;
+  }
+
+  .flow-progress__item span {
+    width: 23px;
+    height: 23px;
+  }
+
+  .public-content {
+    min-height: 0;
+  }
+
+  .opening-state {
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .opening-state h2,
+  .section-heading h2 {
+    font-size: 1.7rem;
+    line-height: 1.1;
+  }
+
+  .section-heading > p:last-child {
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .appointment-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 13px;
+  }
+
+  .health-notice {
+    margin-top: 17px;
+    padding: 11px 13px;
+  }
+
+  .personal-data-grid,
+  .questions-list {
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .personal-field input,
+  .conditional-field input,
+  .conditional-field textarea,
+  .consent-name-field input {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .personal-field-group,
+  .binary-question,
+  .conditional-field,
+  .consent-checkbox {
+    padding: 14px;
+  }
+
+  .binary-question legend {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .binary-options {
+    gap: 8px;
+  }
+
+  .binary-options span {
+    min-height: 42px;
+    padding: 8px 14px;
+  }
+
+  .questionnaire-actions {
+    gap: 14px;
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+
+  .term-document {
+    max-height: 300px;
+    margin-top: 18px;
+    padding: 0 16px 18px;
+  }
+
+  .consent-name-field,
+  .consent-checkbox {
+    margin-top: 18px;
+  }
+
+  .completion-panel {
+    padding: 22px 18px;
+  }
+
+  .completion-symbol {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+  }
+
+  .completion-panel h2 {
+    font-size: 1.8rem;
+  }
+
+  .completion-details {
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .completion-details div {
+    padding: 13px;
+  }
+}
+
+@media (max-width: 440px) {
+  .filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-field--wide {
+    grid-column: 1 / -1;
+  }
+}

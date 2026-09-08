@@ -1,0 +1,25 @@
+.calendar-input {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.calendar-input input {
+  cursor: pointer;
+}
+
+.calendar-input input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+@media (max-width: 680px) {
+  .calendar-input input {
+    min-height: 52px;
+  }
+
+  .calendar-input input::-webkit-calendar-picker-indicator {
+    width: 24px;
+    height: 24px;
+    padding: 6px;
+  }
+}

@@ -1,5 +1,7 @@
 using FichaDigital.Api.Modules.Fichas.Application;
+using FichaDigital.Api.Modules.Profissionais.Domain;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FichaDigital.Api.Modules.Fichas.Api;
@@ -8,7 +10,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [Authorize]
 [Route("api/clientes/{clienteId:guid}/fichas/convites")]
 public sealed class ConvitesFichaController(
-    EmitirConviteFichaService service) : ControllerBase
+    EmitirConviteFichaService service,
+    UserManager<ProfissionalUsuario> userManager) : ControllerBase
 {
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -20,10 +23,21 @@ public sealed class ConvitesFichaController(
         StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ConviteFichaCriadoResponse>> Emitir(
         Guid clienteId,
+        [FromBody] EmitirConviteFichaRequest request,
         CancellationToken cancellationToken)
     {
+        var profissional = await userManager.GetUserAsync(User);
+
+        if (profissional is null)
+        {
+            return Unauthorized();
+        }
+
         var conviteEmitido = await service.EmitirAsync(
             clienteId,
+            profissional.Id,
+            profissional.NomeCompleto,
+            request.TipoProcedimento!.Value,
             cancellationToken);
 
         if (conviteEmitido is null)

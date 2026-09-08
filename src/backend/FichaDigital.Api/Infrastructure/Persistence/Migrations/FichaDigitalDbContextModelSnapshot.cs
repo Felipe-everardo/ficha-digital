@@ -22,6 +22,57 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FichaDigital.Api.Modules.Atendimentos.Domain.Atendimento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("AtualizadoEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("DataRealizacao")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Desconto")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("FichaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FormaPagamento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTimeOffset>("RegistradoEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SituacaoPagamento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("ValorCobrado")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("ValorFinal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataRealizacao");
+
+                    b.HasIndex("FichaId")
+                        .IsUnique();
+
+                    b.HasIndex("SituacaoPagamento");
+
+                    b.ToTable("Atendimentos", (string)null);
+                });
+
             modelBuilder.Entity("FichaDigital.Api.Modules.Clientes.Domain.Cliente", b =>
                 {
                     b.Property<Guid>("Id")
@@ -160,7 +211,20 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CriadaEmUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid?>("ProfissionalResponsavelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProfissionalResponsavelNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TipoProcedimento")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
@@ -168,6 +232,12 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
+
+                    b.HasIndex("ProfissionalResponsavelId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TipoProcedimento");
 
                     b.ToTable("Fichas", (string)null);
                 });
@@ -226,6 +296,53 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("QuestionariosSaude", (string)null);
                 });
 
+            modelBuilder.Entity("FichaDigital.Api.Modules.Financeiro.Domain.Despesa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("AtualizadaEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("ProfissionalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProfissionalNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("RegistradaEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Categoria");
+
+                    b.HasIndex("Data");
+
+                    b.HasIndex("ProfissionalId");
+
+                    b.ToTable("Despesas", (string)null);
+                });
+
             modelBuilder.Entity("FichaDigital.Api.Modules.Profissionais.Domain.ProfissionalUsuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -246,6 +363,9 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<int>("Especialidades")
+                        .HasColumnType("int");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -432,6 +552,15 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("FichaDigital.Api.Modules.Atendimentos.Domain.Atendimento", b =>
+                {
+                    b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
+                        .WithOne()
+                        .HasForeignKey("FichaDigital.Api.Modules.Atendimentos.Domain.Atendimento", "FichaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.AceiteTermoConsentimento", b =>
                 {
                     b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
@@ -457,6 +586,11 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("FichaDigital.Api.Modules.Profissionais.Domain.ProfissionalUsuario", null)
+                        .WithMany()
+                        .HasForeignKey("ProfissionalResponsavelId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", b =>
@@ -464,6 +598,15 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
                         .WithOne()
                         .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", "FichaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Financeiro.Domain.Despesa", b =>
+                {
+                    b.HasOne("FichaDigital.Api.Modules.Profissionais.Domain.ProfissionalUsuario", null)
+                        .WithMany()
+                        .HasForeignKey("ProfissionalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

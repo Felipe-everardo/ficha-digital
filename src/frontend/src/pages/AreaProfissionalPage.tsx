@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { StudioBrand } from '../components/StudioBrand'
+import { ProfessionalMobileLayout } from '../components/ProfessionalMobileNav'
 import { ApiRequestError } from '../services/api'
 import {
   entrarProfissional,
@@ -164,6 +165,7 @@ export function AreaProfissionalPage() {
                 type="email"
                 autoComplete="username"
                 maxLength={254}
+                placeholder="Ex.: profissional@email.com"
                 required
                 value={email}
                 onChange={(event) => {
@@ -209,7 +211,8 @@ export function AreaProfissionalPage() {
   }
 
   return (
-    <main className="professional-dashboard-shell">
+    <ProfessionalMobileLayout activeSection="inicio">
+      <main className="professional-dashboard-shell">
       <header className="professional-topbar">
         <StudioBrand
           className="professional-brand"
@@ -258,7 +261,7 @@ export function AreaProfissionalPage() {
           >
             <span>01</span>
             <h2>Clientes</h2>
-            <p>Consulte os cadastros e acesse os próximos passos.</p>
+            <p>Busque clientes, veja o atendimento atual e gere nova ficha.</p>
             <strong>Ver clientes →</strong>
           </a>
           <a
@@ -266,17 +269,22 @@ export function AreaProfissionalPage() {
             href="/profissional/fichas"
           >
             <span>02</span>
-            <h2>Fichas</h2>
-            <p>Acompanhamento dos estados e confirmações do cliente.</p>
-            <strong>Ver fichas →</strong>
+            <h2>Histórico</h2>
+            <p>Consulte o arquivo completo de fichas anteriores.</p>
+            <strong>Ver histórico →</strong>
           </a>
-          <article className="professional-placeholder-card">
+          <a
+            className="professional-placeholder-card professional-placeholder-card--action"
+            href="/profissional/financeiro"
+          >
             <span>03</span>
-            <h2>Convites</h2>
-            <p>Geração e compartilhamento dos links temporários.</p>
-          </article>
+            <h2>Financeiro</h2>
+            <p>Registre despesas e acompanhe entradas, saídas e saldo.</p>
+            <strong>Ver financeiro →</strong>
+          </a>
         </div>
       </section>
-    </main>
+      </main>
+    </ProfessionalMobileLayout>
   )
 }

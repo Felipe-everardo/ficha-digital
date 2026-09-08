@@ -55,7 +55,7 @@ public sealed class PreencherDadosPessoaisTests
     }
 
     [Fact]
-    public async Task Preencher_DuasVezes_DeveRetornarConflict()
+    public async Task Preencher_DadosJaExistentes_DevePermitirConfirmarEAtualizar()
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
@@ -66,20 +66,25 @@ public sealed class PreencherDadosPessoaisTests
             "/api/fichas/dados-pessoais",
             request,
             TestContext.Current.CancellationToken);
+        var atualizacao = CriarRequestValido(
+            token,
+            "(21) 97777-7777",
+            "novo-email@example.com");
         using var segundaResposta = await client.PostAsJsonAsync(
             "/api/fichas/dados-pessoais",
-            request,
+            atualizacao,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, primeiraResposta.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, segundaResposta.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, segundaResposta.StatusCode);
 
-        var problem = await segundaResposta.Content
-            .ReadFromJsonAsync<ProblemDetails>(
-                TestContext.Current.CancellationToken);
-
-        Assert.NotNull(problem);
-        Assert.Equal("Dados pessoais já preenchidos.", problem.Title);
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<FichaDigitalDbContext>();
+        var cliente = await dbContext.Clientes.AsNoTracking().SingleAsync(
+            TestContext.Current.CancellationToken);
+        Assert.Equal("(21) 97777-7777", cliente.Celular);
+        Assert.Equal("novo-email@example.com", cliente.Email);
     }
 
     [Fact]
@@ -139,7 +144,9 @@ public sealed class PreencherDadosPessoaisTests
     }
 
     private static PreencherDadosPessoaisRequest CriarRequestValido(
-        string token)
+        string token,
+        string celular = "  (21) 99999-9999  ",
+        string email = "  ana@example.com  ")
     {
         return new PreencherDadosPessoaisRequest
         {
@@ -148,8 +155,8 @@ public sealed class PreencherDadosPessoaisTests
             NomeSocial = "  Ana  ",
             Pronomes = "  ela/dela  ",
             DataNascimento = new DateOnly(1995, 6, 15),
-            Celular = "  (21) 99999-9999  ",
-            Email = "  ana@example.com  ",
+            Celular = celular,
+            Email = email,
             Instagram = "  @ana  ",
             ContatoEmergenciaNome = "  Maria  ",
             ContatoEmergenciaCelular = "  (21) 98888-8888  "

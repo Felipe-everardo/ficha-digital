@@ -177,4 +177,34 @@ public sealed class ClienteTests
         Assert.Equal("teste@teste.com", cliente.Email);
 
     }
+
+    [Fact]
+    public void AtualizarDadosPessoais_ComNovoContato_DeveManterCadastroAtualizado()
+    {
+        var cliente = new Cliente(
+            "Ana Silva",
+            null,
+            "ela/dela",
+            new DateOnly(1995, 6, 15),
+            "(21) 99999-9999",
+            "ana@example.com");
+        var atualizadoEmUtc = DateTimeOffset.UtcNow.AddMinutes(1);
+
+        cliente.AtualizarDadosPessoais(
+            "Ana Silva",
+            null,
+            "ela/dela",
+            new DateOnly(1995, 6, 15),
+            "(21) 97777-7777",
+            "novo-email@example.com",
+            "@ana",
+            null,
+            null,
+            atualizadoEmUtc);
+
+        Assert.Equal("(21) 97777-7777", cliente.Celular);
+        Assert.Equal("novo-email@example.com", cliente.Email);
+        Assert.Equal("@ana", cliente.Instagram);
+        Assert.Equal(atualizadoEmUtc, cliente.DadosPessoaisPreenchidosEmUtc);
+    }
 }

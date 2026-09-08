@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
+using FichaDigital.Api.Modules.Atendimentos.Domain;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
 using FichaDigital.Api.Modules.Fichas.Domain;
@@ -86,6 +87,10 @@ public sealed class ObterDetalheFichaTests
         Assert.Equal("Ana Silva", detalhe.AceiteTermo.NomeAssinante);
         Assert.Equal(1, detalhe.AceiteTermo.VersaoTermo);
 
+        Assert.NotNull(detalhe.Atendimento);
+        Assert.Equal(180m, detalhe.Atendimento.ValorFinal);
+        Assert.Equal("Pix", detalhe.Atendimento.FormaPagamento);
+
         Assert.DoesNotContain("tokenHash", corpo);
         Assert.DoesNotContain("conteudoTermo", corpo);
         Assert.DoesNotContain("conteudoHash", corpo);
@@ -132,12 +137,20 @@ public sealed class ObterDetalheFichaTests
             conteudoHash: new string('d', 64),
             nomeAssinante: "Ana Silva",
             aceitoEmUtc: agora);
+        var atendimento = new Atendimento(
+            ficha.Id,
+            DateOnly.FromDateTime(agora.UtcDateTime),
+            200m,
+            20m,
+            FormaPagamento.Pix,
+            agora);
 
         dbContext.Clientes.Add(cliente);
         dbContext.Fichas.Add(ficha);
         dbContext.ConvitesFicha.Add(convite);
         dbContext.QuestionariosSaude.Add(questionario);
         dbContext.AceitesTermoConsentimento.Add(aceite);
+        dbContext.Atendimentos.Add(atendimento);
         await dbContext.SaveChangesAsync(
             TestContext.Current.CancellationToken);
 

@@ -5,6 +5,24 @@ namespace FichaDigital.UnitTests.Modules.Fichas.Domain;
 public sealed class FichaTests
 {
     [Fact]
+    public void Criar_ComResponsavelEProcedimento_DeveRegistrarContextoDoAtendimento()
+    {
+        var clienteId = Guid.NewGuid();
+        var profissionalId = Guid.NewGuid();
+
+        var ficha = new Ficha(
+            clienteId,
+            profissionalId,
+            "  Marina Tattoo  ",
+            TipoProcedimento.Tatuagem);
+
+        Assert.Equal(clienteId, ficha.ClienteId);
+        Assert.Equal(profissionalId, ficha.ProfissionalResponsavelId);
+        Assert.Equal("Marina Tattoo", ficha.ProfissionalResponsavelNome);
+        Assert.Equal(TipoProcedimento.Tatuagem, ficha.TipoProcedimento);
+    }
+
+    [Fact]
     public void Criar_ComClienteValido_DeveIniciarComoRascunho()
     {
         // Arrange
@@ -28,6 +46,18 @@ public sealed class FichaTests
 
         Assert.Equal("clienteId", exception.ParamName);
         Assert.Contains("O cliente é obrigatório.", exception.Message);
+    }
+
+    [Fact]
+    public void Criar_ComResponsavelSemProcedimento_DeveLancarArgumentException()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => new Ficha(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Marina Tattoo",
+            TipoProcedimento.NaoInformado));
+
+        Assert.Equal("tipoProcedimento", exception.ParamName);
     }
 
     [Fact]

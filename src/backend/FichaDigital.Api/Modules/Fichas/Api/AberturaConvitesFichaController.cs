@@ -43,6 +43,18 @@ public sealed class AberturaConvitesFichaController(
                     resultado.QuestionarioRespondido,
                     resultado.DadosPessoaisPreenchidos,
                     resultado.NomeReferencia!,
+                    resultado.ProfissionalResponsavelNome!,
+                    resultado.TipoProcedimento!.Value.ToString(),
+                    new DadosPessoaisConviteResponse(
+                        resultado.DadosPessoais!.NomeCompleto,
+                        resultado.DadosPessoais.NomeSocial,
+                        resultado.DadosPessoais.Pronomes,
+                        resultado.DadosPessoais.DataNascimento,
+                        resultado.DadosPessoais.Celular,
+                        resultado.DadosPessoais.Email,
+                        resultado.DadosPessoais.Instagram,
+                        resultado.DadosPessoais.ContatoEmergenciaNome,
+                        resultado.DadosPessoais.ContatoEmergenciaCelular),
                     new TermoConsentimentoResponse(
                         TermoConsentimentoAtual.Versao,
                         TermoConsentimentoAtual.Conteudo,

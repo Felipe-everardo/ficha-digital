@@ -1,3 +1,5 @@
+using FichaDigital.Api.Modules.Atendimentos.Api;
+
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 public sealed record FichaDetalheResponse(
@@ -6,6 +8,10 @@ public sealed record FichaDetalheResponse(
     DateTimeOffset CriadaEmUtc,
     DateTimeOffset? ConviteExpiraEmUtc,
     bool ConviteExpirado,
+    Guid? ProfissionalResponsavelId,
+    string ProfissionalResponsavelNome,
+    string TipoProcedimento,
     ClienteFichaDetalheResponse Cliente,
     QuestionarioSaudeDetalheResponse? QuestionarioSaude,
-    AceiteTermoResumoResponse? AceiteTermo);
+    AceiteTermoResumoResponse? AceiteTermo,
+    AtendimentoResponse? Atendimento);

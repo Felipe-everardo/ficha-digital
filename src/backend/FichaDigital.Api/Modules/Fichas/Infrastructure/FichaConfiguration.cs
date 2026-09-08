@@ -1,4 +1,5 @@
 using FichaDigital.Api.Modules.Clientes.Domain;
+using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -19,6 +20,15 @@ public sealed class FichaConfiguration : IEntityTypeConfiguration<Ficha>
         builder.Property(ficha => ficha.ClienteId)
             .IsRequired();
 
+        builder.Property(ficha => ficha.ProfissionalResponsavelNome)
+            .HasMaxLength(150)
+            .IsRequired();
+
+        builder.Property(ficha => ficha.TipoProcedimento)
+            .HasConversion<string>()
+            .HasMaxLength(30)
+            .IsRequired();
+
         builder.Property(ficha => ficha.Status)
             .HasConversion<string>()
             .HasMaxLength(30)
@@ -33,5 +43,16 @@ public sealed class FichaConfiguration : IEntityTypeConfiguration<Ficha>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(ficha => ficha.ClienteId);
+
+        builder.HasOne<ProfissionalUsuario>()
+            .WithMany()
+            .HasForeignKey(ficha => ficha.ProfissionalResponsavelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(ficha => ficha.ProfissionalResponsavelId);
+
+        builder.HasIndex(ficha => ficha.TipoProcedimento);
+
+        builder.HasIndex(ficha => ficha.Status);
     }
 }

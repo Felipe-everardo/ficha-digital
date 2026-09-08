@@ -7,6 +7,19 @@ public sealed class Ficha
     }
 
     public Ficha(Guid clienteId)
+        : this(
+            clienteId,
+            null,
+            "Profissional não informado",
+            TipoProcedimento.NaoInformado)
+    {
+    }
+
+    public Ficha(
+        Guid clienteId,
+        Guid? profissionalResponsavelId,
+        string profissionalResponsavelNome,
+        TipoProcedimento tipoProcedimento)
     {
         if (clienteId == Guid.Empty)
         {
@@ -15,8 +28,37 @@ public sealed class Ficha
                 nameof(clienteId));
         }
 
+        if (profissionalResponsavelId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "O profissional responsável é inválido.",
+                nameof(profissionalResponsavelId));
+        }
+
+        if (string.IsNullOrWhiteSpace(profissionalResponsavelNome))
+        {
+            throw new ArgumentException(
+                "O nome do profissional responsável é obrigatório.",
+                nameof(profissionalResponsavelNome));
+        }
+
+        if (!Enum.IsDefined(tipoProcedimento) ||
+            (profissionalResponsavelId is not null &&
+             tipoProcedimento == TipoProcedimento.NaoInformado) ||
+            (profissionalResponsavelId is null &&
+             tipoProcedimento != TipoProcedimento.NaoInformado))
+        {
+            throw new ArgumentException(
+                "O procedimento informado é inválido.",
+                nameof(tipoProcedimento));
+        }
+
         Id = Guid.NewGuid();
         ClienteId = clienteId;
+        ProfissionalResponsavelId = profissionalResponsavelId;
+        ProfissionalResponsavelNome =
+            profissionalResponsavelNome.Trim();
+        TipoProcedimento = tipoProcedimento;
         Status = StatusFicha.Rascunho;
         CriadaEmUtc = DateTimeOffset.UtcNow;
     }
@@ -24,6 +66,13 @@ public sealed class Ficha
     public Guid Id { get; private set; }
 
     public Guid ClienteId { get; private set; }
+
+    public Guid? ProfissionalResponsavelId { get; private set; }
+
+    public string ProfissionalResponsavelNome { get; private set; } =
+        string.Empty;
+
+    public TipoProcedimento TipoProcedimento { get; private set; }
 
     public StatusFicha Status { get; private set; }
 

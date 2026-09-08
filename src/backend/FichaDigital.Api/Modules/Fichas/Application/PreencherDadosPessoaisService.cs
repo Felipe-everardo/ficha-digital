@@ -62,24 +62,35 @@ public sealed class PreencherDadosPessoaisService(
                 StatusPreenchimentoDadosPessoais.ClienteNaoEncontrado);
         }
 
+        var preenchidosEmUtc = timeProvider.GetUtcNow();
         if (cliente.DadosPessoaisPreenchidos)
         {
-            return new ResultadoPreenchimentoDadosPessoais(
-                StatusPreenchimentoDadosPessoais.JaPreenchidos);
+            cliente.AtualizarDadosPessoais(
+                command.NomeCompleto,
+                command.NomeSocial,
+                command.Pronomes,
+                command.DataNascimento,
+                command.Celular,
+                command.Email,
+                command.Instagram,
+                command.ContatoEmergenciaNome,
+                command.ContatoEmergenciaCelular,
+                preenchidosEmUtc);
         }
-
-        var preenchidosEmUtc = timeProvider.GetUtcNow();
-        cliente.PreencherDadosPessoais(
-            command.NomeCompleto,
-            command.NomeSocial,
-            command.Pronomes,
-            command.DataNascimento,
-            command.Celular,
-            command.Email,
-            command.Instagram,
-            command.ContatoEmergenciaNome,
-            command.ContatoEmergenciaCelular,
-            preenchidosEmUtc);
+        else
+        {
+            cliente.PreencherDadosPessoais(
+                command.NomeCompleto,
+                command.NomeSocial,
+                command.Pronomes,
+                command.DataNascimento,
+                command.Celular,
+                command.Email,
+                command.Instagram,
+                command.ContatoEmergenciaNome,
+                command.ContatoEmergenciaCelular,
+                preenchidosEmUtc);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

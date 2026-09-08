@@ -80,6 +80,18 @@ public sealed class AbrirConviteFichaService(
             ficha.Status,
             questionarioRespondido,
             cliente.DadosPessoaisPreenchidos,
-            cliente.NomeReferencia);
+            cliente.NomeReferencia,
+            ficha.ProfissionalResponsavelNome,
+            ficha.TipoProcedimento,
+            new DadosPessoaisConvite(
+                cliente.NomeCompleto,
+                cliente.NomeSocial,
+                cliente.Pronomes,
+                cliente.DataNascimento,
+                cliente.Celular,
+                cliente.Email,
+                cliente.Instagram,
+                cliente.ContatoEmergenciaNome,
+                cliente.ContatoEmergenciaCelular));
     }
 }

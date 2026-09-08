@@ -61,8 +61,129 @@
   outline-offset: 3px;
 }
 
+.records-period-filter {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  gap: 32px;
+  align-items: end;
+  margin-top: 42px;
+  padding: 24px 26px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 254, 249, 0.92);
+  box-shadow: 0 20px 55px rgba(53, 72, 50, 0.06);
+}
+
+.records-period-filter__intro .eyebrow {
+  margin: 0 0 7px;
+}
+
+.records-period-filter__intro h2 {
+  margin: 0;
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 400;
+}
+
+.records-period-filter__intro > p:last-child:not(.eyebrow) {
+  max-width: 430px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.records-period-filter__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.records-period-filter label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.records-period-filter select,
+.records-period-filter input {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: #fffef9;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.records-period-filter select:focus,
+.records-period-filter input:focus {
+  border-color: var(--moss);
+  outline: 3px solid rgba(83, 107, 74, 0.16);
+}
+
+.records-period-filter__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.records-period-filter__actions button {
+  min-height: 44px;
+  margin: 0;
+  padding: 9px 18px;
+  white-space: nowrap;
+}
+
+.records-financial-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.records-financial-summary article {
+  display: grid;
+  min-height: 128px;
+  align-content: center;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 254, 249, 0.9);
+}
+
+.records-financial-summary span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.records-financial-summary strong {
+  margin-top: 5px;
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 400;
+}
+
+.records-financial-summary small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 .records-content {
-  margin-top: 46px;
+  margin-top: 28px;
 }
 
 .records-summary {
@@ -124,25 +245,44 @@
 }
 
 .record-detail-link {
-  display: inline-block;
-  padding: 7px 12px;
+  display: inline-grid;
+  min-width: 132px;
+  min-height: 42px;
+  place-items: center;
+  padding: 9px 18px;
   border: 1px solid var(--moss);
   border-radius: 999px;
-  color: var(--moss-dark);
+  color: #fffef9;
+  background: var(--moss);
   font-size: 0.76rem;
   font-weight: 800;
+  text-align: center;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .record-detail-link:hover {
-  color: #fffef9;
+  border-color: var(--moss-dark);
   background: var(--moss-dark);
 }
 
 .record-detail-link:focus-visible {
   outline: 3px solid rgba(83, 107, 74, 0.28);
   outline-offset: 3px;
+}
+
+.payment-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.payment-status--pago {
+  color: #315b35;
+  background: #dcebdd;
 }
 
 .record-status {
@@ -257,6 +397,22 @@
     flex-direction: column;
   }
 
+  .records-period-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .records-period-filter__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .records-period-filter__actions button {
+    flex: 1;
+  }
+
+  .records-financial-summary {
+    grid-template-columns: 1fr;
+  }
+
   .records-table-wrapper {
     overflow: visible;
     border: 0;
@@ -310,12 +466,24 @@
     text-transform: uppercase;
   }
 
+  .record-detail-link {
+    width: 100%;
+  }
+
   .records-pagination {
     justify-content: space-between;
   }
 }
 
 @media (max-width: 440px) {
+  .records-shell {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .records-period-filter {
+    padding: 20px;
+  }
+
   .records-pagination {
     align-items: stretch;
     flex-direction: column;

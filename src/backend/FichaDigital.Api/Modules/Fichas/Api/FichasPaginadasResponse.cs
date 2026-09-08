@@ -5,4 +5,5 @@ public sealed record FichasPaginadasResponse(
     int Pagina,
     int TamanhoPagina,
     int TotalItens,
-    int TotalPaginas);
+    int TotalPaginas,
+    ResumoFinanceiroFichasResponse ResumoFinanceiro);

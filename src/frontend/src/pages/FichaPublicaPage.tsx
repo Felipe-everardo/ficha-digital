@@ -1,5 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { StudioBrand } from '../components/StudioBrand'
+import { CalendarInput } from '../components/CalendarInput'
+import { formatarTelefoneBrasileiro } from '../utils/telefone'
 import {
   ApiRequestError,
   ApiValidationError,
@@ -183,7 +185,25 @@ export function FichaPublicaPage() {
     abrirConviteFicha(tokenDoConvite, abortController.signal)
       .then((convite) => {
         setEstado({ tipo: 'aberto', convite })
-        setDadosPessoaisPreenchidos(convite.dadosPessoaisPreenchidos)
+        setDadosPessoais({
+          nomeCompleto: convite.dadosPessoais.nomeCompleto ?? '',
+          nomeSocial: convite.dadosPessoais.nomeSocial ?? '',
+          pronomes: convite.dadosPessoais.pronomes ?? '',
+          dataNascimento: convite.dadosPessoais.dataNascimento ?? '',
+          celular: formatarTelefoneBrasileiro(
+            convite.dadosPessoais.celular ?? '',
+          ),
+          email: convite.dadosPessoais.email ?? '',
+          instagram: convite.dadosPessoais.instagram ?? '',
+          contatoEmergenciaNome:
+            convite.dadosPessoais.contatoEmergenciaNome ?? '',
+          contatoEmergenciaCelular: formatarTelefoneBrasileiro(
+            convite.dadosPessoais.contatoEmergenciaCelular ?? '',
+          ),
+        })
+        // Em um novo atendimento, os dados anteriores precisam ser
+        // confirmados novamente antes do questionário de saúde.
+        setDadosPessoaisPreenchidos(convite.questionarioRespondido)
         setQuestionarioRespondido(convite.questionarioRespondido)
       })
       .catch((error: unknown) => {
@@ -439,6 +459,9 @@ export function FichaPublicaPage() {
     dadosPessoaisPreenchidos || questionarioRespondido || termoAceito !== null
   const questionarioConcluido = questionarioRespondido || termoAceito !== null
   const fichaConcluida = termoAceito !== null
+  const possuiDadosAnteriores =
+    estado.tipo === 'aberto' &&
+    estado.convite.dadosPessoaisPreenchidos
 
   return (
     <main className="public-page-shell">
@@ -550,6 +573,25 @@ export function FichaPublicaPage() {
             </div>
           )}
 
+          {estado.tipo === 'aberto' && !termoAceito && (
+            <aside className="appointment-summary" aria-label="Seu atendimento">
+              <div>
+                <span>Procedimento</span>
+                <strong>
+                  {estado.convite.tipoProcedimento === 'Piercing'
+                    ? 'Piercing'
+                    : estado.convite.tipoProcedimento === 'Tatuagem'
+                      ? 'Tatuagem'
+                      : 'Não informado'}
+                </strong>
+              </div>
+              <div>
+                <span>Profissional responsável</span>
+                <strong>{estado.convite.profissionalResponsavelNome}</strong>
+              </div>
+            </aside>
+          )}
+
           {estado.tipo === 'aberto' &&
             !dadosPessoaisPreenchidos &&
             !termoAceito && (
@@ -559,12 +601,25 @@ export function FichaPublicaPage() {
               >
                 <div className="section-heading">
                   <p className="eyebrow">Etapa 2 de 4</p>
-                  <h2>Seus dados pessoais</h2>
-                  <p>
-                    Este convite foi criado para{' '}
-                    <strong>{estado.convite.nomeReferencia}</strong>. Complete
-                    seus dados para continuar para o histórico de saúde.
-                  </p>
+                  <h2>
+                    {possuiDadosAnteriores
+                      ? 'Confira seus dados pessoais'
+                      : 'Seus dados pessoais'}
+                  </h2>
+                  {possuiDadosAnteriores ? (
+                    <p>
+                      Encontramos os dados do seu atendimento anterior.
+                      Confira todos os campos e atualize o que mudou antes de
+                      continuar.
+                    </p>
+                  ) : (
+                    <p>
+                      Este convite foi criado para{' '}
+                      <strong>{estado.convite.nomeReferencia}</strong>.
+                      Complete seus dados para continuar para o histórico de
+                      saúde.
+                    </p>
+                  )}
                 </div>
 
                 <div className="personal-data-grid">
@@ -574,6 +629,7 @@ export function FichaPublicaPage() {
                       type="text"
                       autoComplete="name"
                       maxLength={150}
+                      placeholder="Ex.: Maria da Silva"
                       required
                       value={dadosPessoais.nomeCompleto}
                       onChange={(event) =>
@@ -591,6 +647,7 @@ export function FichaPublicaPage() {
                       type="text"
                       autoComplete="nickname"
                       maxLength={150}
+                      placeholder="Ex.: Mari"
                       value={dadosPessoais.nomeSocial}
                       onChange={(event) =>
                         atualizarDadoPessoal('nomeSocial', event.target.value)
@@ -613,7 +670,7 @@ export function FichaPublicaPage() {
 
                   <label className="personal-field">
                     <span>Data de nascimento *</span>
-                    <input
+                    <CalendarInput
                       type="date"
                       autoComplete="bday"
                       max={dataMaximaNascimento}
@@ -633,12 +690,16 @@ export function FichaPublicaPage() {
                     <input
                       type="tel"
                       autoComplete="tel"
-                      maxLength={25}
-                      placeholder="(21) 99999-9999"
+                      maxLength={15}
+                      inputMode="numeric"
+                      placeholder="Ex.: (21) 99999-9999"
                       required
                       value={dadosPessoais.celular}
                       onChange={(event) =>
-                        atualizarDadoPessoal('celular', event.target.value)
+                        atualizarDadoPessoal(
+                          'celular',
+                          formatarTelefoneBrasileiro(event.target.value),
+                        )
                       }
                     />
                   </label>
@@ -649,6 +710,7 @@ export function FichaPublicaPage() {
                       type="email"
                       autoComplete="email"
                       maxLength={254}
+                      placeholder="Ex.: maria@email.com"
                       value={dadosPessoais.email}
                       onChange={(event) =>
                         atualizarDadoPessoal('email', event.target.value)
@@ -680,6 +742,7 @@ export function FichaPublicaPage() {
                         <input
                           type="text"
                           maxLength={150}
+                          placeholder="Ex.: João da Silva"
                           value={dadosPessoais.contatoEmergenciaNome}
                           onChange={(event) =>
                             atualizarDadoPessoal(
@@ -693,12 +756,14 @@ export function FichaPublicaPage() {
                         <span>Celular do contato</span>
                         <input
                           type="tel"
-                          maxLength={25}
+                          maxLength={15}
+                          inputMode="numeric"
+                          placeholder="Ex.: (21) 98888-8888"
                           value={dadosPessoais.contatoEmergenciaCelular}
                           onChange={(event) =>
                             atualizarDadoPessoal(
                               'contatoEmergenciaCelular',
-                              event.target.value,
+                              formatarTelefoneBrasileiro(event.target.value),
                             )
                           }
                         />
@@ -715,13 +780,16 @@ export function FichaPublicaPage() {
 
                 <div className="questionnaire-actions">
                   <p>
-                    Confira as informações antes de continuar. Elas ficarão
-                    associadas ao seu histórico no estúdio.
+                    {possuiDadosAnteriores
+                      ? 'Ao continuar, você confirma que estes dados estão atualizados.'
+                      : 'Confira as informações antes de continuar. Elas ficarão associadas ao seu histórico no estúdio.'}
                   </p>
                   <button type="submit" disabled={enviandoDadosPessoais}>
                     {enviandoDadosPessoais
                       ? 'Salvando dados...'
-                      : 'Salvar e continuar'}
+                      : possuiDadosAnteriores
+                        ? 'Confirmar dados e continuar'
+                        : 'Salvar e continuar'}
                   </button>
                 </div>
               </form>

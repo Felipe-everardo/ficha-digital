@@ -92,6 +92,63 @@ public sealed class Cliente
                 "Os dados pessoais do cliente já foram preenchidos.");
         }
 
+        DefinirDadosPessoais(
+            nomeCompleto,
+            nomeSocial,
+            pronomes,
+            dataNascimento,
+            celular,
+            email,
+            instagram,
+            contatoEmergenciaNome,
+            contatoEmergenciaCelular,
+            preenchidosEmUtc);
+    }
+
+    public void AtualizarDadosPessoais(
+        string nomeCompleto,
+        string? nomeSocial,
+        string? pronomes,
+        DateOnly dataNascimento,
+        string celular,
+        string? email,
+        string? instagram,
+        string? contatoEmergenciaNome,
+        string? contatoEmergenciaCelular,
+        DateTimeOffset atualizadosEmUtc)
+    {
+        if (!DadosPessoaisPreenchidos)
+        {
+            throw new InvalidOperationException(
+                "Os dados pessoais do cliente ainda não foram preenchidos.");
+        }
+
+        DefinirDadosPessoais(
+            nomeCompleto,
+            nomeSocial,
+            pronomes,
+            dataNascimento,
+            celular,
+            email,
+            instagram,
+            contatoEmergenciaNome,
+            contatoEmergenciaCelular,
+            atualizadosEmUtc);
+    }
+
+    private void DefinirDadosPessoais(
+        string nomeCompleto,
+        string? nomeSocial,
+        string? pronomes,
+        DateOnly dataNascimento,
+        string celular,
+        string? email,
+        string? instagram,
+        string? contatoEmergenciaNome,
+        string? contatoEmergenciaCelular,
+        DateTimeOffset preenchidosEmUtc)
+    {
+
         if (string.IsNullOrWhiteSpace(nomeCompleto))
         {
             throw new ArgumentException(

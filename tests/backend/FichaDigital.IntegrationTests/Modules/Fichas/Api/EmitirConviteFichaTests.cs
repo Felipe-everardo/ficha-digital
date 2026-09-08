@@ -3,11 +3,13 @@ using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
+using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.IntegrationTests.Modules.Fichas.Api;
 
@@ -24,10 +26,13 @@ public sealed class EmitirConviteFichaTests
                 TestContext.Current.CancellationToken);
 
         using var httpResponse = await AutenticacaoProfissionalTestHelper
-            .PostProtegidoAsync(
+            .PostComoJsonProtegidoAsync(
             client,
             $"/api/clientes/{clienteId}/fichas/convites",
-            content: null,
+            new EmitirConviteFichaRequest
+            {
+                TipoProcedimento = TipoProcedimento.Tatuagem
+            },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
@@ -46,6 +51,22 @@ public sealed class EmitirConviteFichaTests
         Assert.Equal(
             $"/api/fichas/{response.FichaId}/convites/{response.ConviteId}",
             httpResponse.Headers.Location?.OriginalString);
+
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<FichaDigitalDbContext>();
+        var ficha = await dbContext.Fichas
+            .AsNoTracking()
+            .SingleAsync(
+                item => item.Id == response.FichaId,
+                TestContext.Current.CancellationToken);
+        var profissional = await dbContext.Users
+            .AsNoTracking()
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(profissional.Id, ficha.ProfissionalResponsavelId);
+        Assert.Equal(profissional.NomeCompleto, ficha.ProfissionalResponsavelNome);
+        Assert.Equal(TipoProcedimento.Tatuagem, ficha.TipoProcedimento);
     }
 
     [Fact]
@@ -58,10 +79,13 @@ public sealed class EmitirConviteFichaTests
                 TestContext.Current.CancellationToken);
 
         using var httpResponse = await AutenticacaoProfissionalTestHelper
-            .PostProtegidoAsync(
+            .PostComoJsonProtegidoAsync(
             client,
             $"/api/clientes/{Guid.NewGuid()}/fichas/convites",
-            content: null,
+            new EmitirConviteFichaRequest
+            {
+                TipoProcedimento = TipoProcedimento.Piercing
+            },
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.NotFound, httpResponse.StatusCode);
@@ -75,6 +99,29 @@ public sealed class EmitirConviteFichaTests
             StatusCodes.Status404NotFound,
             problemDetails.Status);
         Assert.Equal("Cliente não encontrado.", problemDetails.Title);
+    }
+
+    [Fact]
+    public async Task Emitir_SemProcedimentoValido_DeveRetornarBadRequest()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        var clienteId = await CriarClienteAsync(factory);
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+
+        using var response = await AutenticacaoProfissionalTestHelper
+            .PostComoJsonProtegidoAsync(
+                client,
+                $"/api/clientes/{clienteId}/fichas/convites",
+                new EmitirConviteFichaRequest
+                {
+                    TipoProcedimento = TipoProcedimento.NaoInformado
+                },
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
