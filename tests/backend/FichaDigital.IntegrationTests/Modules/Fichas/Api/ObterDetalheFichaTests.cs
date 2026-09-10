@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
-using FichaDigital.Api.Modules.Atendimentos.Domain;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
 using FichaDigital.Api.Modules.Fichas.Domain;
@@ -47,7 +46,7 @@ public sealed class ObterDetalheFichaTests
     }
 
     [Fact]
-    public async Task ObterDetalhe_ComSessaoValida_DeveRetornarDadosSemSegredos()
+    public async Task ObterDetalhe_DevePreservarDadosConfirmadosNaFicha()
     {
         var agora = DateTimeOffset.UtcNow;
         using var factory = new FichaDigitalApiFactory(
@@ -75,7 +74,9 @@ public sealed class ObterDetalheFichaTests
         Assert.Equal(fichaId, detalhe.Id);
         Assert.Equal("Concluida", detalhe.Status);
         Assert.Equal("Ana", detalhe.Cliente.NomeParaExibicao);
+        Assert.Equal("Ana Silva", detalhe.Cliente.NomeCompleto);
         Assert.Equal(new DateOnly(1995, 6, 15), detalhe.Cliente.DataNascimento);
+        Assert.Equal("ana@example.com", detalhe.Cliente.Email);
 
         Assert.NotNull(detalhe.QuestionarioSaude);
         Assert.True(detalhe.QuestionarioSaude.TemDiabetes);
@@ -87,13 +88,17 @@ public sealed class ObterDetalheFichaTests
         Assert.Equal("Ana Silva", detalhe.AceiteTermo.NomeAssinante);
         Assert.Equal(1, detalhe.AceiteTermo.VersaoTermo);
 
-        Assert.NotNull(detalhe.Atendimento);
-        Assert.Equal(180m, detalhe.Atendimento.ValorFinal);
-        Assert.Equal("Pix", detalhe.Atendimento.FormaPagamento);
-
         Assert.DoesNotContain("tokenHash", corpo);
         Assert.DoesNotContain("conteudoTermo", corpo);
         Assert.DoesNotContain("conteudoHash", corpo);
+        Assert.DoesNotContain(
+            "ana-atualizada@example.com",
+            corpo,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            "financeiro",
+            corpo,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task<Guid> CriarFichaConcluidaAsync(
@@ -114,6 +119,18 @@ public sealed class ObterDetalheFichaTests
         ficha.EnviarConvite();
         ficha.IniciarPreenchimento();
         ficha.Concluir();
+        var dadosDaFicha = new DadosPessoaisFicha(
+            ficha.Id,
+            cliente.NomeCompleto!,
+            cliente.NomeSocial,
+            cliente.Pronomes,
+            cliente.DataNascimento!.Value,
+            cliente.Celular!,
+            cliente.Email,
+            cliente.Instagram,
+            cliente.ContatoEmergenciaNome,
+            cliente.ContatoEmergenciaCelular,
+            agora.AddMinutes(-5));
         var convite = new ConviteFicha(
             ficha.Id,
             new string('c', 64),
@@ -137,22 +154,27 @@ public sealed class ObterDetalheFichaTests
             conteudoHash: new string('d', 64),
             nomeAssinante: "Ana Silva",
             aceitoEmUtc: agora);
-        var atendimento = new Atendimento(
-            ficha.Id,
-            DateOnly.FromDateTime(agora.UtcDateTime),
-            200m,
-            20m,
-            FormaPagamento.Pix,
-            agora);
 
         dbContext.Clientes.Add(cliente);
         dbContext.Fichas.Add(ficha);
+        dbContext.DadosPessoaisFichas.Add(dadosDaFicha);
         dbContext.ConvitesFicha.Add(convite);
         dbContext.QuestionariosSaude.Add(questionario);
         dbContext.AceitesTermoConsentimento.Add(aceite);
-        dbContext.Atendimentos.Add(atendimento);
-        await dbContext.SaveChangesAsync(
-            TestContext.Current.CancellationToken);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        cliente.AtualizarDadosPessoais(
+            "Ana Silva Atualizada",
+            "Ana Atualizada",
+            "ela/dela",
+            new DateOnly(1995, 6, 15),
+            "21999999999",
+            "ana-atualizada@example.com",
+            "@ana_atualizada",
+            null,
+            null,
+            agora);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         return ficha.Id;
     }

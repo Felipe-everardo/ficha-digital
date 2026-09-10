@@ -76,20 +76,16 @@ Adicione os arquivos em docs/screenshots e remova este comentário.
 
 - autenticação com sessão protegida;
 - cadastro inicial do cliente somente por nome de referência;
-- busca de clientes por nome, contato e dados do atendimento mais recente;
+- busca de clientes por nome, contato e dados da ficha mais recente;
 - histórico de fichas e procedimentos por cliente;
 - geração de convite com validade de 1 hora, procedimento e profissional
   responsável registrados automaticamente;
 - link completo pronto para cópia e compartilhamento;
-- histórico completo das fichas, mantendo o atendimento mais recente em
+- histórico completo das fichas, mantendo a ficha mais recente em
   destaque na listagem de clientes;
 - consulta protegida dos dados preenchidos e do resumo do aceite;
-- registro do valor, desconto e forma de pagamento de cada
-  atendimento;
-- painel financeiro por dia, mês, ano ou período completo, com valores
-  recebidos, saídas e saldo real;
-- cadastro e edição de despesas por categoria, mantendo o profissional que
-  registrou cada lançamento;
+- preservação dos dados pessoais confirmados em cada ficha, sem reescrever o
+  histórico quando o cadastro geral do cliente for atualizado;
 - separação entre listagens administrativas e informações sensíveis.
 
 ### Experiência do cliente
@@ -116,6 +112,8 @@ Adicione os arquivos em docs/screenshots e remova este comentário.
   respostas sensíveis sem cache.
 - **Contratos HTTP explícitos:** DTOs de entrada e saída impedem que entidades
   do domínio sejam expostas diretamente.
+- **Histórico imutável:** cada ficha mantém um retrato dos dados pessoais
+  confirmados pelo cliente naquele preenchimento.
 - **Validação em duas fronteiras:** dados inválidos são rejeitados tanto na API
   quanto pelas regras internas do domínio.
 - **Qualidade automatizada:** testes unitários e de integração, lint e build do
@@ -143,13 +141,16 @@ flowchart LR
 Modules/
 ├── Clientes/
 │   ├── Api/             # Controllers e contratos HTTP
+│   ├── Application/     # Casos de uso e consultas da aplicação
 │   ├── Domain/          # Entidades e regras de negócio
 │   └── Infrastructure/  # Persistência e mapeamentos
 ├── Fichas/
-├── Atendimentos/
-├── Financeiro/
 └── Profissionais/
 ```
+
+No frontend, as rotas ficam isoladas em `app`, as integrações HTTP são
+separadas por módulo em `services` e o fluxo público da ficha distribui estado,
+regras de interação e apresentação entre `hooks`, `pages` e `components`.
 
 ## Tecnologias
 
@@ -258,9 +259,9 @@ contagem final das tabelas afetadas.
 
 Para substituir os registros por uma base de demonstração mais completa,
 execute [`scripts/seed-demo-data.sql`](scripts/seed-demo-data.sql). A carga é
-repetível e cria 12 clientes, 16 fichas em diferentes dias, meses e anos, 14
-atendimentos, 5 despesas e alguns clientes com mais de uma ficha. As datas são
-calculadas a partir do dia da execução para facilitar o teste dos filtros.
+repetível e cria 12 clientes e 16 fichas completas em diferentes dias, meses e
+anos, incluindo clientes com mais de uma ficha. As datas são calculadas a
+partir do dia da execução para facilitar o teste dos filtros.
 
 A carga também garante os perfis fictícios Lia e Taty, com especialidade em
 tatuagem, e Thais, com especialidade em body piercing. Esses perfis não recebem
@@ -273,8 +274,8 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -d FichaDigitalDb `
 ```
 
 > Confirme o nome do servidor e do banco antes da execução. Os dois scripts
-> excluem permanentemente clientes, fichas, convites, questionários, aceites,
-> atendimentos e despesas existentes no banco selecionado.
+> excluem permanentemente clientes, fichas, dados pessoais confirmados,
+> questionários, aceites e convites existentes no banco selecionado.
 
 O endpoint `GET /api/status/database` pode ser usado pelo Azure Health Check
 para confirmar que a aplicação consegue se conectar ao banco.
@@ -298,9 +299,11 @@ para confirmar que a aplicação consegue se conectar ao banco.
 
 ## Próximas evoluções
 
-- histórico de procedimentos preenchido pelo profissional;
+- substituir o questionário provisório pela ficha real validada com o estúdio;
+- versionar modelos de ficha sem invalidar registros históricos;
+- permitir perguntas diferentes por procedimento quando essa necessidade for
+  confirmada;
 - gestão de contas, especialidades e autorização por função;
-- decisões de negócio do módulo de procedimentos validadas com o estúdio;
 - auditoria de acessos quando o sistema entrar em operação real;
 - revisão jurídica do termo de consentimento;
 - estratégia de backup, retenção e preparação para produção.

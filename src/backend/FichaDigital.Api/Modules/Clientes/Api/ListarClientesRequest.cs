@@ -12,9 +12,9 @@ public sealed class ListarClientesRequest : IValidatableObject
 
     public TipoProcedimento? TipoProcedimento { get; init; }
 
-    public DateOnly? AtendimentoDe { get; init; }
+    public DateOnly? UltimaFichaDe { get; init; }
 
-    public DateOnly? AtendimentoAte { get; init; }
+    public DateOnly? UltimaFichaAte { get; init; }
 
     [Range(
         1,
@@ -31,11 +31,11 @@ public sealed class ListarClientesRequest : IValidatableObject
     public IEnumerable<ValidationResult> Validate(
         ValidationContext validationContext)
     {
-        if (AtendimentoDe > AtendimentoAte)
+        if (UltimaFichaDe > UltimaFichaAte)
         {
             yield return new ValidationResult(
-                "A data inicial não pode ser posterior à data final.",
-                [nameof(AtendimentoDe), nameof(AtendimentoAte)]);
+                "A data inicial da ficha não pode ser posterior à data final.",
+                [nameof(UltimaFichaDe), nameof(UltimaFichaAte)]);
         }
 
         if (ProfissionalId == Guid.Empty)

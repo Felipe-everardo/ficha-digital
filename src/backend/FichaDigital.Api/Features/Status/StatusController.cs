@@ -1,10 +1,12 @@
 using FichaDigital.Api.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Features.Status;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/status")]
 public sealed class StatusController(
     FichaDigitalDbContext dbContext) : ControllerBase

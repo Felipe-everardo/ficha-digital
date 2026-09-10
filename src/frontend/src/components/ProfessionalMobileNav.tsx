@@ -4,7 +4,6 @@ import './ProfessionalMobileNav.css'
 export type ProfessionalSection =
   | 'clientes'
   | 'fichas'
-  | 'financeiro'
   | 'inicio'
 
 type ProfessionalMobileLayoutProps = {
@@ -16,7 +15,6 @@ const itens = [
   { id: 'inicio', label: 'Início', href: '/profissional' },
   { id: 'clientes', label: 'Clientes', href: '/profissional/clientes' },
   { id: 'fichas', label: 'Fichas', href: '/profissional/fichas' },
-  { id: 'financeiro', label: 'Financeiro', href: '/profissional/financeiro' },
 ] as const
 
 function NavigationIcon({ section }: { section: ProfessionalSection }) {
@@ -46,7 +44,7 @@ function NavigationIcon({ section }: { section: ProfessionalSection }) {
 
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 7.5h16v11H4v-11Zm0 3.5h16M15.5 15h2M7 5h10" />
+      <path d="m3 11 9-8 9 8M5.5 9.5V21h13V9.5M9.5 21v-6h5v6" />
     </svg>
   )
 }

@@ -18,9 +18,9 @@ public sealed class ListarFichasRequest : IValidatableObject
 
     public DateOnly? CriadaAte { get; init; }
 
-    public DateOnly? AtendimentoDe { get; init; }
+    public DateOnly? ConcluidaDe { get; init; }
 
-    public DateOnly? AtendimentoAte { get; init; }
+    public DateOnly? ConcluidaAte { get; init; }
 
     [Range(
         1,
@@ -44,11 +44,11 @@ public sealed class ListarFichasRequest : IValidatableObject
                 [nameof(CriadaDe), nameof(CriadaAte)]);
         }
 
-        if (AtendimentoDe > AtendimentoAte)
+        if (ConcluidaDe > ConcluidaAte)
         {
             yield return new ValidationResult(
-                "A data inicial do atendimento não pode ser posterior à data final.",
-                [nameof(AtendimentoDe), nameof(AtendimentoAte)]);
+                "A data inicial de conclusão não pode ser posterior à data final.",
+                [nameof(ConcluidaDe), nameof(ConcluidaAte)]);
         }
 
         if (ProfissionalId == Guid.Empty)

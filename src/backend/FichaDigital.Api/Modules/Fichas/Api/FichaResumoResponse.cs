@@ -1,5 +1,3 @@
-using FichaDigital.Api.Modules.Atendimentos.Api;
-
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 public sealed record FichaResumoResponse(
@@ -12,6 +10,5 @@ public sealed record FichaResumoResponse(
     string Status,
     DateTimeOffset CriadaEmUtc,
     DateTimeOffset? ConcluidaEmUtc,
-    AtendimentoResponse? Atendimento,
     DateTimeOffset? ConviteExpiraEmUtc,
     bool ConviteExpirado);

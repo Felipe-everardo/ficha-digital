@@ -19,16 +19,16 @@ type FiltrosFormulario = {
   busca: string
   profissionalId: string
   tipoProcedimento: string
-  atendimentoDe: string
-  atendimentoAte: string
+  ultimaFichaDe: string
+  ultimaFichaAte: string
 }
 
 const FILTROS_VAZIOS: FiltrosFormulario = {
   busca: '',
   profissionalId: '',
   tipoProcedimento: '',
-  atendimentoDe: '',
-  atendimentoAte: '',
+  ultimaFichaDe: '',
+  ultimaFichaAte: '',
 }
 
 type ConviteEmPreparacao = {
@@ -63,20 +63,21 @@ function criarFiltros(formulario: FiltrosFormulario): FiltrosClientes {
     profissionalId: formulario.profissionalId || undefined,
     tipoProcedimento:
       (formulario.tipoProcedimento as TipoProcedimento) || undefined,
-    atendimentoDe: formulario.atendimentoDe || undefined,
-    atendimentoAte: formulario.atendimentoAte || undefined,
+    ultimaFichaDe: formulario.ultimaFichaDe || undefined,
+    ultimaFichaAte: formulario.ultimaFichaAte || undefined,
   }
 }
 
 export function ClientesPage() {
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState<ClientesPaginados | null>(null)
-  const [carregando, setCarregando] = useState(true)
+  const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [profissionais, setProfissionais] = useState<ProfissionalResumo[]>([])
   const [filtrosFormulario, setFiltrosFormulario] =
     useState<FiltrosFormulario>(FILTROS_VAZIOS)
-  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosClientes>({})
+  const [filtrosAplicados, setFiltrosAplicados] =
+    useState<FiltrosClientes | null>(null)
   const [conviteEmPreparacao, setConviteEmPreparacao] =
     useState<ConviteEmPreparacao | null>(null)
   const [tipoProcedimento, setTipoProcedimento] = useState<
@@ -105,6 +106,13 @@ export function ClientesPage() {
   }, [])
 
   useEffect(() => {
+    if (filtrosAplicados === null) {
+      setResultado(null)
+      setErro(null)
+      setCarregando(false)
+      return
+    }
+
     const abortController = new AbortController()
 
     setCarregando(true)
@@ -159,7 +167,7 @@ export function ClientesPage() {
   function limparFiltros() {
     setFiltrosFormulario(FILTROS_VAZIOS)
     setPagina(1)
-    setFiltrosAplicados({})
+    setFiltrosAplicados(null)
   }
 
   function prepararConvite(clienteId: string, clienteNome: string) {
@@ -194,7 +202,9 @@ export function ClientesPage() {
         expiraEmUtc: convite.expiraEmUtc,
       })
       setConviteEmPreparacao(null)
-      setFiltrosAplicados((atuais) => ({ ...atuais }))
+      setFiltrosAplicados((atuais) =>
+        atuais === null ? atuais : { ...atuais },
+      )
     } catch (error) {
       if (error instanceof ApiRequestError && error.status === 401) {
         window.location.replace('/profissional/entrar')
@@ -227,6 +237,9 @@ export function ClientesPage() {
   }
 
   const totalPaginasExibido = Math.max(resultado?.totalPaginas ?? 1, 1)
+  const possuiFiltroPreenchido = Object.values(
+    criarFiltros(filtrosFormulario),
+  ).some((valor) => valor !== undefined)
 
   return (
     <main className="clients-shell">
@@ -241,7 +254,7 @@ export function ClientesPage() {
           <p className="eyebrow">Área profissional</p>
           <h1>Clientes</h1>
           <p>
-            Encontre rapidamente um cliente, veja seu último atendimento e
+            Encontre rapidamente um cliente, veja sua última ficha e
             acesse o histórico completo.
           </p>
         </div>
@@ -304,31 +317,35 @@ export function ClientesPage() {
             </select>
           </label>
           <label className="filter-field">
-            <span>Último atendimento de</span>
+            <span>Última ficha de</span>
             <CalendarInput
               type="date"
-              max={filtrosFormulario.atendimentoAte || undefined}
-              value={filtrosFormulario.atendimentoDe}
+              max={filtrosFormulario.ultimaFichaAte || undefined}
+              value={filtrosFormulario.ultimaFichaDe}
               onChange={(event) =>
-                atualizarFiltro('atendimentoDe', event.target.value)
+                atualizarFiltro('ultimaFichaDe', event.target.value)
               }
             />
           </label>
           <label className="filter-field">
-            <span>Último atendimento até</span>
+            <span>Última ficha até</span>
             <CalendarInput
               type="date"
-              min={filtrosFormulario.atendimentoDe || undefined}
-              value={filtrosFormulario.atendimentoAte}
+              min={filtrosFormulario.ultimaFichaDe || undefined}
+              value={filtrosFormulario.ultimaFichaAte}
               onChange={(event) =>
-                atualizarFiltro('atendimentoAte', event.target.value)
+                atualizarFiltro('ultimaFichaAte', event.target.value)
               }
             />
           </label>
         </div>
 
         <button type="submit" className="filters-submit" disabled={carregando}>
-          {carregando ? 'Atualizando...' : 'Buscar clientes'}
+          {carregando
+            ? 'Atualizando...'
+            : possuiFiltroPreenchido
+              ? 'Buscar clientes'
+              : 'Mostrar todos os clientes'}
         </button>
       </form>
 
@@ -439,6 +456,17 @@ export function ClientesPage() {
           </div>
         )}
 
+        {!carregando && !erro && resultado === null && (
+          <div className="clients-state clients-state--initial">
+            <p className="eyebrow">Lista sob demanda</p>
+            <h2>Como deseja encontrar o cliente?</h2>
+            <p>
+              Digite um nome ou combine os filtros acima. Para consultar a
+              base inteira, use “Mostrar todos os clientes”.
+            </p>
+          </div>
+        )}
+
         {carregando && !resultado && (
           <div className="clients-state">
             <span className="clients-loading-indicator" aria-hidden="true" />
@@ -537,7 +565,7 @@ export function ClientesPage() {
                               prepararConvite(cliente.id, cliente.nomeParaExibicao)
                             }
                           >
-                            Novo atendimento
+                            Nova ficha
                           </button>
                         </div>
                       </td>

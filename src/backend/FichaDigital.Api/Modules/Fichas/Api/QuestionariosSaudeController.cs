@@ -1,10 +1,13 @@
 using FichaDigital.Api.Modules.Fichas.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 [ApiController]
+[AllowAnonymous]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/fichas/questionario-saude")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class QuestionariosSaudeController(

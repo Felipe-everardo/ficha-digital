@@ -1,5 +1,3 @@
-using FichaDigital.Api.Modules.Atendimentos.Api;
-
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 public sealed record FichaDetalheResponse(
@@ -13,5 +11,4 @@ public sealed record FichaDetalheResponse(
     string TipoProcedimento,
     ClienteFichaDetalheResponse Cliente,
     QuestionarioSaudeDetalheResponse? QuestionarioSaude,
-    AceiteTermoResumoResponse? AceiteTermo,
-    AtendimentoResponse? Atendimento);
+    AceiteTermoResumoResponse? AceiteTermo);

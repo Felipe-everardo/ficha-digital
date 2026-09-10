@@ -119,6 +119,12 @@
   line-height: 1.6;
 }
 
+.record-detail-evidence-code {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.76rem;
+}
+
 .record-detail-collapsible {
   padding: 0;
 }
@@ -190,147 +196,6 @@
   transform: rotate(180deg);
 }
 
-.record-financial-section {
-  border-color: rgba(83, 107, 74, 0.32);
-  background:
-    linear-gradient(rgba(255, 254, 249, 0.94), rgba(255, 254, 249, 0.94)),
-    var(--moss-soft);
-}
-
-.record-financial-form {
-  margin-top: 28px;
-}
-
-.record-financial-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  align-items: end;
-}
-
-.record-financial-grid > label {
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.record-financial-grid input,
-.record-financial-grid select {
-  width: 100%;
-  min-height: 46px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  color: var(--text);
-  background: #fffef9;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
-}
-
-.record-financial-grid input:focus,
-.record-financial-grid select:focus {
-  border-color: var(--moss);
-  outline: 3px solid rgba(83, 107, 74, 0.16);
-}
-
-.record-money-input {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fffef9;
-}
-
-.record-money-input:focus-within {
-  border-color: var(--moss);
-  outline: 3px solid rgba(83, 107, 74, 0.16);
-}
-
-.record-money-input > span {
-  padding-left: 12px;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.record-money-input input {
-  border: 0;
-  outline: 0;
-}
-
-.record-money-input input:focus {
-  border: 0;
-  outline: 0;
-}
-
-.record-financial-total {
-  display: grid;
-  min-height: 70px;
-  align-content: center;
-  padding: 10px 16px;
-  border-radius: 12px;
-  color: #fffef9;
-  background: var(--moss-dark);
-}
-
-.record-financial-total span {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.record-financial-total strong {
-  margin-top: 3px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.35rem;
-  font-weight: 400;
-}
-
-.record-financial-message {
-  margin: 18px 0 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.record-financial-message--error {
-  color: var(--error);
-  background: #fbefed;
-}
-
-.record-financial-message--success {
-  color: var(--success);
-  background: #e5f0e2;
-}
-
-.record-financial-actions {
-  display: flex;
-  gap: 18px;
-  align-items: center;
-  margin-top: 22px;
-}
-
-.record-financial-actions button {
-  min-height: 46px;
-  margin: 0;
-  padding: 10px 20px;
-}
-
-.record-financial-actions span {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
 .record-detail-state {
   display: flex;
   gap: 14px;
@@ -389,15 +254,6 @@
   .record-detail-grid,
   .health-answer-list {
     grid-template-columns: 1fr;
-  }
-
-  .record-financial-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .record-financial-actions {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .record-detail-grid > div:nth-child(odd),

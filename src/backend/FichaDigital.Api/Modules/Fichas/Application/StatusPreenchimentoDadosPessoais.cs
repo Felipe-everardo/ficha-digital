@@ -7,5 +7,6 @@ public enum StatusPreenchimentoDadosPessoais
     ConviteExpirado = 3,
     FichaIndisponivel = 4,
     ClienteNaoEncontrado = 5,
-    JaPreenchidos = 6
+    JaPreenchidos = 6,
+    ClienteMenorDeIdade = 7
 }

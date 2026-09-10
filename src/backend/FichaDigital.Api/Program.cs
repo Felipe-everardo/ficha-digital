@@ -1,11 +1,13 @@
 using System.Threading.RateLimiting;
 using FichaDigital.Api.Infrastructure.Persistence;
+using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Modules.Fichas.Api;
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.Api.Modules.Profissionais.Api;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.Api.Modules.Profissionais.Infrastructure.Provisionamento;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -62,7 +64,12 @@ builder.Services.AddAntiforgery(options =>
             ? CookieSecurePolicy.SameAsRequest
             : CookieSecurePolicy.Always;
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 builder.Services.Configure<ProfissionalDesenvolvimentoOptions>(
     builder.Configuration.GetSection(
         ProfissionalDesenvolvimentoOptions.Secao));
@@ -74,6 +81,8 @@ builder.Services.AddScoped<ProvisionadorProfissionalInicial>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<GeradorTokenConvite>();
 builder.Services.AddSingleton<CalculadorHashConteudo>();
+builder.Services.AddScoped<ConsultaClientes>();
+builder.Services.AddScoped<ConsultaFichas>();
 builder.Services.AddScoped<EmitirConviteFichaService>();
 builder.Services.AddScoped<AbrirConviteFichaService>();
 builder.Services.AddScoped<PreencherDadosPessoaisService>();
@@ -188,7 +197,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 app.Run();
 

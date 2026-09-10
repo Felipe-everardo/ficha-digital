@@ -1,12 +1,15 @@
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 [ApiController]
+[AllowAnonymous]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/fichas/convites")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class AberturaConvitesFichaController(
@@ -55,6 +58,21 @@ public sealed class AberturaConvitesFichaController(
                         resultado.DadosPessoais.Instagram,
                         resultado.DadosPessoais.ContatoEmergenciaNome,
                         resultado.DadosPessoais.ContatoEmergenciaCelular),
+                    resultado.QuestionarioSaude is null
+                        ? null
+                        : new QuestionarioSaudeDetalheResponse(
+                            resultado.QuestionarioSaude.Versao,
+                            resultado.QuestionarioSaude.TemDiabetes,
+                            resultado.QuestionarioSaude.TipoDiabetes,
+                            resultado.QuestionarioSaude.PossuiPressaoAlta,
+                            resultado.QuestionarioSaude.TemAlergia,
+                            resultado.QuestionarioSaude.DescricaoAlergia,
+                            resultado.QuestionarioSaude.PossuiCondicaoCardiaca,
+                            resultado.QuestionarioSaude.TemEpilepsia,
+                            resultado.QuestionarioSaude.TemHemofilia,
+                            resultado.QuestionarioSaude.UsaMarcaPasso,
+                            resultado.QuestionarioSaude.EstaGravidaOuAmamentando,
+                            resultado.QuestionarioSaude.RespondidoEmUtc),
                     new TermoConsentimentoResponse(
                         TermoConsentimentoAtual.Versao,
                         TermoConsentimentoAtual.Conteudo,

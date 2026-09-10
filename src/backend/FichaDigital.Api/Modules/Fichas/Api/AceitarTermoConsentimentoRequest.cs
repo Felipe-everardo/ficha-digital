@@ -25,6 +25,15 @@ public sealed class AceitarTermoConsentimentoRequest : IValidatableObject
     [Required(ErrorMessage = "A confirmação do aceite é obrigatória.")]
     public bool? AceitouTermo { get; init; }
 
+    [Required(ErrorMessage = "A confirmação de maioridade é obrigatória.")]
+    public bool? ConfirmouMaioridade { get; init; }
+
+    [Required(ErrorMessage = "A confirmação dos dados pessoais é obrigatória.")]
+    public bool? ConfirmouDadosPessoais { get; init; }
+
+    [Required(ErrorMessage = "A confirmação do questionário de saúde é obrigatória.")]
+    public bool? ConfirmouQuestionarioSaude { get; init; }
+
     public IEnumerable<ValidationResult> Validate(
         ValidationContext validationContext)
     {
@@ -33,6 +42,27 @@ public sealed class AceitarTermoConsentimentoRequest : IValidatableObject
             yield return new ValidationResult(
                 "É necessário aceitar o termo para concluir a ficha.",
                 [nameof(AceitouTermo)]);
+        }
+
+        if (ConfirmouMaioridade is false)
+        {
+            yield return new ValidationResult(
+                "É necessário declarar que possui 18 anos ou mais.",
+                [nameof(ConfirmouMaioridade)]);
+        }
+
+        if (ConfirmouDadosPessoais is false)
+        {
+            yield return new ValidationResult(
+                "É necessário confirmar que os dados pessoais estão corretos.",
+                [nameof(ConfirmouDadosPessoais)]);
+        }
+
+        if (ConfirmouQuestionarioSaude is false)
+        {
+            yield return new ValidationResult(
+                "É necessário confirmar que as informações de saúde estão corretas.",
+                [nameof(ConfirmouQuestionarioSaude)]);
         }
     }
 }

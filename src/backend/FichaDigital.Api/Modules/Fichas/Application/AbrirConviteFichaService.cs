@@ -56,9 +56,15 @@ public sealed class AbrirConviteFichaService(
                 StatusAberturaConvite.Indisponivel);
         }
 
-        var questionarioRespondido = await dbContext.QuestionariosSaude
+        var questionario = await dbContext.QuestionariosSaude
             .AsNoTracking()
-            .AnyAsync(
+            .SingleOrDefaultAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+
+        var dadosDaFicha = await dbContext.DadosPessoaisFichas
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
                 item => item.FichaId == ficha.Id,
                 cancellationToken);
 
@@ -78,20 +84,46 @@ public sealed class AbrirConviteFichaService(
             StatusAberturaConvite.Aberto,
             ficha.Id,
             ficha.Status,
-            questionarioRespondido,
-            cliente.DadosPessoaisPreenchidos,
+            questionario is not null,
+            dadosDaFicha is not null,
             cliente.NomeReferencia,
             ficha.ProfissionalResponsavelNome,
             ficha.TipoProcedimento,
-            new DadosPessoaisConvite(
-                cliente.NomeCompleto,
-                cliente.NomeSocial,
-                cliente.Pronomes,
-                cliente.DataNascimento,
-                cliente.Celular,
-                cliente.Email,
-                cliente.Instagram,
-                cliente.ContatoEmergenciaNome,
-                cliente.ContatoEmergenciaCelular));
+            dadosDaFicha is null
+                ? new DadosPessoaisConvite(
+                    cliente.NomeCompleto,
+                    cliente.NomeSocial,
+                    cliente.Pronomes,
+                    cliente.DataNascimento,
+                    cliente.Celular,
+                    cliente.Email,
+                    cliente.Instagram,
+                    cliente.ContatoEmergenciaNome,
+                    cliente.ContatoEmergenciaCelular)
+                : new DadosPessoaisConvite(
+                    dadosDaFicha.NomeCompleto,
+                    dadosDaFicha.NomeSocial,
+                    dadosDaFicha.Pronomes,
+                    dadosDaFicha.DataNascimento,
+                    dadosDaFicha.Celular,
+                    dadosDaFicha.Email,
+                    dadosDaFicha.Instagram,
+                    dadosDaFicha.ContatoEmergenciaNome,
+                    dadosDaFicha.ContatoEmergenciaCelular),
+            questionario is null
+                ? null
+                : new QuestionarioSaudeConvite(
+                    questionario.Versao,
+                    questionario.TemDiabetes,
+                    questionario.TipoDiabetes,
+                    questionario.PossuiPressaoAlta,
+                    questionario.TemAlergia,
+                    questionario.DescricaoAlergia,
+                    questionario.PossuiCondicaoCardiaca,
+                    questionario.TemEpilepsia,
+                    questionario.TemHemofilia,
+                    questionario.UsaMarcaPasso,
+                    questionario.EstaGravidaOuAmamentando,
+                    questionario.RespondidoEmUtc));
     }
 }

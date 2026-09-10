@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
-using FichaDigital.Api.Modules.Atendimentos.Domain;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
 using FichaDigital.Api.Modules.Fichas.Domain;
@@ -49,7 +48,6 @@ public sealed class ListarFichasTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
         var corpo = await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken);
         var resultado = await response.Content
@@ -59,9 +57,6 @@ public sealed class ListarFichasTests
         Assert.NotNull(resultado);
         Assert.Equal(2, resultado.TotalItens);
         Assert.Equal(1, resultado.TotalPaginas);
-        Assert.Equal(180m, resultado.ResumoFinanceiro.TotalRecebido);
-        Assert.Equal(1, resultado.ResumoFinanceiro.AtendimentosRegistrados);
-        Assert.Equal(1, resultado.ResumoFinanceiro.FichasSemRegistro);
 
         var fichaExpirada = Assert.Single(
             resultado.Itens,
@@ -76,13 +71,19 @@ public sealed class ListarFichasTests
         Assert.Equal("Bruno Lima", fichaConcluida.ClienteNome);
         Assert.Equal("Concluida", fichaConcluida.Status);
         Assert.Equal(fichas.ConcluidaEmUtc, fichaConcluida.ConcluidaEmUtc);
-        Assert.NotNull(fichaConcluida.Atendimento);
-        Assert.Equal(180m, fichaConcluida.Atendimento.ValorFinal);
         Assert.False(fichaConcluida.ConviteExpirado);
 
         Assert.DoesNotContain("temDiabetes", corpo);
         Assert.DoesNotContain("descricaoAlergia", corpo);
         Assert.DoesNotContain("nomeAssinante", corpo);
+        Assert.DoesNotContain(
+            "atendimento",
+            corpo,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            "financeiro",
+            corpo,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -126,25 +127,30 @@ public sealed class ListarFichasTests
         var ficha = Assert.Single(resultado.Itens);
         Assert.Equal("Bruno Lima", ficha.ClienteNome);
         Assert.Equal("Piercing", ficha.TipoProcedimento);
-        Assert.Equal("Profissional do Histórico", ficha.ProfissionalResponsavelNome);
+        Assert.Equal(
+            "Profissional do Histórico",
+            ficha.ProfissionalResponsavelNome);
     }
 
     [Fact]
-    public async Task Listar_ComPeriodoDeAtendimento_DeveFiltrarPelaDataDoProcedimento()
+    public async Task Listar_ComPeriodoDeConclusao_DeveFiltrarADataDoAceite()
     {
         var agora = DateTimeOffset.UtcNow;
+        var concluidaEmUtc = agora.AddHours(2);
+        var dataConclusao = concluidaEmUtc.ToString("yyyy-MM-dd");
         using var factory = new FichaDigitalApiFactory(
-            new FixedTimeProvider(agora.AddHours(3)));
-        var fichas = await CriarFichasAsync(factory, agora);
+            new FixedTimeProvider(concluidaEmUtc.AddHours(1)));
+        var fichas = await CriarFichasAsync(
+            factory,
+            agora);
         using var client = await AutenticacaoProfissionalTestHelper
             .CriarClienteAutenticadoAsync(
                 factory,
                 TestContext.Current.CancellationToken);
-        var data = fichas.DataRealizacao.ToString("yyyy-MM-dd");
 
         using var response = await client.GetAsync(
-            $"/api/fichas?status=Concluida&atendimentoDe={data}" +
-            $"&atendimentoAte={data}",
+            $"/api/fichas?status=Concluida&concluidaDe={dataConclusao}" +
+            $"&concluidaAte={dataConclusao}",
             TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
@@ -155,70 +161,7 @@ public sealed class ListarFichasTests
         Assert.NotNull(resultado);
         var ficha = Assert.Single(resultado.Itens);
         Assert.Equal(fichas.FichaConcluidaId, ficha.Id);
-        Assert.Equal(fichas.DataRealizacao, ficha.Atendimento?.DataRealizacao);
-        Assert.Equal(180m, resultado.ResumoFinanceiro.TotalRecebido);
-        Assert.Equal(0, resultado.ResumoFinanceiro.FichasSemRegistro);
-    }
-
-    [Fact]
-    public async Task Listar_ComPeriodoESemRegistroFinanceiro_DeveUsarDataDeConclusao()
-    {
-        var concluidaEmUtc = new DateTimeOffset(
-            2026,
-            9,
-            5,
-            14,
-            0,
-            0,
-            TimeSpan.Zero);
-        using var factory = new FichaDigitalApiFactory(
-            new FixedTimeProvider(concluidaEmUtc.AddHours(1)));
-
-        Guid fichaId;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider
-                .GetRequiredService<FichaDigitalDbContext>();
-            var cliente = new Cliente("Cliente sem valor registrado");
-            var ficha = new Ficha(cliente.Id);
-            ficha.EnviarConvite();
-            ficha.IniciarPreenchimento();
-            ficha.Concluir();
-            var aceite = new AceiteTermoConsentimento(
-                ficha.Id,
-                1,
-                "Termo usado no teste.",
-                new string('a', 64),
-                "Cliente Teste",
-                concluidaEmUtc);
-
-            fichaId = ficha.Id;
-            dbContext.Clientes.Add(cliente);
-            dbContext.Fichas.Add(ficha);
-            dbContext.AceitesTermoConsentimento.Add(aceite);
-            await dbContext.SaveChangesAsync(
-                TestContext.Current.CancellationToken);
-        }
-
-        using var client = await AutenticacaoProfissionalTestHelper
-            .CriarClienteAutenticadoAsync(
-                factory,
-                TestContext.Current.CancellationToken);
-        using var response = await client.GetAsync(
-            "/api/fichas?status=Concluida&atendimentoDe=2026-09-05" +
-            "&atendimentoAte=2026-09-05",
-            TestContext.Current.CancellationToken);
-
-        response.EnsureSuccessStatusCode();
-        var resultado = await response.Content
-            .ReadFromJsonAsync<FichasPaginadasResponse>(
-                TestContext.Current.CancellationToken);
-
-        Assert.NotNull(resultado);
-        var fichaEncontrada = Assert.Single(resultado.Itens);
-        Assert.Equal(fichaId, fichaEncontrada.Id);
-        Assert.Null(fichaEncontrada.Atendimento);
-        Assert.Equal(concluidaEmUtc, fichaEncontrada.ConcluidaEmUtc);
+        Assert.Equal(concluidaEmUtc, ficha.ConcluidaEmUtc);
     }
 
     private static async Task<FichasCriadas> CriarFichasAsync(
@@ -235,6 +178,7 @@ public sealed class ListarFichasTests
             $"historico-{Guid.NewGuid():N}@example.com");
         var criacaoProfissional = await userManager.CreateAsync(profissional);
         Assert.True(criacaoProfissional.Succeeded);
+
         var ana = new Cliente(
             "Ana Silva",
             "Ana",
@@ -259,6 +203,8 @@ public sealed class ListarFichasTests
             fichaExpirada.Id,
             new string('a', 64),
             agora.AddHours(1));
+        var dadosAna = CriarDadosDaFicha(fichaExpirada.Id, ana, agora);
+
         var fichaConcluida = new Ficha(
             bruno.Id,
             profissional.Id,
@@ -279,35 +225,42 @@ public sealed class ListarFichasTests
             new string('c', 64),
             "Bruno Lima",
             concluidaEmUtc);
-        var dataRealizacao = DateOnly.FromDateTime(agora.UtcDateTime);
-        var atendimento = new Atendimento(
-            fichaConcluida.Id,
-            dataRealizacao,
-            200m,
-            20m,
-            FormaPagamento.Pix,
-            concluidaEmUtc.AddHours(1));
+        var dadosBruno = CriarDadosDaFicha(fichaConcluida.Id, bruno, agora);
 
         dbContext.Clientes.AddRange(ana, bruno);
         dbContext.Fichas.AddRange(fichaExpirada, fichaConcluida);
-        dbContext.ConvitesFicha.AddRange(
-            conviteExpirado,
-            conviteConcluido);
+        dbContext.ConvitesFicha.AddRange(conviteExpirado, conviteConcluido);
+        dbContext.DadosPessoaisFichas.AddRange(dadosAna, dadosBruno);
         dbContext.AceitesTermoConsentimento.Add(aceite);
-        dbContext.Atendimentos.Add(atendimento);
-        await dbContext.SaveChangesAsync(
-            TestContext.Current.CancellationToken);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         return new FichasCriadas(
             fichaExpirada.Id,
             fichaConcluida.Id,
-            concluidaEmUtc,
-            dataRealizacao);
+            concluidaEmUtc);
+    }
+
+    private static DadosPessoaisFicha CriarDadosDaFicha(
+        Guid fichaId,
+        Cliente cliente,
+        DateTimeOffset confirmadosEmUtc)
+    {
+        return new DadosPessoaisFicha(
+            fichaId,
+            cliente.NomeCompleto!,
+            cliente.NomeSocial,
+            cliente.Pronomes,
+            cliente.DataNascimento!.Value,
+            cliente.Celular!,
+            cliente.Email,
+            cliente.Instagram,
+            cliente.ContatoEmergenciaNome,
+            cliente.ContatoEmergenciaCelular,
+            confirmadosEmUtc);
     }
 
     private sealed record FichasCriadas(
         Guid FichaExpiradaId,
         Guid FichaConcluidaId,
-        DateTimeOffset ConcluidaEmUtc,
-        DateOnly DataRealizacao);
+        DateTimeOffset ConcluidaEmUtc);
 }

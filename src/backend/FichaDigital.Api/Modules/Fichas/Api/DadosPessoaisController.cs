@@ -1,10 +1,13 @@
 using FichaDigital.Api.Modules.Fichas.Application;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 [ApiController]
+[AllowAnonymous]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/fichas/dados-pessoais")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class DadosPessoaisController(
@@ -18,6 +21,8 @@ public sealed class DadosPessoaisController(
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status410Gone)]
+    [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType<ProblemDetails>(
         StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<DadosPessoaisPreenchidosResponse>> Preencher(
@@ -60,6 +65,11 @@ public sealed class DadosPessoaisController(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ficha indisponível.",
                 detail: "Esta ficha não está disponível para preenchimento."),
+
+            StatusPreenchimentoDadosPessoais.ClienteMenorDeIdade => Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Atendimento indisponível.",
+                detail: "O estúdio realiza procedimentos somente em pessoas com 18 anos ou mais."),
 
             _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,

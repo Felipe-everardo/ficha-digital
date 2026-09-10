@@ -5,4 +5,5 @@ public sealed record ResultadoAceiteTermoConsentimento(
     Guid? AceiteId = null,
     Guid? FichaId = null,
     int? VersaoTermo = null,
-    DateTimeOffset? AceitoEmUtc = null);
+    DateTimeOffset? AceitoEmUtc = null,
+    string? EvidenciaHash = null);

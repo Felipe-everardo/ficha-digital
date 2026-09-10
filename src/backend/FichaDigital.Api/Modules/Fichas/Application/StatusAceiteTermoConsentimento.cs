@@ -8,5 +8,7 @@ public enum StatusAceiteTermoConsentimento
     FichaIndisponivel = 4,
     QuestionarioPendente = 5,
     JaAceito = 6,
-    TermoDesatualizado = 7
+    TermoDesatualizado = 7,
+    ClienteMenorDeIdade = 8,
+    DadosPessoaisPendentes = 9
 }

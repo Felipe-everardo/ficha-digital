@@ -5,4 +5,5 @@ public sealed record TermoConsentimentoAceitoResponse(
     Guid FichaId,
     int VersaoTermo,
     DateTimeOffset AceitoEmUtc,
+    string EvidenciaHash,
     string StatusFicha);

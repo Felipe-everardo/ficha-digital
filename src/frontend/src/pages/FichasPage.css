@@ -143,45 +143,6 @@
   white-space: nowrap;
 }
 
-.records-financial-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 18px;
-}
-
-.records-financial-summary article {
-  display: grid;
-  min-height: 128px;
-  align-content: center;
-  padding: 20px 22px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: rgba(255, 254, 249, 0.9);
-}
-
-.records-financial-summary span {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.records-financial-summary strong {
-  margin-top: 5px;
-  color: var(--moss-dark);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  font-weight: 400;
-}
-
-.records-financial-summary small {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 0.72rem;
-}
-
 .records-content {
   margin-top: 28px;
 }
@@ -269,20 +230,6 @@
 .record-detail-link:focus-visible {
   outline: 3px solid rgba(83, 107, 74, 0.28);
   outline-offset: 3px;
-}
-
-.payment-status {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.74rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.payment-status--pago {
-  color: #315b35;
-  background: #dcebdd;
 }
 
 .record-status {
@@ -407,10 +354,6 @@
 
   .records-period-filter__actions button {
     flex: 1;
-  }
-
-  .records-financial-summary {
-    grid-template-columns: 1fr;
   }
 
   .records-table-wrapper {

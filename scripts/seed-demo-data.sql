@@ -10,11 +10,10 @@ BEGIN TRY
     BEGIN TRANSACTION;
 
     -- Preserva as contas profissionais existentes e substitui somente os
-    -- dados fictícios de clientes, fichas, atendimentos e despesas.
-    DELETE FROM [Despesas];
-    DELETE FROM [Atendimentos];
+    -- dados fictícios de clientes e fichas.
     DELETE FROM [AceitesTermoConsentimento];
     DELETE FROM [QuestionariosSaude];
+    DELETE FROM [DadosPessoaisFichas];
     DELETE FROM [ConvitesFicha];
     DELETE FROM [Fichas];
     DELETE FROM [Clientes];
@@ -112,34 +111,29 @@ BEGIN TRY
         [ClienteId] uniqueidentifier NOT NULL,
         [QuestionarioId] uniqueidentifier NOT NULL,
         [AceiteId] uniqueidentifier NOT NULL,
-        [AtendimentoId] uniqueidentifier NULL,
         [ProfissionalId] uniqueidentifier NOT NULL,
         [ProfissionalNome] nvarchar(150) NOT NULL,
         [TipoProcedimento] nvarchar(30) NOT NULL,
-        [DataProcedimento] date NOT NULL,
-        [ValorCobrado] decimal(10,2) NULL,
-        [Desconto] decimal(10,2) NULL,
-        [FormaPagamento] nvarchar(30) NULL,
-        [SituacaoPagamento] nvarchar(30) NULL
+        [DataConclusao] date NOT NULL
     );
 
     INSERT INTO @FichasDemo VALUES
-        ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', @Lia, N'Lia', N'Tatuagem', @Hoje, 480.00, 30.00, N'Pix', N'Pago'),
-        ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000002', '60000000-0000-0000-0000-000000000002', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -35, @Hoje), 350.00, 0.00, N'CartaoCredito', N'Pago'),
-        ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', '60000000-0000-0000-0000-000000000003', @Lia, N'Lia', N'Tatuagem', DATEADD(year, -1, @Hoje), 220.00, 0.00, N'Dinheiro', N'Pago'),
-        ('30000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-000000000004', '60000000-0000-0000-0000-000000000004', @Thais, N'Thais', N'Piercing', DATEADD(day, -1, @Hoje), 150.00, 0.00, N'Pix', N'Pago'),
-        ('30000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000005', '60000000-0000-0000-0000-000000000005', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -45, @Hoje), 600.00, 50.00, N'Transferencia', N'Pago'),
-        ('30000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000006', '50000000-0000-0000-0000-000000000006', NULL, @Taty, N'Taty', N'Tatuagem', DATEADD(day, -1, @Hoje), NULL, NULL, NULL, NULL),
-        ('30000000-0000-0000-0000-000000000007', '20000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000007', '50000000-0000-0000-0000-000000000007', '60000000-0000-0000-0000-000000000007', @Lia, N'Lia', N'Tatuagem', @Hoje, 300.00, 0.00, N'CartaoDebito', N'Pago'),
-        ('30000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000005', '40000000-0000-0000-0000-000000000008', '50000000-0000-0000-0000-000000000008', '60000000-0000-0000-0000-000000000008', @Thais, N'Thais', N'Piercing', DATEADD(day, -35, @Hoje), 90.00, 0.00, N'Dinheiro', N'Pago'),
-        ('30000000-0000-0000-0000-000000000009', '20000000-0000-0000-0000-000000000006', '40000000-0000-0000-0000-000000000009', '50000000-0000-0000-0000-000000000009', '60000000-0000-0000-0000-000000000009', @Lia, N'Lia', N'Tatuagem', DATEADD(day, -120, @Hoje), 750.00, 75.00, N'CartaoCredito', N'Pago'),
-        ('30000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000007', '40000000-0000-0000-0000-000000000010', '50000000-0000-0000-0000-000000000010', '60000000-0000-0000-0000-000000000010', @Thais, N'Thais', N'Piercing', DATEADD(year, -1, DATEADD(day, -20, @Hoje)), 110.00, 0.00, N'Pix', N'Pago'),
-        ('30000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000008', '40000000-0000-0000-0000-000000000011', '50000000-0000-0000-0000-000000000011', '60000000-0000-0000-0000-000000000011', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -2, @Hoje), 900.00, 100.00, N'CartaoCredito', N'Pago'),
-        ('30000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000009', '40000000-0000-0000-0000-000000000012', '50000000-0000-0000-0000-000000000012', '60000000-0000-0000-0000-000000000012', @Thais, N'Thais', N'Piercing', DATEADD(day, -5, @Hoje), 140.00, 0.00, N'Pix', N'Pago'),
-        ('30000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000010', '40000000-0000-0000-0000-000000000013', '50000000-0000-0000-0000-000000000013', '60000000-0000-0000-0000-000000000013', @Lia, N'Lia', N'Tatuagem', DATEADD(day, -240, @Hoje), 520.00, 20.00, N'Transferencia', N'Pago'),
-        ('30000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000010', '40000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000014', '60000000-0000-0000-0000-000000000014', @Thais, N'Thais', N'Piercing', @Hoje, 180.00, 0.00, N'Pix', N'Pago'),
-        ('30000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000011', '40000000-0000-0000-0000-000000000015', '50000000-0000-0000-0000-000000000015', NULL, @Lia, N'Lia', N'Tatuagem', @Hoje, NULL, NULL, NULL, NULL),
-        ('30000000-0000-0000-0000-000000000016', '20000000-0000-0000-0000-000000000012', '40000000-0000-0000-0000-000000000016', '50000000-0000-0000-0000-000000000016', '60000000-0000-0000-0000-000000000016', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -15, @Hoje), 420.00, 0.00, N'Pix', N'Pago');
+        ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', @Lia, N'Lia', N'Tatuagem', @Hoje),
+        ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000002', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -35, @Hoje)),
+        ('30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000003', @Lia, N'Lia', N'Tatuagem', DATEADD(year, -1, @Hoje)),
+        ('30000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000004', '50000000-0000-0000-0000-000000000004', @Thais, N'Thais', N'Piercing', DATEADD(day, -1, @Hoje)),
+        ('30000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000005', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -45, @Hoje)),
+        ('30000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000006', '50000000-0000-0000-0000-000000000006', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -1, @Hoje)),
+        ('30000000-0000-0000-0000-000000000007', '20000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000007', '50000000-0000-0000-0000-000000000007', @Lia, N'Lia', N'Tatuagem', @Hoje),
+        ('30000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000005', '40000000-0000-0000-0000-000000000008', '50000000-0000-0000-0000-000000000008', @Thais, N'Thais', N'Piercing', DATEADD(day, -35, @Hoje)),
+        ('30000000-0000-0000-0000-000000000009', '20000000-0000-0000-0000-000000000006', '40000000-0000-0000-0000-000000000009', '50000000-0000-0000-0000-000000000009', @Lia, N'Lia', N'Tatuagem', DATEADD(day, -120, @Hoje)),
+        ('30000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000007', '40000000-0000-0000-0000-000000000010', '50000000-0000-0000-0000-000000000010', @Thais, N'Thais', N'Piercing', DATEADD(year, -1, DATEADD(day, -20, @Hoje))),
+        ('30000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000008', '40000000-0000-0000-0000-000000000011', '50000000-0000-0000-0000-000000000011', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -2, @Hoje)),
+        ('30000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000009', '40000000-0000-0000-0000-000000000012', '50000000-0000-0000-0000-000000000012', @Thais, N'Thais', N'Piercing', DATEADD(day, -5, @Hoje)),
+        ('30000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000010', '40000000-0000-0000-0000-000000000013', '50000000-0000-0000-0000-000000000013', @Lia, N'Lia', N'Tatuagem', DATEADD(day, -240, @Hoje)),
+        ('30000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000010', '40000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000014', @Thais, N'Thais', N'Piercing', @Hoje),
+        ('30000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000011', '40000000-0000-0000-0000-000000000015', '50000000-0000-0000-0000-000000000015', @Lia, N'Lia', N'Tatuagem', @Hoje),
+        ('30000000-0000-0000-0000-000000000016', '20000000-0000-0000-0000-000000000012', '40000000-0000-0000-0000-000000000016', '50000000-0000-0000-0000-000000000016', @Taty, N'Taty', N'Tatuagem', DATEADD(day, -15, @Hoje));
 
     INSERT INTO [Fichas] (
         [Id], [ClienteId], [ProfissionalResponsavelId],
@@ -148,8 +142,22 @@ BEGIN TRY
     SELECT
         [FichaId], [ClienteId], [ProfissionalId], [ProfissionalNome],
         [TipoProcedimento], N'Concluida',
-        DATEADD(day, -1, TODATETIMEOFFSET(CAST([DataProcedimento] AS datetime2), '+00:00'))
+        DATEADD(day, -1, TODATETIMEOFFSET(CAST([DataConclusao] AS datetime2), '+00:00'))
     FROM @FichasDemo;
+
+    INSERT INTO [DadosPessoaisFichas] (
+        [FichaId], [NomeCompleto], [NomeSocial], [Pronomes],
+        [DataNascimento], [Celular], [Email], [Instagram],
+        [ContatoEmergenciaNome], [ContatoEmergenciaCelular],
+        [ConfirmadosEmUtc])
+    SELECT
+        ficha.[FichaId], cliente.[NomeCompleto], cliente.[NomeSocial],
+        cliente.[Pronomes], cliente.[DataNascimento], cliente.[Celular],
+        cliente.[Email], cliente.[Instagram],
+        cliente.[ContatoEmergenciaNome], cliente.[ContatoEmergenciaCelular],
+        DATEADD(hour, 8, TODATETIMEOFFSET(CAST(ficha.[DataConclusao] AS datetime2), '+00:00'))
+    FROM @FichasDemo ficha
+    INNER JOIN [Clientes] cliente ON cliente.[Id] = ficha.[ClienteId];
 
     INSERT INTO [QuestionariosSaude] (
         [Id], [FichaId], [Versao], [TemDiabetes], [TipoDiabetes],
@@ -164,43 +172,23 @@ BEGIN TRY
         CASE WHEN [ClienteId] = '20000000-0000-0000-0000-000000000003' THEN 1 ELSE 0 END,
         CASE WHEN [ClienteId] = '20000000-0000-0000-0000-000000000003' THEN N'Alergia fictícia a látex' ELSE NULL END,
         0, 0, 0, 0, 0,
-        DATEADD(hour, 9, TODATETIMEOFFSET(CAST([DataProcedimento] AS datetime2), '+00:00'))
+        DATEADD(hour, 9, TODATETIMEOFFSET(CAST([DataConclusao] AS datetime2), '+00:00'))
     FROM @FichasDemo;
 
     INSERT INTO [AceitesTermoConsentimento] (
         [Id], [FichaId], [VersaoTermo], [ConteudoTermo], [ConteudoHash],
-        [NomeAssinante], [AceitoEmUtc])
+        [NomeAssinante], [ConfirmouMaioridade], [ConfirmouDadosPessoais],
+        [ConfirmouQuestionarioSaude], [VersaoEvidencia], [EvidenciaJson],
+        [EvidenciaHash], [AceitoEmUtc])
     SELECT
         ficha.[AceiteId], ficha.[FichaId], 1,
         N'Termo de consentimento fictício para demonstração.',
         REPLICATE(N'0', 64), cliente.[NomeCompleto],
-        DATEADD(hour, 10, TODATETIMEOFFSET(CAST(ficha.[DataProcedimento] AS datetime2), '+00:00'))
+        1, 1, 1, 1, N'{"registroDemonstracao":true}',
+        N'0d2c9e656e43a3f29fa34ace539e8dff66f9e5711b28346799f602f88bf0fe6a',
+        DATEADD(hour, 10, TODATETIMEOFFSET(CAST(ficha.[DataConclusao] AS datetime2), '+00:00'))
     FROM @FichasDemo ficha
     INNER JOIN [Clientes] cliente ON cliente.[Id] = ficha.[ClienteId];
-
-    INSERT INTO [Atendimentos] (
-        [Id], [FichaId], [DataRealizacao], [ValorCobrado], [Desconto],
-        [ValorFinal], [FormaPagamento], [SituacaoPagamento],
-        [RegistradoEmUtc], [AtualizadoEmUtc])
-    SELECT
-        [AtendimentoId], [FichaId], [DataProcedimento], [ValorCobrado],
-        [Desconto], [ValorCobrado] - [Desconto], [FormaPagamento],
-        [SituacaoPagamento],
-        DATEADD(hour, 18, TODATETIMEOFFSET(CAST([DataProcedimento] AS datetime2), '+00:00')),
-        DATEADD(hour, 18, TODATETIMEOFFSET(CAST([DataProcedimento] AS datetime2), '+00:00'))
-    FROM @FichasDemo
-    WHERE [AtendimentoId] IS NOT NULL;
-
-    INSERT INTO [Despesas] (
-        [Id], [Data], [Categoria], [Descricao], [Valor],
-        [ProfissionalId], [ProfissionalNome], [RegistradaEmUtc],
-        [AtualizadaEmUtc])
-    VALUES
-        ('70000000-0000-0000-0000-000000000001', @Hoje, N'Materiais', N'Agulhas e materiais descartáveis (fictício)', 85.00, @Thais, N'Thais', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET()),
-        ('70000000-0000-0000-0000-000000000002', DATEADD(day, -7, @Hoje), N'Contas', N'Conta de energia do estúdio (fictícia)', 320.00, @Lia, N'Lia', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET()),
-        ('70000000-0000-0000-0000-000000000003', DATEADD(day, -35, @Hoje), N'Marketing', N'Anúncio em rede social (fictício)', 180.00, @Taty, N'Taty', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET()),
-        ('70000000-0000-0000-0000-000000000004', DATEADD(day, -120, @Hoje), N'Aluguel', N'Aluguel mensal do estúdio (fictício)', 1500.00, @Lia, N'Lia', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET()),
-        ('70000000-0000-0000-0000-000000000005', DATEADD(year, -1, @Hoje), N'Manutencao', N'Manutenção de equipamento (fictícia)', 600.00, @Thais, N'Thais', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET());
 
     COMMIT TRANSACTION;
 END TRY
@@ -215,8 +203,9 @@ END CATCH;
 
 SELECT N'Clientes' AS [Tabela], COUNT_BIG(*) AS [Registros] FROM [Clientes]
 UNION ALL SELECT N'Fichas', COUNT_BIG(*) FROM [Fichas]
-UNION ALL SELECT N'Atendimentos', COUNT_BIG(*) FROM [Atendimentos]
-UNION ALL SELECT N'Despesas', COUNT_BIG(*) FROM [Despesas]
+UNION ALL SELECT N'DadosPessoaisFichas', COUNT_BIG(*) FROM [DadosPessoaisFichas]
+UNION ALL SELECT N'QuestionariosSaude', COUNT_BIG(*) FROM [QuestionariosSaude]
+UNION ALL SELECT N'AceitesTermoConsentimento', COUNT_BIG(*) FROM [AceitesTermoConsentimento]
 UNION ALL SELECT N'Profissionais demo', COUNT_BIG(*) FROM [AspNetUsers]
 WHERE [Id] IN (@Lia, @Taty, @Thais);
 

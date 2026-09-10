@@ -273,15 +273,6 @@ export function AreaProfissionalPage() {
             <p>Consulte o arquivo completo de fichas anteriores.</p>
             <strong>Ver histórico →</strong>
           </a>
-          <a
-            className="professional-placeholder-card professional-placeholder-card--action"
-            href="/profissional/financeiro"
-          >
-            <span>03</span>
-            <h2>Financeiro</h2>
-            <p>Registre despesas e acompanhe entradas, saídas e saldo.</p>
-            <strong>Ver financeiro →</strong>
-          </a>
         </div>
       </section>
       </main>

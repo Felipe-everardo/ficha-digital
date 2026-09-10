@@ -1,11 +1,14 @@
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FichaDigital.Api.Modules.Fichas.Api;
 
 [ApiController]
+[AllowAnonymous]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/fichas/termo-consentimento")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class TermosConsentimentoController(
@@ -23,6 +26,8 @@ public sealed class TermosConsentimentoController(
     [ProducesResponseType<ProblemDetails>(
         StatusCodes.Status410Gone)]
     [ProducesResponseType<ProblemDetails>(
+        StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType<ProblemDetails>(
         StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<TermoConsentimentoAceitoResponse>> Aceitar(
         [FromBody] AceitarTermoConsentimentoRequest request,
@@ -32,7 +37,14 @@ public sealed class TermosConsentimentoController(
             request.Token,
             request.VersaoTermo!.Value,
             request.ConteudoHash,
-            request.NomeAssinante);
+            request.NomeAssinante,
+            request.ConfirmouMaioridade!.Value,
+            request.ConfirmouDadosPessoais!.Value,
+            request.ConfirmouQuestionarioSaude!.Value,
+            LimitarMetadata(
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                64),
+            LimitarMetadata(Request.Headers.UserAgent.ToString(), 512));
 
         var resultado = await service.AceitarAsync(
             command,
@@ -45,6 +57,7 @@ public sealed class TermosConsentimentoController(
                 resultado.FichaId!.Value,
                 resultado.VersaoTermo!.Value,
                 resultado.AceitoEmUtc!.Value,
+                resultado.EvidenciaHash!,
                 StatusFicha.Concluida.ToString());
 
             return Created(
@@ -64,6 +77,11 @@ public sealed class TermosConsentimentoController(
                 title: "Questionário pendente.",
                 detail: "Responda o questionário antes de aceitar o termo."),
 
+            StatusAceiteTermoConsentimento.DadosPessoaisPendentes => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Dados pessoais pendentes.",
+                detail: "Confirme os dados pessoais antes de aceitar o termo."),
+
             StatusAceiteTermoConsentimento.TermoDesatualizado => Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Termo atualizado.",
@@ -79,10 +97,28 @@ public sealed class TermosConsentimentoController(
                 title: "Ficha indisponível.",
                 detail: "Esta ficha não está disponível para conclusão."),
 
+            StatusAceiteTermoConsentimento.ClienteMenorDeIdade => Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Atendimento indisponível.",
+                detail: "O estúdio realiza procedimentos somente em pessoas com 18 anos ou mais."),
+
             _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Convite inválido.",
                 detail: "Não foi encontrado um convite válido para o token informado.")
         };
+    }
+
+    private static string? LimitarMetadata(string? valor, int tamanhoMaximo)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return null;
+        }
+
+        var normalizado = valor.Trim();
+        return normalizado.Length <= tamanhoMaximo
+            ? normalizado
+            : normalizado[..tamanhoMaximo];
     }
 }

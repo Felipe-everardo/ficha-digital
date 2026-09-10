@@ -57,6 +57,13 @@ public sealed class AceitarTermoConsentimentoTests
         Assert.Equal(convite.Termo.Conteudo, aceite.ConteudoTermo);
         Assert.Equal(convite.Termo.ConteudoHash, aceite.ConteudoHash);
         Assert.Equal("Ana Silva", aceite.NomeAssinante);
+        Assert.True(aceite.ConfirmouMaioridade);
+        Assert.True(aceite.ConfirmouDadosPessoais);
+        Assert.True(aceite.ConfirmouQuestionarioSaude);
+        Assert.NotEqual(Guid.Empty, aceite.ConviteId);
+        Assert.Equal(64, aceite.EvidenciaHash.Length);
+        Assert.Contains("\"nomeCompleto\":\"Ana Silva\"", aceite.EvidenciaJson);
+        Assert.Equal(aceite.EvidenciaHash, response.EvidenciaHash);
     }
 
     [Fact]
@@ -107,7 +114,10 @@ public sealed class AceitarTermoConsentimentoTests
             VersaoTermo = convite.Termo.Versao,
             ConteudoHash = new string('0', 64),
             NomeAssinante = "Ana Silva",
-            AceitouTermo = true
+            AceitouTermo = true,
+            ConfirmouMaioridade = true,
+            ConfirmouDadosPessoais = true,
+            ConfirmouQuestionarioSaude = true
         };
 
         using var httpResponse = await client.PostAsJsonAsync(
@@ -134,7 +144,10 @@ public sealed class AceitarTermoConsentimentoTests
             VersaoTermo = convite.Termo.Versao,
             ConteudoHash = convite.Termo.ConteudoHash,
             NomeAssinante = "  Ana Silva  ",
-            AceitouTermo = true
+            AceitouTermo = true,
+            ConfirmouMaioridade = true,
+            ConfirmouDadosPessoais = true,
+            ConfirmouQuestionarioSaude = true
         };
     }
 
@@ -175,6 +188,21 @@ public sealed class AceitarTermoConsentimentoTests
         var conviteAberto = (await abrirResponse.Content
             .ReadFromJsonAsync<ConviteFichaAbertoResponse>(
                 TestContext.Current.CancellationToken))!;
+
+        using var dadosResponse = await client.PostAsJsonAsync(
+            "/api/fichas/dados-pessoais",
+            new PreencherDadosPessoaisRequest
+            {
+                Token = token,
+                NomeCompleto = "Ana Silva",
+                NomeSocial = "Ana",
+                Pronomes = "ela/dela",
+                DataNascimento = new DateOnly(1995, 6, 15),
+                Celular = "(21) 99999-9999",
+                Email = "ana@example.com"
+            },
+            TestContext.Current.CancellationToken);
+        dadosResponse.EnsureSuccessStatusCode();
 
         return new ConviteAberto(
             token,

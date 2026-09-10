@@ -40,6 +40,7 @@ public sealed class AbrirConviteFichaTests
         Assert.Equal(conviteEmitido.FichaId, response.FichaId);
         Assert.Equal("EmPreenchimento", response.Status);
         Assert.False(response.QuestionarioRespondido);
+        Assert.False(response.DadosPessoaisPreenchidos);
         Assert.Equal("Tatuagem", response.TipoProcedimento);
         Assert.Equal("Ana Silva", response.DadosPessoais.NomeCompleto);
         Assert.Equal("(21) 99999-9999", response.DadosPessoais.Celular);
@@ -109,6 +110,21 @@ public sealed class AbrirConviteFichaTests
             TestContext.Current.CancellationToken);
 
         aberturaInicial.EnsureSuccessStatusCode();
+
+        using var respostaDados = await client.PostAsJsonAsync(
+            "/api/fichas/dados-pessoais",
+            new PreencherDadosPessoaisRequest
+            {
+                Token = token,
+                NomeCompleto = "Ana Silva",
+                NomeSocial = "Ana",
+                Pronomes = "ela/dela",
+                DataNascimento = new DateOnly(1995, 6, 15),
+                Celular = "(21) 99999-9999",
+                Email = "ana@example.com"
+            },
+            TestContext.Current.CancellationToken);
+        respostaDados.EnsureSuccessStatusCode();
 
         using var respostaQuestionario = await client.PostAsJsonAsync(
             "/api/fichas/questionario-saude",

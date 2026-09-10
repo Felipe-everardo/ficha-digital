@@ -186,7 +186,9 @@ h1 {
 }
 
 .field input::placeholder {
-  color: #899286;
+  color: rgba(102, 112, 99, 0.62);
+  font-style: italic;
+  opacity: 1;
 }
 
 .field input[type='date'] {
@@ -265,8 +267,13 @@ button:disabled {
 .success-actions {
   display: flex;
   flex-wrap: wrap;
+  max-width: 420px;
   gap: 12px;
   margin-top: 26px;
+}
+
+.success-actions button {
+  width: 100%;
 }
 
 .success-procedure-field {
@@ -297,10 +304,6 @@ button:disabled {
 .success-procedure-field select:focus {
   border-color: var(--moss);
   box-shadow: 0 0 0 3px rgba(83, 107, 74, 0.13);
-}
-
-.success-actions .secondary-button {
-  margin-top: 0;
 }
 
 .page-back-link {

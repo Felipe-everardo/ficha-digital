@@ -16,7 +16,7 @@ namespace FichaDigital.IntegrationTests.Modules.Fichas.Api;
 public sealed class PreencherDadosPessoaisTests
 {
     [Fact]
-    public async Task Preencher_ComDadosValidos_DeveAtualizarClientePendente()
+    public async Task Preencher_ComDadosValidos_DeveAtualizarClienteECriarRetratoDaFicha()
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
@@ -46,12 +46,20 @@ public sealed class PreencherDadosPessoaisTests
             .SingleAsync(
                 item => item.Id == clienteId,
                 TestContext.Current.CancellationToken);
+        var dadosDaFicha = await dbContext.DadosPessoaisFichas
+            .AsNoTracking()
+            .SingleAsync(
+                item => item.FichaId == fichaId,
+                TestContext.Current.CancellationToken);
 
         Assert.Equal("Ana Silva", cliente.NomeCompleto);
         Assert.Equal("@ana", cliente.Instagram);
         Assert.Equal("Maria", cliente.ContatoEmergenciaNome);
         Assert.Equal("(21) 98888-8888", cliente.ContatoEmergenciaCelular);
         Assert.True(cliente.DadosPessoaisPreenchidos);
+        Assert.Equal("Ana Silva", dadosDaFicha.NomeCompleto);
+        Assert.Equal("Ana", dadosDaFicha.NomeSocial);
+        Assert.Equal("ana@example.com", dadosDaFicha.Email);
     }
 
     [Fact]
@@ -59,7 +67,7 @@ public sealed class PreencherDadosPessoaisTests
     {
         using var factory = new FichaDigitalApiFactory();
         using var client = CriarHttpClient(factory);
-        var (token, _, _) = await PrepararConviteAbertoAsync(factory);
+        var (token, fichaId, _) = await PrepararConviteAbertoAsync(factory);
         var request = CriarRequestValido(token);
 
         using var primeiraResposta = await client.PostAsJsonAsync(
@@ -83,8 +91,15 @@ public sealed class PreencherDadosPessoaisTests
             .GetRequiredService<FichaDigitalDbContext>();
         var cliente = await dbContext.Clientes.AsNoTracking().SingleAsync(
             TestContext.Current.CancellationToken);
+        var dadosDaFicha = await dbContext.DadosPessoaisFichas
+            .AsNoTracking()
+            .SingleAsync(
+                item => item.FichaId == fichaId,
+                TestContext.Current.CancellationToken);
         Assert.Equal("(21) 97777-7777", cliente.Celular);
         Assert.Equal("novo-email@example.com", cliente.Email);
+        Assert.Equal("(21) 97777-7777", dadosDaFicha.Celular);
+        Assert.Equal("novo-email@example.com", dadosDaFicha.Email);
     }
 
     [Fact]
@@ -108,6 +123,32 @@ public sealed class PreencherDadosPessoaisTests
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, httpResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Preencher_ComClienteMenorDeIdade_DeveRetornarUnprocessableEntity()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = CriarHttpClient(factory);
+        var (token, _, _) = await PrepararConviteAbertoAsync(factory);
+        var request = CriarRequestValido(
+            token,
+            dataNascimento: DateOnly.FromDateTime(DateTime.Today).AddYears(-17));
+
+        using var httpResponse = await client.PostAsJsonAsync(
+            "/api/fichas/dados-pessoais",
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            HttpStatusCode.UnprocessableEntity,
+            httpResponse.StatusCode);
+
+        var problem = await httpResponse.Content.ReadFromJsonAsync<ProblemDetails>(
+            TestContext.Current.CancellationToken);
+
+        Assert.NotNull(problem);
+        Assert.Equal("Atendimento indisponível.", problem.Title);
     }
 
     [Fact]
@@ -146,7 +187,8 @@ public sealed class PreencherDadosPessoaisTests
     private static PreencherDadosPessoaisRequest CriarRequestValido(
         string token,
         string celular = "  (21) 99999-9999  ",
-        string email = "  ana@example.com  ")
+        string email = "  ana@example.com  ",
+        DateOnly? dataNascimento = null)
     {
         return new PreencherDadosPessoaisRequest
         {
@@ -154,7 +196,7 @@ public sealed class PreencherDadosPessoaisTests
             NomeCompleto = "  Ana Silva  ",
             NomeSocial = "  Ana  ",
             Pronomes = "  ela/dela  ",
-            DataNascimento = new DateOnly(1995, 6, 15),
+            DataNascimento = dataNascimento ?? new DateOnly(1995, 6, 15),
             Celular = celular,
             Email = email,
             Instagram = "  @ana  ",

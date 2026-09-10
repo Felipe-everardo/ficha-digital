@@ -68,6 +68,12 @@
   font: inherit;
 }
 
+.professional-login-form input::placeholder {
+  color: rgba(102, 112, 99, 0.62);
+  font-style: italic;
+  opacity: 1;
+}
+
 .professional-login-form input:focus {
   border-color: var(--moss);
   box-shadow: 0 0 0 3px rgba(83, 107, 74, 0.13);

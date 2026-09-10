@@ -63,6 +63,15 @@ public sealed class PreencherDadosPessoaisService(
         }
 
         var preenchidosEmUtc = timeProvider.GetUtcNow();
+
+        if (!RegraMaioridade.EhMaiorDeIdade(
+                command.DataNascimento,
+                preenchidosEmUtc))
+        {
+            return new ResultadoPreenchimentoDadosPessoais(
+                StatusPreenchimentoDadosPessoais.ClienteMenorDeIdade);
+        }
+
         if (cliente.DadosPessoaisPreenchidos)
         {
             cliente.AtualizarDadosPessoais(
@@ -92,13 +101,49 @@ public sealed class PreencherDadosPessoaisService(
                 preenchidosEmUtc);
         }
 
+        var dadosDaFicha = await dbContext.DadosPessoaisFichas
+            .SingleOrDefaultAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+
+        if (dadosDaFicha is null)
+        {
+            dadosDaFicha = new DadosPessoaisFicha(
+                ficha.Id,
+                cliente.NomeCompleto!,
+                cliente.NomeSocial,
+                cliente.Pronomes,
+                cliente.DataNascimento!.Value,
+                cliente.Celular!,
+                cliente.Email,
+                cliente.Instagram,
+                cliente.ContatoEmergenciaNome,
+                cliente.ContatoEmergenciaCelular,
+                preenchidosEmUtc);
+            dbContext.DadosPessoaisFichas.Add(dadosDaFicha);
+        }
+        else
+        {
+            dadosDaFicha.Atualizar(
+                cliente.NomeCompleto!,
+                cliente.NomeSocial,
+                cliente.Pronomes,
+                cliente.DataNascimento!.Value,
+                cliente.Celular!,
+                cliente.Email,
+                cliente.Instagram,
+                cliente.ContatoEmergenciaNome,
+                cliente.ContatoEmergenciaCelular,
+                preenchidosEmUtc);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new ResultadoPreenchimentoDadosPessoais(
             StatusPreenchimentoDadosPessoais.Preenchidos,
             ficha.Id,
             cliente.Id,
-            cliente.NomeParaExibicao,
+            dadosDaFicha.NomeParaExibicao,
             preenchidosEmUtc);
     }
 }

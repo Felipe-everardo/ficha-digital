@@ -52,11 +52,11 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.FichaIndisponivel);
         }
 
-        var dadosPessoaisPreenchidos = await dbContext.Clientes
+        var dadosPessoaisPreenchidos = await dbContext.DadosPessoaisFichas
             .AsNoTracking()
-            .Where(cliente => cliente.Id == ficha.ClienteId)
-            .Select(cliente => cliente.DadosPessoaisPreenchidosEmUtc != null)
-            .SingleOrDefaultAsync(cancellationToken);
+            .AnyAsync(
+                dados => dados.FichaId == ficha.Id,
+                cancellationToken);
 
         if (!dadosPessoaisPreenchidos)
         {

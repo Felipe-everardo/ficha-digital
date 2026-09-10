@@ -1,14 +1,13 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { CalendarInput } from '../components/CalendarInput'
+import { MonthInput } from '../components/MonthInput'
 import {
   ApiRequestError,
   listarFichas,
-  type FormaPagamento,
   type FichasPaginadas,
   type FiltrosFichas,
   type TipoProcedimento,
 } from '../services/api'
-import { CalendarInput } from '../components/CalendarInput'
-import { MonthInput } from '../components/MonthInput'
 import { obterMesAno } from '../utils/periodo'
 import './FichasPage.css'
 
@@ -16,31 +15,13 @@ const TAMANHO_PAGINA = 10
 
 type TipoPeriodo = 'todos' | 'dia' | 'mes' | 'ano'
 
-function formatarData(data: string) {
-  const [ano, mes, dia] = data.split('-').map(Number)
-  return new Intl.DateTimeFormat('pt-BR').format(
-    new Date(ano, mes - 1, dia),
-  )
-}
+function formatarDataHora(data: string | null) {
+  if (!data) return 'Ainda não concluída'
 
-function formatarMoeda(valor: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(valor)
-}
-
-function formatarFormaPagamento(forma: FormaPagamento) {
-  const rotulos: Record<FormaPagamento, string> = {
-    Dinheiro: 'Dinheiro',
-    Pix: 'Pix',
-    CartaoDebito: 'Cartão de débito',
-    CartaoCredito: 'Cartão de crédito',
-    Transferencia: 'Transferência',
-    Outro: 'Outro',
-  }
-
-  return rotulos[forma]
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(data))
 }
 
 function formatarProcedimento(tipo: TipoProcedimento) {
@@ -49,37 +30,56 @@ function formatarProcedimento(tipo: TipoProcedimento) {
   return 'Não informado'
 }
 
-function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
-  if (tipo === 'todos' || !valor) return null
+function classeDoStatus(status: string) {
+  if (status === 'Rascunho') return 'draft'
+  if (status === 'ConviteEnviado') return 'sent'
+  if (status === 'EmPreenchimento') return 'progress'
+  if (status === 'Concluida') return 'completed'
+  return 'cancelled'
+}
 
-  if (tipo === 'dia') {
-    return { atendimentoDe: valor, atendimentoAte: valor }
+function rotuloDoStatus(status: string) {
+  if (status === 'Rascunho') return 'Rascunho'
+  if (status === 'ConviteEnviado') return 'Convite enviado'
+  if (status === 'EmPreenchimento') return 'Em preenchimento'
+  if (status === 'Concluida') return 'Concluída'
+  return status
+}
+
+function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
+  if (tipo === 'dia' && valor) {
+    return { concluidaDe: valor, concluidaAte: valor }
   }
 
   if (tipo === 'mes') {
     const mesAno = obterMesAno(valor, new Date().getFullYear())
-    if (!mesAno) return null
+    if (!mesAno) return {}
 
     const ano = Number(mesAno.ano)
     const mes = Number(mesAno.mes)
     const ultimoDia = new Date(ano, mes, 0).getDate()
     const valorIso = `${mesAno.ano}-${mesAno.mes}`
     return {
-      atendimentoDe: `${valorIso}-01`,
-      atendimentoAte: `${valorIso}-${String(ultimoDia).padStart(2, '0')}`,
+      concluidaDe: `${valorIso}-01`,
+      concluidaAte: `${valorIso}-${String(ultimoDia).padStart(2, '0')}`,
     }
   }
 
-  return {
-    atendimentoDe: `${valor}-01-01`,
-    atendimentoAte: `${valor}-12-31`,
+  if (tipo === 'ano' && /^\d{4}$/.test(valor)) {
+    return {
+      concluidaDe: `${valor}-01-01`,
+      concluidaAte: `${valor}-12-31`,
+    }
   }
+
+  return {}
 }
 
 function obterRotuloDoValor(tipo: TipoPeriodo) {
-  if (tipo === 'dia') return 'Escolha o dia'
-  if (tipo === 'mes') return 'Escolha o mês'
-  return 'Informe o ano'
+  if (tipo === 'dia') return 'Dia da conclusão'
+  if (tipo === 'mes') return 'Mês da conclusão'
+  if (tipo === 'ano') return 'Ano da conclusão'
+  return ''
 }
 
 export function FichasPage() {
@@ -90,20 +90,23 @@ export function FichasPage() {
   const [tipoPeriodo, setTipoPeriodo] = useState<TipoPeriodo>('todos')
   const [valorPeriodo, setValorPeriodo] = useState('')
   const [periodoAtivo, setPeriodoAtivo] = useState(false)
-  const [filtros, setFiltros] = useState<FiltrosFichas>({
-    status: 'Concluida',
-  })
+  const [filtros, setFiltros] = useState<FiltrosFichas>({})
 
   useEffect(() => {
     const abortController = new AbortController()
-
     setCarregando(true)
     setErro(null)
 
-    listarFichas(pagina, TAMANHO_PAGINA, filtros, abortController.signal)
+    listarFichas(
+      pagina,
+      TAMANHO_PAGINA,
+      filtros,
+      abortController.signal,
+    )
       .then(setResultado)
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return
+
         if (error instanceof ApiRequestError && error.status === 401) {
           window.location.replace('/profissional/entrar')
           return
@@ -112,7 +115,7 @@ export function FichasPage() {
         setErro(
           error instanceof ApiRequestError
             ? error.message
-            : 'Não foi possível carregar o histórico de fichas.',
+            : 'Não foi possível carregar as fichas.',
         )
       })
       .finally(() => {
@@ -120,77 +123,57 @@ export function FichasPage() {
       })
 
     return () => abortController.abort()
-  }, [pagina, filtros])
+  }, [filtros, pagina])
 
   function aplicarPeriodo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const limites = obterLimitesDoPeriodo(tipoPeriodo, valorPeriodo)
-
+    const novosFiltros = obterLimitesDoPeriodo(tipoPeriodo, valorPeriodo)
+    setFiltros(novosFiltros)
+    setPeriodoAtivo(Object.keys(novosFiltros).length > 0)
     setPagina(1)
-    setPeriodoAtivo(limites !== null)
-    setFiltros({
-      status: 'Concluida',
-      ...limites,
-    })
   }
 
   function limparPeriodo() {
     setTipoPeriodo('todos')
     setValorPeriodo('')
-    setPagina(1)
+    setFiltros({})
     setPeriodoAtivo(false)
-    setFiltros({ status: 'Concluida' })
+    setPagina(1)
   }
 
-  const totalPaginasExibido = Math.max(resultado?.totalPaginas ?? 1, 1)
   return (
     <main className="records-shell">
       <header className="records-header">
-        <div>
-          <a
-            className="records-back-link desktop-section-navigation"
-            href="/profissional"
-          >
-            ← Voltar ao painel
-          </a>
-          <p className="eyebrow">Atendimentos realizados</p>
+        <div className="records-period-filter__intro">
+          <p className="eyebrow">Arquivo do estúdio</p>
           <h1>Histórico de fichas</h1>
           <p>
-            Consulte os procedimentos e valores registrados por dia, mês ou
-            ano. Para encontrar uma pessoa ou iniciar um novo atendimento, use
-            a área de clientes.
+            Consulte as fichas enviadas e concluídas, preservando o contexto
+            declarado em cada procedimento.
           </p>
         </div>
-
-        <a
-          className="records-primary-link desktop-section-navigation"
-          href="/profissional/clientes"
-        >
-          Ir para clientes
+        <a className="records-primary-link" href="/profissional/clientes">
+          Localizar cliente
         </a>
       </header>
 
       <form className="records-period-filter" onSubmit={aplicarPeriodo}>
-        <div className="records-period-filter__intro">
-          <p className="eyebrow">Filtrar por data</p>
-          <h2>Quando o procedimento foi realizado?</h2>
-          <p>
-            O período usa a data do procedimento. Quando o valor ainda não foi
-            registrado, usa a data em que o cliente concluiu a ficha.
-          </p>
+        <div>
+          <p className="eyebrow">Período</p>
+          <h2>Filtrar pela conclusão</h2>
         </div>
-
         <div className="records-period-filter__fields">
           <label>
-            Período
+            <span>Tipo</span>
             <select
               value={tipoPeriodo}
               onChange={(event) => {
-                setTipoPeriodo(event.target.value as TipoPeriodo)
+                const tipo = event.target.value as TipoPeriodo
+                setTipoPeriodo(tipo)
                 setValorPeriodo('')
               }}
             >
-              <option value="todos">Todos os períodos</option>
+              <option value="todos">Todo o histórico</option>
               <option value="dia">Dia</option>
               <option value="mes">Mês</option>
               <option value="ano">Ano</option>
@@ -199,28 +182,27 @@ export function FichasPage() {
 
           {tipoPeriodo !== 'todos' && (
             <label>
-              {obterRotuloDoValor(tipoPeriodo)}
+              <span>{obterRotuloDoValor(tipoPeriodo)}</span>
               {tipoPeriodo === 'dia' ? (
                 <CalendarInput
                   type="date"
-                  value={valorPeriodo}
                   required
+                  value={valorPeriodo}
                   onChange={(event) => setValorPeriodo(event.target.value)}
                 />
               ) : tipoPeriodo === 'mes' ? (
                 <MonthInput
-                  value={valorPeriodo}
                   required
+                  value={valorPeriodo}
                   onValueChange={setValorPeriodo}
                 />
               ) : (
                 <input
                   type="number"
-                  value={valorPeriodo}
                   min="2000"
                   max={String(new Date().getFullYear())}
-                  placeholder="Ex.: 2026"
                   required
+                  value={valorPeriodo}
                   onChange={(event) => setValorPeriodo(event.target.value)}
                 />
               )}
@@ -229,15 +211,10 @@ export function FichasPage() {
 
           <div className="records-period-filter__actions">
             <button type="submit" disabled={carregando}>
-              Consultar
+              Aplicar
             </button>
             {periodoAtivo && (
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={carregando}
-                onClick={limparPeriodo}
-              >
+              <button type="button" className="secondary-button" onClick={limparPeriodo}>
                 Limpar
               </button>
             )}
@@ -245,76 +222,37 @@ export function FichasPage() {
         </div>
       </form>
 
-      {resultado && !erro && (
-        <section
-          className="records-financial-summary"
-          aria-label="Resumo financeiro do período"
-        >
-          <article>
-            <span>Recebido</span>
-            <strong>
-              {formatarMoeda(resultado.resumoFinanceiro.totalRecebido)}
-            </strong>
-            <small>Atendimentos com valor registrado</small>
-          </article>
-          <article>
-            <span>A registrar</span>
-            <strong>{resultado.resumoFinanceiro.fichasSemRegistro}</strong>
-            <small>Fichas concluídas sem valor informado</small>
-          </article>
-        </section>
-      )}
-
       <section className="records-content" aria-live="polite">
-        {carregando && !resultado && (
-          <div className="records-state">
+        {carregando && !resultado ? (
+          <div className="records-state records-state--empty">
             <span className="records-loading-indicator" aria-hidden="true" />
-            Carregando histórico...
+            Carregando fichas...
           </div>
-        )}
-
-        {erro && (
+        ) : erro ? (
           <div className="records-state records-state--error" role="alert">
             <p>{erro}</p>
             <button type="button" onClick={() => window.location.reload()}>
               Tentar novamente
             </button>
           </div>
-        )}
-
-        {!erro && resultado && resultado.itens.length === 0 && (
-          <div className="records-state records-state--empty">
-            <p className="eyebrow">Nenhum resultado</p>
-            <h2>
+        ) : resultado && resultado.itens.length === 0 ? (
+          <div className="records-state">
+            <h2>Nenhuma ficha encontrada</h2>
+            <p>
               {periodoAtivo
-                ? 'Nenhum atendimento foi registrado nesse período.'
-                : 'Nenhum atendimento foi concluído ainda.'}
-            </h2>
-            {periodoAtivo ? (
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={limparPeriodo}
-              >
-                Ver todos os períodos
-              </button>
-            ) : (
-              <a className="records-primary-link" href="/profissional/clientes">
-                Ir para clientes
-              </a>
-            )}
+                ? 'Nenhuma ficha foi concluída nesse período.'
+                : 'As fichas aparecerão aqui quando forem enviadas aos clientes.'}
+            </p>
           </div>
-        )}
-
-        {!erro && resultado && resultado.itens.length > 0 && (
+        ) : resultado ? (
           <>
-            <div className="records-summary">
-              <strong>{resultado.totalItens}</strong>{' '}
-              {resultado.totalItens === 1
-                ? 'atendimento concluído'
-                : 'atendimentos concluídos'}
-              {carregando && <span>Atualizando...</span>}
-            </div>
+            <p className="records-summary">
+              <strong>Fichas registradas:</strong>
+              <span>
+                {resultado.totalItens}{' '}
+                {resultado.totalItens === 1 ? 'ficha' : 'fichas'}
+              </span>
+            </p>
 
             <div className="records-table-wrapper">
               <table>
@@ -323,10 +261,9 @@ export function FichasPage() {
                     <th>Cliente</th>
                     <th>Procedimento</th>
                     <th>Profissional</th>
-                    <th>Data do atendimento</th>
-                    <th>Valor final</th>
-                    <th>Pagamento</th>
-                    <th>Ações</th>
+                    <th>Conclusão</th>
+                    <th>Status</th>
+                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -341,42 +278,20 @@ export function FichasPage() {
                       <td data-label="Profissional">
                         {ficha.profissionalResponsavelNome}
                       </td>
-                      <td data-label="Data do atendimento">
-                        {ficha.atendimento
-                          ? formatarData(ficha.atendimento.dataRealizacao)
-                          : ficha.concluidaEmUtc
-                            ? new Intl.DateTimeFormat('pt-BR').format(
-                                new Date(ficha.concluidaEmUtc),
-                              )
-                            : 'A registrar'}
+                      <td data-label="Conclusão">
+                        {formatarDataHora(ficha.concluidaEmUtc)}
                       </td>
-                      <td data-label="Valor final">
-                        {ficha.atendimento
-                          ? formatarMoeda(ficha.atendimento.valorFinal)
-                          : 'A registrar'}
+                      <td data-label="Status">
+                        <span className={`record-status record-status--${classeDoStatus(ficha.status)}`}>
+                          {rotuloDoStatus(ficha.status)}
+                        </span>
                       </td>
-                      <td data-label="Pagamento">
-                        {ficha.atendimento ? (
-                          <span
-                            className="payment-status payment-status--pago"
-                          >
-                            Pago ·{' '}
-                            {formatarFormaPagamento(
-                              ficha.atendimento.formaPagamento,
-                            )}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td data-label="Ações">
+                      <td data-label="Ação">
                         <a
                           className="record-detail-link"
                           href={`/profissional/fichas/${ficha.id}`}
                         >
-                          {ficha.atendimento
-                            ? 'Ver detalhes'
-                            : 'Registrar valor'}
+                          Ver ficha
                         </a>
                       </td>
                     </tr>
@@ -389,13 +304,13 @@ export function FichasPage() {
               <button
                 className="secondary-button"
                 type="button"
-                disabled={pagina === 1 || carregando}
+                disabled={pagina <= 1 || carregando}
                 onClick={() => setPagina((atual) => atual - 1)}
               >
                 Anterior
               </button>
               <span>
-                Página {resultado.pagina} de {totalPaginasExibido}
+                Página {resultado.pagina} de {Math.max(resultado.totalPaginas, 1)}
               </span>
               <button
                 className="secondary-button"
@@ -407,7 +322,7 @@ export function FichasPage() {
               </button>
             </nav>
           </>
-        )}
+        ) : null}
       </section>
     </main>
   )

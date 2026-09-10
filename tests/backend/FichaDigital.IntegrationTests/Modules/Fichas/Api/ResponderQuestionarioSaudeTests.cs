@@ -321,6 +321,21 @@ public sealed class ResponderQuestionarioSaudeTests
             TestContext.Current.CancellationToken);
         abrirResponse.EnsureSuccessStatusCode();
 
+        using var dadosResponse = await client.PostAsJsonAsync(
+            "/api/fichas/dados-pessoais",
+            new PreencherDadosPessoaisRequest
+            {
+                Token = token,
+                NomeCompleto = "Ana Silva",
+                NomeSocial = "Ana",
+                Pronomes = "ela/dela",
+                DataNascimento = new DateOnly(1995, 6, 15),
+                Celular = "(21) 99999-9999",
+                Email = "ana@example.com"
+            },
+            TestContext.Current.CancellationToken);
+        dadosResponse.EnsureSuccessStatusCode();
+
         return (token, convite.FichaId);
     }
 

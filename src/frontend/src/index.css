@@ -22,6 +22,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: rgba(102, 112, 99, 0.62);
+  font-style: italic;
+  opacity: 1;
+}
+
 * {
   box-sizing: border-box;
 }

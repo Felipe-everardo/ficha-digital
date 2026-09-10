@@ -5,7 +5,7 @@ namespace FichaDigital.UnitTests.Modules.Fichas.Domain;
 public sealed class FichaTests
 {
     [Fact]
-    public void Criar_ComResponsavelEProcedimento_DeveRegistrarContextoDoAtendimento()
+    public void Criar_ComResponsavelEProcedimento_DeveRegistrarContextoDaFicha()
     {
         var clienteId = Guid.NewGuid();
         var profissionalId = Guid.NewGuid();

@@ -1,7 +1,5 @@
 using FichaDigital.Api.Modules.Clientes.Domain;
-using FichaDigital.Api.Modules.Atendimentos.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Financeiro.Domain;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -18,11 +16,10 @@ public sealed class FichaDigitalDbContext(
 {
     public DbSet<Cliente> Clientes => Set<Cliente>();
 
-    public DbSet<Atendimento> Atendimentos => Set<Atendimento>();
-
     public DbSet<Ficha> Fichas => Set<Ficha>();
 
-    public DbSet<Despesa> Despesas => Set<Despesa>();
+    public DbSet<DadosPessoaisFicha> DadosPessoaisFichas =>
+        Set<DadosPessoaisFicha>();
 
     public DbSet<ConviteFicha> ConvitesFicha => Set<ConviteFicha>();
 

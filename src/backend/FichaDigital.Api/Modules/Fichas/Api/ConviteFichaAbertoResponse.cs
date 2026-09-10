@@ -9,4 +9,5 @@ public sealed record ConviteFichaAbertoResponse(
     string ProfissionalResponsavelNome,
     string TipoProcedimento,
     DadosPessoaisConviteResponse DadosPessoais,
+    QuestionarioSaudeDetalheResponse? QuestionarioSaude,
     TermoConsentimentoResponse TermoConsentimento);

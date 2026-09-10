@@ -34,6 +34,33 @@ public sealed class AceiteTermoConsentimentoConfiguration
             .HasMaxLength(150)
             .IsRequired();
 
+        builder.Property(aceite => aceite.ConviteId);
+
+        builder.Property(aceite => aceite.ConfirmouMaioridade)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.ConfirmouDadosPessoais)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.ConfirmouQuestionarioSaude)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.VersaoEvidencia)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.EvidenciaJson)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.EvidenciaHash)
+            .HasMaxLength(64)
+            .IsRequired();
+
+        builder.Property(aceite => aceite.EnderecoIp)
+            .HasMaxLength(64);
+
+        builder.Property(aceite => aceite.AgenteUsuario)
+            .HasMaxLength(512);
+
         builder.Property(aceite => aceite.AceitoEmUtc)
             .IsRequired();
 
@@ -43,7 +70,14 @@ public sealed class AceiteTermoConsentimentoConfiguration
                 aceite => aceite.FichaId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<ConviteFicha>()
+            .WithMany()
+            .HasForeignKey(aceite => aceite.ConviteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(aceite => aceite.FichaId)
             .IsUnique();
+
+        builder.HasIndex(aceite => aceite.ConviteId);
     }
 }

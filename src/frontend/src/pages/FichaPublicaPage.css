@@ -222,6 +222,12 @@
   font-weight: 700;
 }
 
+.personal-field > small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
 .personal-field input {
   width: 100%;
   min-height: 50px;
@@ -393,6 +399,92 @@
   line-height: 1.55;
 }
 
+.consent-review {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.consent-review__heading h3,
+.consent-review__heading p {
+  margin: 0;
+}
+
+.consent-review__heading h3 {
+  margin-top: 5px;
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.consent-review__heading > p:last-child {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.consent-review details {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.consent-review summary {
+  padding: 15px 18px;
+  color: var(--moss-dark);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.consent-review__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0 18px 18px;
+}
+
+.consent-review__grid > div {
+  min-width: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.consent-review__grid > div:nth-child(odd) {
+  padding-right: 16px;
+}
+
+.consent-review__grid > div:nth-child(even) {
+  padding-left: 16px;
+}
+
+.consent-review__grid dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.consent-review__grid dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.consent-confirmations {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.consent-confirmations .consent-checkbox {
+  margin-top: 0;
+}
+
 .term-document {
   max-height: 360px;
   margin-top: 26px;
@@ -491,6 +583,12 @@
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.55;
+}
+
+.evidence-code {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.76rem;
 }
 
 .completion-panel {
@@ -632,6 +730,16 @@
 
   .questionnaire-actions button {
     width: 100%;
+  }
+
+  .consent-review__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .consent-review__grid > div:nth-child(odd),
+  .consent-review__grid > div:nth-child(even) {
+    padding-right: 0;
+    padding-left: 0;
   }
 
   .completion-details {

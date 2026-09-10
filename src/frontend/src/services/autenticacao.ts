@@ -10,10 +10,55 @@ type AntiforgeryTokenResponse = {
   token: string
 }
 
-export async function obterAntiforgeryToken(): Promise<string> {
-  const response = await fetch('/api/autenticacao/antiforgery-token', {
-    credentials: 'same-origin',
+const STATUS_TRANSITORIOS = new Set([408, 500, 502, 503, 504])
+const ATRASO_NOVA_TENTATIVA_MS = 900
+
+function requisicaoFoiAbortada(error: unknown) {
+  return error instanceof DOMException && error.name === 'AbortError'
+}
+
+function aguardarNovaTentativa(signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('A operação foi cancelada.', 'AbortError'))
+      return
+    }
+
+    const timeoutId = window.setTimeout(resolve, ATRASO_NOVA_TENTATIVA_MS)
+
+    signal?.addEventListener(
+      'abort',
+      () => {
+        window.clearTimeout(timeoutId)
+        reject(new DOMException('A operação foi cancelada.', 'AbortError'))
+      },
+      { once: true },
+    )
   })
+}
+
+async function fetchComNovaTentativa(
+  executar: () => Promise<Response>,
+  signal?: AbortSignal,
+) {
+  try {
+    const response = await executar()
+
+    if (!STATUS_TRANSITORIOS.has(response.status)) return response
+  } catch (error) {
+    if (requisicaoFoiAbortada(error)) throw error
+  }
+
+  await aguardarNovaTentativa(signal)
+  return executar()
+}
+
+export async function obterAntiforgeryToken(): Promise<string> {
+  const response = await fetchComNovaTentativa(() =>
+    fetch('/api/autenticacao/antiforgery-token', {
+      credentials: 'same-origin',
+    }),
+  )
 
   if (!response.ok) {
     throw new ApiRequestError(
@@ -48,10 +93,14 @@ async function criarErroDaApi(
 export async function obterSessaoProfissional(
   signal?: AbortSignal,
 ): Promise<SessaoProfissional | null> {
-  const response = await fetch('/api/autenticacao/sessao', {
-    credentials: 'same-origin',
+  const response = await fetchComNovaTentativa(
+    () =>
+      fetch('/api/autenticacao/sessao', {
+        credentials: 'same-origin',
+        signal,
+      }),
     signal,
-  })
+  )
 
   if (response.status === 401) {
     return null
@@ -71,16 +120,21 @@ export async function entrarProfissional(
   email: string,
   senha: string,
 ): Promise<SessaoProfissional> {
-  const antiforgeryToken = await obterAntiforgeryToken()
-  const response = await fetch('/api/autenticacao/entrar', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': antiforgeryToken,
-    },
-    body: JSON.stringify({ email, senha }),
-  })
+  const executarLogin = async () => {
+    const antiforgeryToken = await obterAntiforgeryToken()
+
+    return fetch('/api/autenticacao/entrar', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': antiforgeryToken,
+      },
+      body: JSON.stringify({ email, senha }),
+    })
+  }
+
+  const response = await fetchComNovaTentativa(executarLogin)
 
   if (!response.ok) {
     throw await criarErroDaApi(
