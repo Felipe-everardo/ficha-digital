@@ -168,11 +168,39 @@ jobs:
           $env:FICHADIGITAL_MIGRATION_CONNECTION = $connectionString
 
           try {
-            & "${{ env.MIGRATION_BUNDLE_PATH }}" `
-              --connection $env:FICHADIGITAL_MIGRATION_CONNECTION
+            $bundleOutput = @(
+              & "${{ env.MIGRATION_BUNDLE_PATH }}" `
+                --connection $env:FICHADIGITAL_MIGRATION_CONNECTION 2>&1
+            )
+            $bundleExitCode = $LASTEXITCODE
 
-            if ($LASTEXITCODE -ne 0) {
-              throw "O pacote de migrations terminou com o código $LASTEXITCODE."
+            $safeOutput = $bundleOutput | ForEach-Object {
+              $line = $_.ToString()
+              $line = $line -replace `
+                '(?i)(password|pwd|user id|uid)\s*=\s*[^;\s]+', `
+                '$1=***'
+              $line = $line -replace `
+                '(?i)(server|data source)\s*=\s*[^;\s]+', `
+                '$1=***'
+              $line
+            }
+
+            $safeOutput | ForEach-Object { Write-Host $_ }
+
+            if ($bundleExitCode -ne 0) {
+              $diagnostic = ($safeOutput | Select-Object -Last 8) -join ' | '
+
+              if ([string]::IsNullOrWhiteSpace($diagnostic)) {
+                $diagnostic = "O pacote não retornou detalhes adicionais."
+              }
+
+              $diagnostic = $diagnostic `
+                -replace '%', '%25' `
+                -replace "`r", '%0D' `
+                -replace "`n", '%0A'
+
+              Write-Output "::error title=Falha ao atualizar schema::$diagnostic"
+              throw "O pacote de migrations terminou com o código $bundleExitCode."
             }
           }
           finally {
