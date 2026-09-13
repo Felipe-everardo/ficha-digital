@@ -1,3 +1,5 @@
+using FichaDigital.Api.Shared.Domain;
+
 namespace FichaDigital.Api.Modules.Fichas.Domain;
 
 /// <summary>
@@ -12,15 +14,7 @@ public sealed class DadosPessoaisFicha
 
     public DadosPessoaisFicha(
         Guid fichaId,
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email,
-        string? instagram,
-        string? contatoEmergenciaNome,
-        string? contatoEmergenciaCelular,
+        DadosPessoaisInformados dados,
         DateTimeOffset confirmadosEmUtc)
     {
         if (fichaId == Guid.Empty)
@@ -29,17 +23,7 @@ public sealed class DadosPessoaisFicha
         }
 
         FichaId = fichaId;
-        Atualizar(
-            nomeCompleto,
-            nomeSocial,
-            pronomes,
-            dataNascimento,
-            celular,
-            email,
-            instagram,
-            contatoEmergenciaNome,
-            contatoEmergenciaCelular,
-            confirmadosEmUtc);
+        Atualizar(dados, confirmadosEmUtc);
     }
 
     public Guid FichaId { get; private set; }
@@ -50,9 +34,15 @@ public sealed class DadosPessoaisFicha
 
     public string? Pronomes { get; private set; }
 
+    public string? EstadoCivil { get; private set; }
+
     public DateOnly DataNascimento { get; private set; }
 
+    public string? Cpf { get; private set; }
+
     public string Celular { get; private set; } = string.Empty;
+
+    public string? TelefoneAdicional { get; private set; }
 
     public string? Email { get; private set; }
 
@@ -62,36 +52,28 @@ public sealed class DadosPessoaisFicha
 
     public string? ContatoEmergenciaCelular { get; private set; }
 
+    public string? Cep { get; private set; }
+
+    public string? Logradouro { get; private set; }
+
+    public string? Numero { get; private set; }
+
+    public string? Complemento { get; private set; }
+
+    public string? Bairro { get; private set; }
+
+    public string? Cidade { get; private set; }
+
+    public string? Estado { get; private set; }
+
     public DateTimeOffset ConfirmadosEmUtc { get; private set; }
 
     public string NomeParaExibicao => NomeSocial ?? NomeCompleto;
 
     public void Atualizar(
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email,
-        string? instagram,
-        string? contatoEmergenciaNome,
-        string? contatoEmergenciaCelular,
+        DadosPessoaisInformados dados,
         DateTimeOffset confirmadosEmUtc)
     {
-        if (string.IsNullOrWhiteSpace(nomeCompleto))
-        {
-            throw new ArgumentException(
-                "O nome completo é obrigatório.",
-                nameof(nomeCompleto));
-        }
-
-        if (string.IsNullOrWhiteSpace(celular))
-        {
-            throw new ArgumentException(
-                "O celular é obrigatório.",
-                nameof(celular));
-        }
-
         if (confirmadosEmUtc == default)
         {
             throw new ArgumentException(
@@ -99,31 +81,27 @@ public sealed class DadosPessoaisFicha
                 nameof(confirmadosEmUtc));
         }
 
-        var contatoNomeInformado =
-            !string.IsNullOrWhiteSpace(contatoEmergenciaNome);
-        var contatoCelularInformado =
-            !string.IsNullOrWhiteSpace(contatoEmergenciaCelular);
+        ArgumentNullException.ThrowIfNull(dados);
 
-        if (contatoNomeInformado != contatoCelularInformado)
-        {
-            throw new ArgumentException(
-                "Informe o nome e o celular do contato de emergência.");
-        }
-
-        NomeCompleto = nomeCompleto.Trim();
-        NomeSocial = NormalizarOpcional(nomeSocial);
-        Pronomes = NormalizarOpcional(pronomes);
-        DataNascimento = dataNascimento;
-        Celular = celular.Trim();
-        Email = NormalizarOpcional(email);
-        Instagram = NormalizarOpcional(instagram);
-        ContatoEmergenciaNome = NormalizarOpcional(contatoEmergenciaNome);
-        ContatoEmergenciaCelular = NormalizarOpcional(contatoEmergenciaCelular);
+        NomeCompleto = dados.NomeCompleto;
+        NomeSocial = dados.NomeSocial;
+        Pronomes = dados.Pronomes;
+        EstadoCivil = dados.EstadoCivil;
+        DataNascimento = dados.DataNascimento;
+        Cpf = dados.Cpf;
+        Celular = dados.Celular;
+        TelefoneAdicional = dados.TelefoneAdicional;
+        Email = dados.Email;
+        Instagram = dados.Instagram;
+        ContatoEmergenciaNome = dados.ContatoEmergenciaNome;
+        ContatoEmergenciaCelular = dados.ContatoEmergenciaCelular;
+        Cep = dados.Cep;
+        Logradouro = dados.Logradouro;
+        Numero = dados.Numero;
+        Complemento = dados.Complemento;
+        Bairro = dados.Bairro;
+        Cidade = dados.Cidade;
+        Estado = dados.Estado;
         ConfirmadosEmUtc = confirmadosEmUtc;
-    }
-
-    private static string? NormalizarOpcional(string? valor)
-    {
-        return string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
     }
 }

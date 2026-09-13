@@ -44,8 +44,15 @@ public sealed class AbrirConviteFichaTests
         Assert.Equal("Tatuagem", response.TipoProcedimento);
         Assert.Equal("Ana Silva", response.DadosPessoais.NomeCompleto);
         Assert.Equal("(21) 99999-9999", response.DadosPessoais.Celular);
+        Assert.Equal(1, response.TermoConsentimento.Versao);
+        Assert.Contains(
+            "TERMO DE AUTORIZAÇÃO DE TATUAGEM",
+            response.TermoConsentimento.Conteudo);
+        Assert.Contains(
+            "00.000.000/0000-00",
+            response.TermoConsentimento.Conteudo);
         Assert.Equal(
-            "Profissional de Teste",
+            "Lia Tatuadora",
             response.ProfissionalResponsavelNome);
 
         using var scope = factory.Services.CreateScope();
@@ -58,6 +65,42 @@ public sealed class AbrirConviteFichaTests
                 TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusFicha.EmPreenchimento, ficha.Status);
+        Assert.Equal(1, ficha.VersaoModelo);
+        Assert.Equal(QuestionarioSaude.VersaoAtual, ficha.VersaoQuestionario);
+        Assert.Equal(1, ficha.VersaoTermo);
+        Assert.Equal("00.000.000/0000-00", ficha.CnpjApresentado);
+    }
+
+    [Fact]
+    public async Task Abrir_ConviteDePiercing_DeveRetornarTermoDePiercing()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = CriarHttpClient(factory);
+        var conviteEmitido = await EmitirConviteAsync(
+            factory,
+            TipoProcedimento.Piercing);
+
+        using var httpResponse = await client.PostAsJsonAsync(
+            "/api/fichas/convites/abrir",
+            new AbrirConviteFichaRequest
+            {
+                Token = ObterToken(conviteEmitido.LinkPreenchimento)
+            },
+            TestContext.Current.CancellationToken);
+
+        var response = await httpResponse.Content
+            .ReadFromJsonAsync<ConviteFichaAbertoResponse>(
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+        Assert.NotNull(response);
+        Assert.Equal("Piercing", response.TipoProcedimento);
+        Assert.Contains(
+            "TERMO DE AUTORIZAÇÃO DE PIERCING",
+            response.TermoConsentimento.Conteudo);
+        Assert.DoesNotContain(
+            "TERMO DE AUTORIZAÇÃO DE TATUAGEM",
+            response.TermoConsentimento.Conteudo);
     }
 
     [Fact]
@@ -119,9 +162,17 @@ public sealed class AbrirConviteFichaTests
                 NomeCompleto = "Ana Silva",
                 NomeSocial = "Ana",
                 Pronomes = "ela/dela",
+                EstadoCivil = "Solteira",
                 DataNascimento = new DateOnly(1995, 6, 15),
+                Cpf = "529.982.247-25",
                 Celular = "(21) 99999-9999",
-                Email = "ana@example.com"
+                Email = "ana@example.com",
+                Cep = "20040-002",
+                Logradouro = "Rua da Assembleia",
+                Numero = "10",
+                Bairro = "Centro",
+                Cidade = "Rio de Janeiro",
+                Estado = "RJ"
             },
             TestContext.Current.CancellationToken);
         respostaDados.EnsureSuccessStatusCode();
@@ -132,12 +183,18 @@ public sealed class AbrirConviteFichaTests
             {
                 Token = token,
                 TemDiabetes = false,
+                TeveAnemia = false,
+                TeveHepatite = false,
                 PossuiPressaoAlta = false,
                 TemAlergia = false,
                 PossuiCondicaoCardiaca = false,
                 TemEpilepsia = false,
                 TemHemofilia = false,
+                PossuiDoencaTransmissivel = false,
                 UsaMarcaPasso = false,
+                Fuma = false,
+                ConsumiuBebidaAlcoolicaUltimas24Horas = false,
+                UsaMedicacao = false,
                 EstaGravidaOuAmamentando = false
             },
             TestContext.Current.CancellationToken);
@@ -160,7 +217,7 @@ public sealed class AbrirConviteFichaTests
 
         Assert.NotNull(response);
         Assert.True(response.QuestionarioRespondido);
-        Assert.Equal("EmPreenchimento", response.Status);
+        Assert.Equal("AnamnesePreenchida", response.Status);
     }
 
     [Fact]
@@ -267,7 +324,8 @@ public sealed class AbrirConviteFichaTests
     }
 
     private static async Task<ConviteFichaCriadoResponse> EmitirConviteAsync(
-        FichaDigitalApiFactory factory)
+        FichaDigitalApiFactory factory,
+        TipoProcedimento tipoProcedimento = TipoProcedimento.Tatuagem)
     {
         var clienteId = await CriarClienteAsync(factory);
         using var client = await AutenticacaoProfissionalTestHelper
@@ -280,7 +338,8 @@ public sealed class AbrirConviteFichaTests
             $"/api/clientes/{clienteId}/fichas/convites",
             new EmitirConviteFichaRequest
             {
-                TipoProcedimento = TipoProcedimento.Tatuagem
+                ProfissionalResponsavelNome = "Lia Tatuadora",
+                TipoProcedimento = tipoProcedimento
             },
             TestContext.Current.CancellationToken);
 
@@ -340,12 +399,7 @@ public sealed class AbrirConviteFichaTests
 
     private static Cliente CriarCliente()
     {
-        return new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com");
+        return new Cliente(DadosPessoaisTeste.Criar(
+            celular: "(21) 99999-9999"));
     }
 }

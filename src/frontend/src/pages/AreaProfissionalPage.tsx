@@ -223,6 +223,7 @@ export function AreaProfissionalPage() {
           <div>
             <strong>{estado.sessao.nomeCompleto}</strong>
             <span>{estado.sessao.email}</span>
+            <span>Conta do estúdio</span>
           </div>
           <button
             className="secondary-button professional-logout"
@@ -241,11 +242,11 @@ export function AreaProfissionalPage() {
       >
         <p className="eyebrow">Sessão protegida ativa</p>
         <h1 id="professional-dashboard-title">
-          Olá, {estado.sessao.nomeCompleto.split(' ')[0]}.
+          Bem-vindo ao Manuscrito Studio.
         </h1>
         <p className="professional-copy">
-          Consulte clientes, gere novos convites e acompanhe o andamento das
-          fichas digitais do estúdio.
+          Gerencie clientes, convites e fichas digitais do estúdio em um só
+          lugar.
         </p>
 
         {erroFormulario && (

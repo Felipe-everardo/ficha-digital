@@ -120,4 +120,5 @@ public sealed class ProvisionadorProfissionalInicial(
 
         throw new InvalidOperationException($"{mensagem} {erros}");
     }
+
 }

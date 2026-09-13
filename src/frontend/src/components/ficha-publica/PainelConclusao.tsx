@@ -17,24 +17,21 @@ export function PainelConclusao({ termoAceito }: PainelConclusaoProps) {
       <span className="completion-symbol" aria-hidden="true">
         ✓
       </span>
-      <p className="eyebrow">Ficha concluída</p>
-      <h2>Obrigado. Suas informações foram recebidas.</h2>
+      <p className="eyebrow">Consentimento registrado</p>
+      <h2>Procedimento autorizado com segurança.</h2>
       <p>
-        O questionário e o aceite foram registrados. O profissional responsável
-        poderá consultar a confirmação no sistema.
+        Seu aceite, seu nome e sua assinatura foram registrados e protegidos
+        por uma verificação de integridade. Não há nenhuma etapa adicional para
+        você preencher antes do atendimento.
       </p>
       <dl className="completion-details">
         <div>
           <dt>Status</dt>
-          <dd>{termoAceito.statusFicha}</dd>
+          <dd>Autorizada para o procedimento</dd>
         </div>
         <div>
-          <dt>Concluída em</dt>
+          <dt>Autorizada em</dt>
           <dd>{formatarDataHora(termoAceito.aceitoEmUtc)}</dd>
-        </div>
-        <div>
-          <dt>Código da evidência</dt>
-          <dd className="evidence-code">{termoAceito.evidenciaHash}</dd>
         </div>
       </dl>
       <p className="completion-guidance">

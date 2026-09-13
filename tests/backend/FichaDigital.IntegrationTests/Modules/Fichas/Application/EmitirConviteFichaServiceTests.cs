@@ -64,6 +64,10 @@ public sealed class EmitirConviteFichaServiceTests
         Assert.Equal(profissional.Id, ficha.ProfissionalResponsavelId);
         Assert.Equal(profissional.NomeCompleto, ficha.ProfissionalResponsavelNome);
         Assert.Equal(TipoProcedimento.Tatuagem, ficha.TipoProcedimento);
+        Assert.Equal(1, ficha.VersaoModelo);
+        Assert.Equal(QuestionarioSaude.VersaoAtual, ficha.VersaoQuestionario);
+        Assert.Equal(1, ficha.VersaoTermo);
+        Assert.Equal("00.000.000/0000-00", ficha.CnpjApresentado);
         Assert.Equal(StatusFicha.ConviteEnviado, ficha.Status);
         Assert.Equal(ficha.Id, convite.FichaId);
         Assert.Equal(
@@ -99,13 +103,8 @@ public sealed class EmitirConviteFichaServiceTests
 
     private static Cliente CriarCliente()
     {
-        return new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com");
+        return new Cliente(DadosPessoaisTeste.Criar(
+            celular: "(21) 99999-9999"));
     }
 
     private static async Task<ProfissionalUsuario> CriarProfissionalAsync(

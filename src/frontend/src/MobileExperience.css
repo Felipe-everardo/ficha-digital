@@ -303,6 +303,7 @@
   }
 
   .field input,
+  .success-procedure-field input,
   .success-procedure-field select {
     min-height: 46px;
     padding: 10px 12px;

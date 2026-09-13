@@ -119,10 +119,180 @@
   line-height: 1.6;
 }
 
+.record-operation-card {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 26px;
+  padding: 24px;
+  border: 1px solid rgba(83, 107, 74, 0.28);
+  border-radius: 18px;
+  background: var(--moss-soft);
+}
+
+.record-operation-card h2,
+.record-operation-card p {
+  margin: 0;
+}
+
+.record-operation-card h2 {
+  color: var(--moss-dark);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.record-operation-card > div > p:last-child {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.record-operation-card button {
+  flex: 0 0 auto;
+}
+
+.record-operation-card--stacked {
+  display: grid;
+  align-items: stretch;
+}
+
+.record-operation-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.record-operation-check input {
+  width: 19px;
+  height: 19px;
+  margin-top: 2px;
+  accent-color: var(--moss);
+}
+
+.record-operation-workflow {
+  min-width: 0;
+}
+
+.record-operation-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(83, 107, 74, 0.22);
+}
+
+.record-operation-form > label {
+  display: grid;
+  gap: 8px;
+}
+
+.record-operation-form > label > span {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.record-operation-form input,
+.record-operation-form select,
+.record-operation-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+}
+
+.record-operation-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.record-operation-form__full,
+.record-operation-form > button {
+  grid-column: 1 / -1;
+}
+
+.record-operation-form__full .signature-field {
+  margin-top: 0;
+}
+
+.record-operation-message {
+  margin: 14px 0 0;
+  padding: 13px 16px;
+  border-left: 3px solid var(--moss);
+  color: var(--moss-dark);
+  background: var(--surface-muted);
+}
+
 .record-detail-evidence-code {
   overflow-wrap: anywhere;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.76rem;
+}
+
+.record-evidence-details {
+  margin: 22px clamp(25px, 5vw, 40px) clamp(25px, 5vw, 40px);
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.record-evidence-details > summary {
+  width: fit-content;
+  color: var(--moss-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.record-evidence-details > .record-detail-grid {
+  margin-top: 10px;
+}
+
+.record-confirmations {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.record-signature {
+  margin: 24px 0 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.record-signature figcaption {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.record-signature img {
+  display: block;
+  width: min(100%, 520px);
+  min-height: 120px;
+  border-bottom: 1px solid var(--line);
+  object-fit: contain;
+  background: var(--surface);
+}
+
+.record-technical-result {
+  margin: 0 clamp(25px, 5vw, 40px) clamp(25px, 5vw, 40px);
+}
+
+.record-technical-result > .record-detail-grid {
+  margin-top: 0;
 }
 
 .record-detail-collapsible {
@@ -242,6 +412,15 @@
 }
 
 @media (max-width: 680px) {
+  .record-operation-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .record-operation-form {
+    grid-template-columns: 1fr;
+  }
+
   .record-detail-title-row {
     align-items: flex-start;
     flex-direction: column;

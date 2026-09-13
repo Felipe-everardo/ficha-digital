@@ -2,6 +2,7 @@ import {
   adicionarFiltros,
   ApiRequestError,
   criarErroDaApi,
+  criarChaveIdempotencia,
   verificarErroValidacao,
 } from './http'
 
@@ -39,7 +40,6 @@ export type FichaResumo = {
 
 export type FiltrosFichas = {
   busca?: string
-  profissionalId?: string
   tipoProcedimento?: TipoProcedimento
   status?: string
   criadaDe?: string
@@ -63,12 +63,22 @@ export type ClienteFichaDetalhe = {
   nomeSocial: string | null
   nomeParaExibicao: string
   pronomes: string | null
+  estadoCivil: string | null
   dataNascimento: string | null
+  cpf: string | null
   celular: string | null
+  telefoneAdicional: string | null
   email: string | null
   instagram: string | null
   contatoEmergenciaNome: string | null
   contatoEmergenciaCelular: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   dadosPessoaisPreenchidosEmUtc: string | null
 }
 
@@ -76,13 +86,23 @@ export type QuestionarioSaudeDetalhe = {
   versao: number
   temDiabetes: boolean
   tipoDiabetes: string | null
+  teveAnemia: boolean
+  descricaoAnemia: string | null
+  teveHepatite: boolean
+  tipoHepatite: string | null
   possuiPressaoAlta: boolean
   temAlergia: boolean
   descricaoAlergia: string | null
   possuiCondicaoCardiaca: boolean
   temEpilepsia: boolean
   temHemofilia: boolean
+  possuiDoencaTransmissivel: boolean
+  descricaoDoencaTransmissivel: string | null
   usaMarcaPasso: boolean
+  fuma: boolean
+  consumiuBebidaAlcoolicaUltimas24Horas: boolean
+  usaMedicacao: boolean
+  descricaoMedicacao: string | null
   estaGravidaOuAmamentando: boolean
   respondidoEmUtc: string
 }
@@ -91,9 +111,8 @@ export type AceiteTermoResumo = {
   versaoTermo: number
   nomeAssinante: string
   aceitoEmUtc: string
-  confirmouMaioridade: boolean
-  confirmouDadosPessoais: boolean
-  confirmouQuestionarioSaude: boolean
+  confirmouLeituraEAutorizacao: boolean
+  assinaturaDesenhada: string | null
   evidenciaHash: string
   evidenciaIntegra: boolean
 }
@@ -107,9 +126,38 @@ export type FichaDetalhe = {
   profissionalResponsavelId: string | null
   profissionalResponsavelNome: string
   tipoProcedimento: TipoProcedimento
+  versaoModelo: number | null
+  versaoQuestionario: number | null
+  versaoTermo: number | null
+  cnpjApresentado: string | null
   cliente: ClienteFichaDetalhe
   questionarioSaude: QuestionarioSaudeDetalhe | null
   aceiteTermo: AceiteTermoResumo | null
+  revisaoProfissional: {
+    profissionalNome: string
+    dadosDaFichaConferidos: boolean
+    revisadaEmUtc: string
+  } | null
+  registroProcedimento: {
+    tipoProcedimento: TipoProcedimento
+    profissionalNome: string
+    arteEfetivamenteTatuada: string | null
+    materialUtilizado: string | null
+    localTatuagem: string | null
+    joiaUtilizada: string | null
+    agulhaUtilizada: string | null
+    localPerfuracao: string | null
+    observacoes: string | null
+    valorTotal: number
+    valorSinal: number
+    valorRestante: number
+    formaPagamento: string
+    nomeProfissionalAssinante: string
+    assinaturaDesenhada: string
+    registradoEmUtc: string
+    evidenciaHash: string
+    evidenciaIntegra: boolean
+  } | null
 }
 
 export type TermoConsentimento = {
@@ -130,12 +178,22 @@ export type ConviteFichaAberto = {
     nomeCompleto: string | null
     nomeSocial: string | null
     pronomes: string | null
+    estadoCivil: string | null
     dataNascimento: string | null
+    cpf: string | null
     celular: string | null
+    telefoneAdicional: string | null
     email: string | null
     instagram: string | null
     contatoEmergenciaNome: string | null
     contatoEmergenciaCelular: string | null
+    cep: string | null
+    logradouro: string | null
+    numero: string | null
+    complemento: string | null
+    bairro: string | null
+    cidade: string | null
+    estado: string | null
   }
   questionarioSaude: QuestionarioSaudeDetalhe | null
   termoConsentimento: TermoConsentimento
@@ -145,12 +203,22 @@ export type PreencherDadosPessoaisInput = {
   nomeCompleto: string
   nomeSocial: string
   pronomes: string
+  estadoCivil: string
   dataNascimento: string
+  cpf: string
   celular: string
+  telefoneAdicional: string
   email: string
   instagram: string
   contatoEmergenciaNome: string
   contatoEmergenciaCelular: string
+  cep: string
+  logradouro: string
+  numero: string
+  complemento: string
+  bairro: string
+  cidade: string
+  estado: string
 }
 
 export type DadosPessoaisPreenchidos = {
@@ -163,13 +231,23 @@ export type DadosPessoaisPreenchidos = {
 export type ResponderQuestionarioSaudeInput = {
   temDiabetes: boolean
   tipoDiabetes: string | null
+  teveAnemia: boolean
+  descricaoAnemia: string | null
+  teveHepatite: boolean
+  tipoHepatite: string | null
   possuiPressaoAlta: boolean
   temAlergia: boolean
   descricaoAlergia: string | null
   possuiCondicaoCardiaca: boolean
   temEpilepsia: boolean
   temHemofilia: boolean
+  possuiDoencaTransmissivel: boolean
+  descricaoDoencaTransmissivel: string | null
   usaMarcaPasso: boolean
+  fuma: boolean
+  consumiuBebidaAlcoolicaUltimas24Horas: boolean
+  usaMedicacao: boolean
+  descricaoMedicacao: string | null
   estaGravidaOuAmamentando: boolean
 }
 
@@ -184,10 +262,8 @@ export type AceitarTermoConsentimentoInput = {
   versaoTermo: number
   conteudoHash: string
   nomeAssinante: string
-  aceitouTermo: boolean
-  confirmouMaioridade: boolean
-  confirmouDadosPessoais: boolean
-  confirmouQuestionarioSaude: boolean
+  confirmouLeituraEAutorizacao: boolean
+  assinaturaDesenhada: string
 }
 
 export type TermoConsentimentoAceito = {
@@ -201,6 +277,7 @@ export type TermoConsentimentoAceito = {
 
 export async function emitirConviteFicha(
   clienteId: string,
+  profissionalResponsavelNome: string,
   tipoProcedimento: Exclude<TipoProcedimento, 'NaoInformado'>,
   antiforgeryToken: string,
 ): Promise<ConviteFichaCriado> {
@@ -212,8 +289,9 @@ export async function emitirConviteFicha(
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': antiforgeryToken,
+        'Idempotency-Key': criarChaveIdempotencia(),
       },
-      body: JSON.stringify({ tipoProcedimento }),
+      body: JSON.stringify({ profissionalResponsavelNome, tipoProcedimento }),
     },
   )
 
@@ -284,7 +362,10 @@ export async function abrirConviteFicha(
 ): Promise<ConviteFichaAberto> {
   const response = await fetch('/api/fichas/convites/abrir', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': criarChaveIdempotencia(),
+    },
     body: JSON.stringify({ token }),
     signal,
   })
@@ -306,20 +387,33 @@ export async function preencherDadosPessoais(
   const opcionalOuNull = (valor: string) => valor.trim() || null
   const response = await fetch('/api/fichas/dados-pessoais', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': criarChaveIdempotencia(),
+    },
     body: JSON.stringify({
       token,
       nomeCompleto: dados.nomeCompleto,
       nomeSocial: opcionalOuNull(dados.nomeSocial),
       pronomes: opcionalOuNull(dados.pronomes),
+      estadoCivil: dados.estadoCivil,
       dataNascimento: dados.dataNascimento,
+      cpf: dados.cpf,
       celular: dados.celular,
+      telefoneAdicional: opcionalOuNull(dados.telefoneAdicional),
       email: opcionalOuNull(dados.email),
       instagram: opcionalOuNull(dados.instagram),
       contatoEmergenciaNome: opcionalOuNull(dados.contatoEmergenciaNome),
       contatoEmergenciaCelular: opcionalOuNull(
         dados.contatoEmergenciaCelular,
       ),
+      cep: dados.cep,
+      logradouro: dados.logradouro,
+      numero: dados.numero,
+      complemento: opcionalOuNull(dados.complemento),
+      bairro: dados.bairro,
+      cidade: dados.cidade,
+      estado: dados.estado,
     }),
   })
 
@@ -341,7 +435,10 @@ export async function responderQuestionarioSaude(
 ): Promise<QuestionarioSaudeRespondido> {
   const response = await fetch('/api/fichas/questionario-saude', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': criarChaveIdempotencia(),
+    },
     body: JSON.stringify({ token, ...respostas }),
   })
 
@@ -363,7 +460,10 @@ export async function aceitarTermoConsentimento(
 ): Promise<TermoConsentimentoAceito> {
   const response = await fetch('/api/fichas/termo-consentimento/aceitar', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': criarChaveIdempotencia(),
+    },
     body: JSON.stringify({ token, ...aceite }),
   })
 
@@ -377,4 +477,80 @@ export async function aceitarTermoConsentimento(
   }
 
   return response.json() as Promise<TermoConsentimentoAceito>
+}
+
+type OperacaoFichaResultado = { fichaId: string; status: string }
+
+async function executarOperacaoFicha(
+  fichaId: string,
+  operacao: string,
+  dados: unknown,
+  antiforgeryToken: string,
+): Promise<OperacaoFichaResultado> {
+  const response = await fetch(
+    `/api/fichas/${encodeURIComponent(fichaId)}/operacoes/${operacao}`,
+    {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': antiforgeryToken,
+        'Idempotency-Key': criarChaveIdempotencia(),
+      },
+      body: JSON.stringify(dados),
+    },
+  )
+
+  if (!response.ok) {
+    throw await criarErroDaApi(
+      response,
+      'Não foi possível registrar a operação.',
+    )
+  }
+
+  return response.json() as Promise<OperacaoFichaResultado>
+}
+
+export function revisarFicha(
+  fichaId: string,
+  antiforgeryToken: string,
+) {
+  return executarOperacaoFicha(
+    fichaId,
+    'revisar',
+    { dadosDaFichaConferidos: true },
+    antiforgeryToken,
+  )
+}
+
+export type ConcluirProcedimentoInput = {
+  valorTotal: number
+  valorSinal: number
+  formaPagamento: 'Pix' | 'Dinheiro' | 'Cartao'
+  assinaturaDesenhada: string
+  tatuagem: {
+    arteEfetivamenteTatuada: string
+    materialUtilizado: string
+    localTatuagem: string
+    observacoes: string | null
+  } | null
+  piercing: {
+    joiaUtilizada: string
+    agulhaUtilizada: string
+    localPerfuracao: string
+    observacoes: string | null
+  } | null
+}
+
+export function concluirProcedimento(
+  fichaId: string,
+  dados: ConcluirProcedimentoInput,
+  antiforgeryToken: string,
+) {
+  return executarOperacaoFicha(
+    fichaId,
+    'concluir',
+    dados,
+    antiforgeryToken,
+  )
 }

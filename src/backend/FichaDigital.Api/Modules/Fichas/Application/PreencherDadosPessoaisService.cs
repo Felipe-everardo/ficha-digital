@@ -1,6 +1,7 @@
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
+using FichaDigital.Api.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
@@ -64,8 +65,29 @@ public sealed class PreencherDadosPessoaisService(
 
         var preenchidosEmUtc = timeProvider.GetUtcNow();
 
+        var dadosInformados = new DadosPessoaisInformados(
+            command.NomeCompleto,
+            command.NomeSocial,
+            command.Pronomes,
+            command.EstadoCivil,
+            command.DataNascimento,
+            command.Cpf,
+            command.Celular,
+            command.TelefoneAdicional,
+            command.Email,
+            command.Instagram,
+            command.ContatoEmergenciaNome,
+            command.ContatoEmergenciaCelular,
+            command.Cep,
+            command.Logradouro,
+            command.Numero,
+            command.Complemento,
+            command.Bairro,
+            command.Cidade,
+            command.Estado);
+
         if (!RegraMaioridade.EhMaiorDeIdade(
-                command.DataNascimento,
+                dadosInformados.DataNascimento,
                 preenchidosEmUtc))
         {
             return new ResultadoPreenchimentoDadosPessoais(
@@ -75,29 +97,13 @@ public sealed class PreencherDadosPessoaisService(
         if (cliente.DadosPessoaisPreenchidos)
         {
             cliente.AtualizarDadosPessoais(
-                command.NomeCompleto,
-                command.NomeSocial,
-                command.Pronomes,
-                command.DataNascimento,
-                command.Celular,
-                command.Email,
-                command.Instagram,
-                command.ContatoEmergenciaNome,
-                command.ContatoEmergenciaCelular,
+                dadosInformados,
                 preenchidosEmUtc);
         }
         else
         {
             cliente.PreencherDadosPessoais(
-                command.NomeCompleto,
-                command.NomeSocial,
-                command.Pronomes,
-                command.DataNascimento,
-                command.Celular,
-                command.Email,
-                command.Instagram,
-                command.ContatoEmergenciaNome,
-                command.ContatoEmergenciaCelular,
+                dadosInformados,
                 preenchidosEmUtc);
         }
 
@@ -110,30 +116,14 @@ public sealed class PreencherDadosPessoaisService(
         {
             dadosDaFicha = new DadosPessoaisFicha(
                 ficha.Id,
-                cliente.NomeCompleto!,
-                cliente.NomeSocial,
-                cliente.Pronomes,
-                cliente.DataNascimento!.Value,
-                cliente.Celular!,
-                cliente.Email,
-                cliente.Instagram,
-                cliente.ContatoEmergenciaNome,
-                cliente.ContatoEmergenciaCelular,
+                dadosInformados,
                 preenchidosEmUtc);
             dbContext.DadosPessoaisFichas.Add(dadosDaFicha);
         }
         else
         {
             dadosDaFicha.Atualizar(
-                cliente.NomeCompleto!,
-                cliente.NomeSocial,
-                cliente.Pronomes,
-                cliente.DataNascimento!.Value,
-                cliente.Celular!,
-                cliente.Email,
-                cliente.Instagram,
-                cliente.ContatoEmergenciaNome,
-                cliente.ContatoEmergenciaCelular,
+                dadosInformados,
                 preenchidosEmUtc);
         }
 

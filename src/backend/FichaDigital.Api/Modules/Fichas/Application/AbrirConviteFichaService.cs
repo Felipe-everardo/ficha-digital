@@ -8,6 +8,7 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 public sealed class AbrirConviteFichaService(
     FichaDigitalDbContext dbContext,
     GeradorTokenConvite geradorToken,
+    ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider)
 {
     public async Task<ResultadoAberturaConvite> AbrirAsync(
@@ -50,7 +51,10 @@ public sealed class AbrirConviteFichaService(
             ficha.IniciarPreenchimento();
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        else if (ficha.Status != StatusFicha.EmPreenchimento)
+        else if (ficha.Status is not (
+                     StatusFicha.EmPreenchimento or
+                     StatusFicha.AnamnesePreenchida or
+                     StatusFicha.AguardandoConsentimento))
         {
             return new ResultadoAberturaConvite(
                 StatusAberturaConvite.Indisponivel);
@@ -80,6 +84,8 @@ public sealed class AbrirConviteFichaService(
                 StatusAberturaConvite.NaoEncontrado);
         }
 
+        var modelo = resolvedorModelo.ObterModeloDaFicha(ficha);
+
         return new ResultadoAberturaConvite(
             StatusAberturaConvite.Aberto,
             ficha.Id,
@@ -94,36 +100,69 @@ public sealed class AbrirConviteFichaService(
                     cliente.NomeCompleto,
                     cliente.NomeSocial,
                     cliente.Pronomes,
+                    cliente.EstadoCivil,
                     cliente.DataNascimento,
+                    cliente.Cpf,
                     cliente.Celular,
+                    cliente.TelefoneAdicional,
                     cliente.Email,
                     cliente.Instagram,
                     cliente.ContatoEmergenciaNome,
-                    cliente.ContatoEmergenciaCelular)
+                    cliente.ContatoEmergenciaCelular,
+                    cliente.Cep,
+                    cliente.Logradouro,
+                    cliente.Numero,
+                    cliente.Complemento,
+                    cliente.Bairro,
+                    cliente.Cidade,
+                    cliente.Estado)
                 : new DadosPessoaisConvite(
                     dadosDaFicha.NomeCompleto,
                     dadosDaFicha.NomeSocial,
                     dadosDaFicha.Pronomes,
+                    dadosDaFicha.EstadoCivil,
                     dadosDaFicha.DataNascimento,
+                    dadosDaFicha.Cpf,
                     dadosDaFicha.Celular,
+                    dadosDaFicha.TelefoneAdicional,
                     dadosDaFicha.Email,
                     dadosDaFicha.Instagram,
                     dadosDaFicha.ContatoEmergenciaNome,
-                    dadosDaFicha.ContatoEmergenciaCelular),
+                    dadosDaFicha.ContatoEmergenciaCelular,
+                    dadosDaFicha.Cep,
+                    dadosDaFicha.Logradouro,
+                    dadosDaFicha.Numero,
+                    dadosDaFicha.Complemento,
+                    dadosDaFicha.Bairro,
+                    dadosDaFicha.Cidade,
+                    dadosDaFicha.Estado),
             questionario is null
                 ? null
                 : new QuestionarioSaudeConvite(
                     questionario.Versao,
                     questionario.TemDiabetes,
                     questionario.TipoDiabetes,
+                    questionario.TeveAnemia,
+                    questionario.DescricaoAnemia,
+                    questionario.TeveHepatite,
+                    questionario.TipoHepatite,
                     questionario.PossuiPressaoAlta,
                     questionario.TemAlergia,
                     questionario.DescricaoAlergia,
                     questionario.PossuiCondicaoCardiaca,
                     questionario.TemEpilepsia,
                     questionario.TemHemofilia,
+                    questionario.PossuiDoencaTransmissivel,
+                    questionario.DescricaoDoencaTransmissivel,
                     questionario.UsaMarcaPasso,
+                    questionario.Fuma,
+                    questionario.ConsumiuBebidaAlcoolicaUltimas24Horas,
+                    questionario.UsaMedicacao,
+                    questionario.DescricaoMedicacao,
                     questionario.EstaGravidaOuAmamentando,
-                    questionario.RespondidoEmUtc));
+                    questionario.RespondidoEmUtc),
+            new TermoConsentimentoConvite(
+                modelo.VersaoTermo,
+                modelo.ConteudoTermo));
     }
 }

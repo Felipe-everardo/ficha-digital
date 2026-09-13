@@ -22,14 +22,136 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FichaDigital.Api.Infrastructure.Auditing.RegistroAuditoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Acao")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("CorrelacaoId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("OcorreuEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Origem")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("ProfissionalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Recurso")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<Guid?>("RecursoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfissionalId");
+
+                    b.HasIndex("Recurso", "RecursoId", "OcorreuEmUtc");
+
+                    b.ToTable("RegistrosAuditoria", (string)null);
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Infrastructure.Idempotency.RequisicaoIdempotente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Caminho")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Chave")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTimeOffset?>("ConcluidaEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CorpoRespostaProtegido")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CriadaEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Escopo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset>("ExpiraEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Localizacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Metodo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TipoConteudo")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiraEmUtc");
+
+                    b.HasIndex("Escopo", "Chave")
+                        .IsUnique();
+
+                    b.ToTable("RequisicoesIdempotentes", (string)null);
+                });
+
             modelBuilder.Entity("FichaDigital.Api.Modules.Clientes.Domain.Cliente", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Bairro")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Celular")
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
+
+                    b.Property<string>("Cep")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("Cidade")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Complemento")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ContatoEmergenciaCelular")
                         .HasMaxLength(25)
@@ -38,6 +160,10 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<string>("ContatoEmergenciaNome")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
 
                     b.Property<DateTimeOffset>("CriadoEmUtc")
                         .HasColumnType("datetimeoffset");
@@ -52,9 +178,21 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("nvarchar(254)");
 
+                    b.Property<string>("Estado")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("EstadoCivil")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Instagram")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Logradouro")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("NomeCompleto")
                         .HasMaxLength(150)
@@ -69,13 +207,23 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<string>("Numero")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("Pronomes")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("TelefoneAdicional")
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Celular");
+
+                    b.HasIndex("Cpf");
 
                     b.HasIndex("NomeCompleto");
 
@@ -96,13 +244,10 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
-                    b.Property<bool>("ConfirmouDadosPessoais")
-                        .HasColumnType("bit");
+                    b.Property<string>("AssinaturaDesenhada")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("ConfirmouMaioridade")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("ConfirmouQuestionarioSaude")
+                    b.Property<bool>("ConfirmouLeituraEAutorizacao")
                         .HasColumnType("bit");
 
                     b.Property<string>("ConteudoHash")
@@ -188,10 +333,26 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FichaId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Bairro")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Celular")
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
+
+                    b.Property<string>("Cep")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("Cidade")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Complemento")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTimeOffset>("ConfirmadosEmUtc")
                         .HasColumnType("datetimeoffset");
@@ -204,6 +365,10 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
                     b.Property<DateOnly>("DataNascimento")
                         .HasColumnType("date");
 
@@ -211,9 +376,21 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("nvarchar(254)");
 
+                    b.Property<string>("Estado")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("EstadoCivil")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Instagram")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Logradouro")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("NomeCompleto")
                         .IsRequired()
@@ -224,9 +401,17 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<string>("Numero")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("Pronomes")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TelefoneAdicional")
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
 
                     b.HasKey("FichaId");
 
@@ -240,6 +425,10 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("ClienteId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CnpjApresentado")
+                        .HasMaxLength(18)
+                        .HasColumnType("nvarchar(18)");
 
                     b.Property<DateTimeOffset>("CriadaEmUtc")
                         .HasColumnType("datetimeoffset");
@@ -262,6 +451,15 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<int?>("VersaoModelo")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VersaoQuestionario")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VersaoTermo")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
@@ -280,7 +478,22 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("ConsumiuBebidaAlcoolicaUltimas24Horas")
+                        .HasColumnType("bit");
+
                     b.Property<string>("DescricaoAlergia")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("DescricaoAnemia")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("DescricaoDoencaTransmissivel")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("DescricaoMedicacao")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
@@ -290,7 +503,13 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FichaId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Fuma")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("PossuiCondicaoCardiaca")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PossuiDoencaTransmissivel")
                         .HasColumnType("bit");
 
                     b.Property<bool>("PossuiPressaoAlta")
@@ -311,11 +530,24 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.Property<bool>("TemHemofilia")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("TeveAnemia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("TeveHepatite")
+                        .HasColumnType("bit");
+
                     b.Property<string>("TipoDiabetes")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("TipoHepatite")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<bool>("UsaMarcaPasso")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UsaMedicacao")
                         .HasColumnType("bit");
 
                     b.Property<int>("Versao")
@@ -327,6 +559,172 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("QuestionariosSaude", (string)null);
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RegistroPiercing", b =>
+                {
+                    b.Property<Guid>("FichaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AgulhaUtilizada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AssinaturaDesenhada")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvidenciaHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EvidenciaJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormaPagamento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("JoiaUtilizada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LocalPerfuracao")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("NomeProfissionalAssinante")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ProfissionalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProfissionalNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("RegistradoEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("ValorSinal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("ValorTotal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.HasKey("FichaId");
+
+                    b.ToTable("RegistrosPiercing", (string)null);
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RegistroTatuagem", b =>
+                {
+                    b.Property<Guid>("FichaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArteEfetivamenteTatuada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AssinaturaDesenhada")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvidenciaHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EvidenciaJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormaPagamento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("LocalTatuagem")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("MaterialUtilizado")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("NomeProfissionalAssinante")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ProfissionalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProfissionalNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("RegistradoEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("ValorSinal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("ValorTotal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.HasKey("FichaId");
+
+                    b.ToTable("RegistrosTatuagem", (string)null);
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RevisaoProfissional", b =>
+                {
+                    b.Property<Guid>("FichaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("DadosDaFichaConferidos")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ProfissionalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProfissionalNome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTimeOffset>("RevisadaEmUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("FichaId");
+
+                    b.ToTable("RevisoesProfissionais", (string)null);
                 });
 
             modelBuilder.Entity("FichaDigital.Api.Modules.Profissionais.Domain.ProfissionalUsuario", b =>
@@ -349,9 +747,6 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<int>("Especialidades")
-                        .HasColumnType("int");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -589,6 +984,33 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                     b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
                         .WithOne()
                         .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.QuestionarioSaude", "FichaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RegistroPiercing", b =>
+                {
+                    b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
+                        .WithOne()
+                        .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.RegistroPiercing", "FichaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RegistroTatuagem", b =>
+                {
+                    b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
+                        .WithOne()
+                        .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.RegistroTatuagem", "FichaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FichaDigital.Api.Modules.Fichas.Domain.RevisaoProfissional", b =>
+                {
+                    b.HasOne("FichaDigital.Api.Modules.Fichas.Domain.Ficha", null)
+                        .WithOne()
+                        .HasForeignKey("FichaDigital.Api.Modules.Fichas.Domain.RevisaoProfissional", "FichaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

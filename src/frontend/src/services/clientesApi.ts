@@ -1,5 +1,10 @@
 import type { FichaClienteResumo, TipoProcedimento } from './fichasApi'
-import { adicionarFiltros, ApiRequestError, ApiValidationError } from './http'
+import {
+  adicionarFiltros,
+  ApiRequestError,
+  ApiValidationError,
+  criarChaveIdempotencia,
+} from './http'
 
 export type CriarClienteInput = {
   nomeReferencia: string
@@ -26,7 +31,8 @@ export type ClienteResumo = {
 
 export type FiltrosClientes = {
   busca?: string
-  profissionalId?: string
+  telefone?: string
+  instagram?: string
   tipoProcedimento?: TipoProcedimento
   ultimaFichaDe?: string
   ultimaFichaAte?: string
@@ -47,12 +53,22 @@ export type ClienteDetalhe = {
   nomeSocial: string | null
   nomeParaExibicao: string
   pronomes: string | null
+  estadoCivil: string | null
   dataNascimento: string | null
+  cpf: string | null
   celular: string | null
+  telefoneAdicional: string | null
   email: string | null
   instagram: string | null
   contatoEmergenciaNome: string | null
   contatoEmergenciaCelular: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   dadosPessoaisPreenchidosEmUtc: string | null
   criadoEmUtc: string
   fichas: FichaClienteResumo[]
@@ -68,6 +84,7 @@ export async function criarCliente(
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-TOKEN': antiforgeryToken,
+      'Idempotency-Key': criarChaveIdempotencia(),
     },
     body: JSON.stringify(cliente),
   })

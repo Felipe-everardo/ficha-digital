@@ -7,7 +7,6 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed record FiltroConsultaFichas(
     string? Busca,
-    Guid? ProfissionalId,
     TipoProcedimento? TipoProcedimento,
     StatusFicha? Status,
     DateOnly? CriadaDe,
@@ -44,25 +43,45 @@ public sealed record ClienteDaFichaConsultado(
     string? NomeSocial,
     string NomeParaExibicao,
     string? Pronomes,
+    string? EstadoCivil,
     DateOnly? DataNascimento,
+    string? Cpf,
     string? Celular,
+    string? TelefoneAdicional,
     string? Email,
     string? Instagram,
     string? ContatoEmergenciaNome,
     string? ContatoEmergenciaCelular,
+    string? Cep,
+    string? Logradouro,
+    string? Numero,
+    string? Complemento,
+    string? Bairro,
+    string? Cidade,
+    string? Estado,
     DateTimeOffset? DadosPessoaisPreenchidosEmUtc);
 
 public sealed record QuestionarioSaudeConsultado(
     int Versao,
     bool TemDiabetes,
     string? TipoDiabetes,
+    bool TeveAnemia,
+    string? DescricaoAnemia,
+    bool TeveHepatite,
+    string? TipoHepatite,
     bool PossuiPressaoAlta,
     bool TemAlergia,
     string? DescricaoAlergia,
     bool PossuiCondicaoCardiaca,
     bool TemEpilepsia,
     bool TemHemofilia,
+    bool PossuiDoencaTransmissivel,
+    string? DescricaoDoencaTransmissivel,
     bool UsaMarcaPasso,
+    bool Fuma,
+    bool ConsumiuBebidaAlcoolicaUltimas24Horas,
+    bool UsaMedicacao,
+    string? DescricaoMedicacao,
     bool EstaGravidaOuAmamentando,
     DateTimeOffset RespondidoEmUtc);
 
@@ -70,9 +89,32 @@ public sealed record AceiteTermoConsultado(
     int VersaoTermo,
     string NomeAssinante,
     DateTimeOffset AceitoEmUtc,
-    bool ConfirmouMaioridade,
-    bool ConfirmouDadosPessoais,
-    bool ConfirmouQuestionarioSaude,
+    bool ConfirmouLeituraEAutorizacao,
+    string? AssinaturaDesenhada,
+    string EvidenciaHash,
+    bool EvidenciaIntegra);
+
+public sealed record RevisaoProfissionalConsultada(
+    string ProfissionalNome,
+    bool DadosDaFichaConferidos,
+    DateTimeOffset RevisadaEmUtc);
+
+public sealed record RegistroProcedimentoConsultado(
+    string TipoProcedimento,
+    string ProfissionalNome,
+    string? ArteEfetivamenteTatuada,
+    string? MaterialUtilizado,
+    string? LocalTatuagem,
+    string? JoiaUtilizada,
+    string? AgulhaUtilizada,
+    string? LocalPerfuracao,
+    string? Observacoes,
+    decimal ValorTotal,
+    decimal ValorSinal,
+    string FormaPagamento,
+    string NomeProfissionalAssinante,
+    string AssinaturaDesenhada,
+    DateTimeOffset RegistradoEmUtc,
     string EvidenciaHash,
     bool EvidenciaIntegra);
 
@@ -85,9 +127,15 @@ public sealed record DetalheFichaConsultada(
     Guid? ProfissionalResponsavelId,
     string ProfissionalResponsavelNome,
     string TipoProcedimento,
+    int? VersaoModelo,
+    int? VersaoQuestionario,
+    int? VersaoTermo,
+    string? CnpjApresentado,
     ClienteDaFichaConsultado Cliente,
     QuestionarioSaudeConsultado? QuestionarioSaude,
-    AceiteTermoConsultado? AceiteTermo);
+    AceiteTermoConsultado? AceiteTermo,
+    RevisaoProfissionalConsultada? RevisaoProfissional,
+    RegistroProcedimentoConsultado? RegistroProcedimento);
 
 public sealed class ConsultaFichas(
     FichaDigitalDbContext dbContext,
@@ -105,9 +153,6 @@ public sealed class ConsultaFichas(
             join dados in dbContext.DadosPessoaisFichas.AsNoTracking()
                 on ficha.Id equals dados.FichaId into dadosPessoais
             from dados in dadosPessoais.DefaultIfEmpty()
-            join aceite in dbContext.AceitesTermoConsentimento.AsNoTracking()
-                on ficha.Id equals aceite.FichaId into aceites
-            from aceite in aceites.DefaultIfEmpty()
             select new
             {
                 ficha.Id,
@@ -130,9 +175,24 @@ public sealed class ConsultaFichas(
                 cliente.Celular,
                 ficha.Status,
                 ficha.CriadaEmUtc,
-                ConcluidaEmUtc = aceite == null
-                    ? null
-                    : (DateTimeOffset?)aceite.AceitoEmUtc,
+                ConcluidaEmUtc = dbContext.RegistrosTatuagem
+                    .Where(registro => registro.FichaId == ficha.Id)
+                    .Select(registro =>
+                        (DateTimeOffset?)registro.RegistradoEmUtc)
+                    .SingleOrDefault() ??
+                    dbContext.RegistrosPiercing
+                        .Where(registro => registro.FichaId == ficha.Id)
+                        .Select(registro =>
+                            (DateTimeOffset?)registro.RegistradoEmUtc)
+                        .SingleOrDefault() ??
+                    (ficha.VersaoModelo == null &&
+                     ficha.Status == StatusFicha.Concluida
+                        ? dbContext.AceitesTermoConsentimento
+                            .Where(aceite => aceite.FichaId == ficha.Id)
+                            .Select(aceite =>
+                                (DateTimeOffset?)aceite.AceitoEmUtc)
+                            .SingleOrDefault()
+                        : null),
                 ConviteExpiraEmUtc = dbContext.ConvitesFicha
                     .Where(convite => convite.FichaId == ficha.Id)
                     .Select(convite => (DateTimeOffset?)convite.ExpiraEmUtc)
@@ -157,12 +217,6 @@ public sealed class ConsultaFichas(
                 (ficha.Email != null && ficha.Email.Contains(busca)) ||
                 (ficha.Celular != null && ficha.Celular.Contains(busca)) ||
                 ficha.ProfissionalResponsavelNome.Contains(busca));
-        }
-
-        if (filtro.ProfissionalId is not null)
-        {
-            consulta = consulta.Where(ficha =>
-                ficha.ProfissionalResponsavelId == filtro.ProfissionalId);
         }
 
         if (filtro.TipoProcedimento is not null)
@@ -217,20 +271,45 @@ public sealed class ConsultaFichas(
         if (providerIsSqlite &&
             (filtro.ConcluidaDe is not null || filtro.ConcluidaAte is not null))
         {
-            var aceitesPorData = await dbContext.AceitesTermoConsentimento
+            var tatuagensPorData = await dbContext.RegistrosTatuagem
                 .AsNoTracking()
-                .Select(aceite => new { aceite.FichaId, aceite.AceitoEmUtc })
+                .Select(registro => new
+                {
+                    registro.FichaId,
+                    ConcluidaEmUtc = registro.RegistradoEmUtc
+                })
                 .ToListAsync(cancellationToken);
-            var ids = aceitesPorData
-                .Where(aceite =>
+            var piercingsPorData = await dbContext.RegistrosPiercing
+                .AsNoTracking()
+                .Select(registro => new
+                {
+                    registro.FichaId,
+                    ConcluidaEmUtc = registro.RegistradoEmUtc
+                })
+                .ToListAsync(cancellationToken);
+            var legadosPorData = await (
+                from aceite in dbContext.AceitesTermoConsentimento.AsNoTracking()
+                join ficha in dbContext.Fichas.AsNoTracking()
+                    on aceite.FichaId equals ficha.Id
+                where ficha.VersaoModelo == null &&
+                    ficha.Status == StatusFicha.Concluida
+                select new
+                {
+                    aceite.FichaId,
+                    ConcluidaEmUtc = aceite.AceitoEmUtc
+                }).ToListAsync(cancellationToken);
+            var ids = tatuagensPorData
+                .Concat(piercingsPorData)
+                .Concat(legadosPorData)
+                .Where(registro =>
                     (filtro.ConcluidaDe is null ||
-                        aceite.AceitoEmUtc >= InicioUtc(
+                        registro.ConcluidaEmUtc >= InicioUtc(
                             filtro.ConcluidaDe.Value)) &&
                     (filtro.ConcluidaAte is null ||
                         filtro.ConcluidaAte == DateOnly.MaxValue ||
-                        aceite.AceitoEmUtc < InicioUtc(
+                        registro.ConcluidaEmUtc < InicioUtc(
                             filtro.ConcluidaAte.Value.AddDays(1))))
-                .Select(aceite => aceite.FichaId)
+                .Select(registro => registro.FichaId)
                 .ToList();
             consulta = consulta.Where(ficha => ids.Contains(ficha.Id));
         }
@@ -252,16 +331,32 @@ public sealed class ConsultaFichas(
         var totalItens = await consulta.CountAsync(cancellationToken);
         var totalPaginas = (int)Math.Ceiling(
             totalItens / (double)filtro.TamanhoPagina);
-        var consultaOrdenada = providerIsSqlite
-            ? consulta.OrderByDescending(ficha => ficha.Id)
-            : consulta
-                .OrderByDescending(ficha => ficha.ConcluidaEmUtc)
-                .ThenByDescending(ficha => ficha.CriadaEmUtc)
-                .ThenBy(ficha => ficha.Id);
-        var registros = await consultaOrdenada
-            .Skip((filtro.Pagina - 1) * filtro.TamanhoPagina)
-            .Take(filtro.TamanhoPagina)
-            .ToListAsync(cancellationToken);
+        var ordenarPorConclusao =
+            filtro.ConcluidaDe is not null || filtro.ConcluidaAte is not null;
+        var deslocamento = (filtro.Pagina - 1) * filtro.TamanhoPagina;
+        var registros = providerIsSqlite
+            ? (ordenarPorConclusao
+                ? (await consulta.ToListAsync(cancellationToken))
+                    .OrderByDescending(ficha => ficha.ConcluidaEmUtc)
+                    .ThenByDescending(ficha => ficha.CriadaEmUtc)
+                    .ThenBy(ficha => ficha.Id)
+                : (await consulta.ToListAsync(cancellationToken))
+                    .OrderByDescending(ficha => ficha.CriadaEmUtc)
+                    .ThenBy(ficha => ficha.Id))
+                .Skip(deslocamento)
+                .Take(filtro.TamanhoPagina)
+                .ToList()
+            : await (ordenarPorConclusao
+                    ? consulta
+                        .OrderByDescending(ficha => ficha.ConcluidaEmUtc)
+                        .ThenByDescending(ficha => ficha.CriadaEmUtc)
+                        .ThenBy(ficha => ficha.Id)
+                    : consulta
+                        .OrderByDescending(ficha => ficha.CriadaEmUtc)
+                        .ThenBy(ficha => ficha.Id))
+                .Skip(deslocamento)
+                .Take(filtro.TamanhoPagina)
+                .ToListAsync(cancellationToken);
         var instanteAtual = timeProvider.GetUtcNow();
         var itens = registros
             .Select(ficha => new FichaConsultada(
@@ -318,6 +413,21 @@ public sealed class ConsultaFichas(
             .SingleOrDefaultAsync(
                 item => item.FichaId == ficha.Id,
                 cancellationToken);
+        var revisao = await dbContext.RevisoesProfissionais
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+        var registroTatuagem = await dbContext.RegistrosTatuagem
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+        var registroPiercing = await dbContext.RegistrosPiercing
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
         var conviteExpiraEmUtc = await dbContext.ConvitesFicha
             .AsNoTracking()
             .Where(convite => convite.FichaId == ficha.Id)
@@ -335,6 +445,10 @@ public sealed class ConsultaFichas(
             ficha.ProfissionalResponsavelId,
             ficha.ProfissionalResponsavelNome,
             ficha.TipoProcedimento.ToString(),
+            ficha.VersaoModelo,
+            ficha.VersaoQuestionario,
+            ficha.VersaoTermo,
+            ficha.CnpjApresentado,
             new ClienteDaFichaConsultado(
                 cliente.Id,
                 cliente.NomeReferencia,
@@ -342,12 +456,22 @@ public sealed class ConsultaFichas(
                 dadosDaFicha?.NomeSocial,
                 dadosDaFicha?.NomeParaExibicao ?? cliente.NomeReferencia,
                 dadosDaFicha?.Pronomes,
+                dadosDaFicha?.EstadoCivil,
                 dadosDaFicha?.DataNascimento,
+                dadosDaFicha?.Cpf,
                 dadosDaFicha?.Celular,
+                dadosDaFicha?.TelefoneAdicional,
                 dadosDaFicha?.Email,
                 dadosDaFicha?.Instagram,
                 dadosDaFicha?.ContatoEmergenciaNome,
                 dadosDaFicha?.ContatoEmergenciaCelular,
+                dadosDaFicha?.Cep,
+                dadosDaFicha?.Logradouro,
+                dadosDaFicha?.Numero,
+                dadosDaFicha?.Complemento,
+                dadosDaFicha?.Bairro,
+                dadosDaFicha?.Cidade,
+                dadosDaFicha?.Estado,
                 dadosDaFicha?.ConfirmadosEmUtc),
             questionario is null
                 ? null
@@ -355,13 +479,23 @@ public sealed class ConsultaFichas(
                     questionario.Versao,
                     questionario.TemDiabetes,
                     questionario.TipoDiabetes,
+                    questionario.TeveAnemia,
+                    questionario.DescricaoAnemia,
+                    questionario.TeveHepatite,
+                    questionario.TipoHepatite,
                     questionario.PossuiPressaoAlta,
                     questionario.TemAlergia,
                     questionario.DescricaoAlergia,
                     questionario.PossuiCondicaoCardiaca,
                     questionario.TemEpilepsia,
                     questionario.TemHemofilia,
+                    questionario.PossuiDoencaTransmissivel,
+                    questionario.DescricaoDoencaTransmissivel,
                     questionario.UsaMarcaPasso,
+                    questionario.Fuma,
+                    questionario.ConsumiuBebidaAlcoolicaUltimas24Horas,
+                    questionario.UsaMedicacao,
+                    questionario.DescricaoMedicacao,
                     questionario.EstaGravidaOuAmamentando,
                     questionario.RespondidoEmUtc),
             aceite is null
@@ -370,20 +504,81 @@ public sealed class ConsultaFichas(
                     aceite.VersaoTermo,
                     aceite.NomeAssinante,
                     aceite.AceitoEmUtc,
-                    aceite.ConfirmouMaioridade,
-                    aceite.ConfirmouDadosPessoais,
-                    aceite.ConfirmouQuestionarioSaude,
+                    aceite.ConfirmouLeituraEAutorizacao,
+                    aceite.AssinaturaDesenhada,
                     aceite.EvidenciaHash,
                     string.Equals(
                         calculadorHash.Calcular(aceite.EvidenciaJson),
                         aceite.EvidenciaHash,
-                        StringComparison.OrdinalIgnoreCase)));
+                        StringComparison.OrdinalIgnoreCase)),
+            revisao is null
+                ? null
+                : new RevisaoProfissionalConsultada(
+                    revisao.ProfissionalNome,
+                    revisao.DadosDaFichaConferidos,
+                    revisao.RevisadaEmUtc),
+            CriarRegistroConsultado(registroTatuagem, registroPiercing));
+    }
+
+    private RegistroProcedimentoConsultado? CriarRegistroConsultado(
+        RegistroTatuagem? tatuagem,
+        RegistroPiercing? piercing)
+    {
+        if (tatuagem is not null)
+        {
+            return new RegistroProcedimentoConsultado(
+                TipoProcedimento.Tatuagem.ToString(),
+                tatuagem.ProfissionalNome,
+                tatuagem.ArteEfetivamenteTatuada,
+                tatuagem.MaterialUtilizado,
+                tatuagem.LocalTatuagem,
+                null,
+                null,
+                null,
+                tatuagem.Observacoes,
+                tatuagem.ValorTotal,
+                tatuagem.ValorSinal,
+                tatuagem.FormaPagamento.ToString(),
+                tatuagem.NomeProfissionalAssinante,
+                tatuagem.AssinaturaDesenhada,
+                tatuagem.RegistradoEmUtc,
+                tatuagem.EvidenciaHash,
+                string.Equals(
+                    calculadorHash.Calcular(tatuagem.EvidenciaJson),
+                    tatuagem.EvidenciaHash,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (piercing is not null)
+        {
+            return new RegistroProcedimentoConsultado(
+                TipoProcedimento.Piercing.ToString(),
+                piercing.ProfissionalNome,
+                null,
+                null,
+                null,
+                piercing.JoiaUtilizada,
+                piercing.AgulhaUtilizada,
+                piercing.LocalPerfuracao,
+                piercing.Observacoes,
+                piercing.ValorTotal,
+                piercing.ValorSinal,
+                piercing.FormaPagamento.ToString(),
+                piercing.NomeProfissionalAssinante,
+                piercing.AssinaturaDesenhada,
+                piercing.RegistradoEmUtc,
+                piercing.EvidenciaHash,
+                string.Equals(
+                    calculadorHash.Calcular(piercing.EvidenciaJson),
+                    piercing.EvidenciaHash,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        return null;
     }
 
     private static DateTimeOffset InicioUtc(DateOnly data)
     {
-        return new DateTimeOffset(
-            data.ToDateTime(TimeOnly.MinValue),
-            TimeSpan.Zero);
+        return HorarioEstudio.ObterInicioUtc(data);
     }
 }

@@ -24,15 +24,14 @@ public sealed class AceiteTermoConsentimento
             conteudoTermo,
             conteudoHash,
             nomeAssinante,
-            confirmouMaioridade: true,
-            confirmouDadosPessoais: true,
-            confirmouQuestionarioSaude: true,
+            confirmouLeituraEAutorizacao: true,
             versaoEvidencia: 1,
             evidenciaJson: "{}",
             evidenciaHash: conteudoHash,
             enderecoIp: null,
             agenteUsuario: null,
-            aceitoEmUtc)
+            aceitoEmUtc,
+            assinaturaDesenhada: null)
     {
     }
 
@@ -43,15 +42,14 @@ public sealed class AceiteTermoConsentimento
         string conteudoTermo,
         string conteudoHash,
         string nomeAssinante,
-        bool confirmouMaioridade,
-        bool confirmouDadosPessoais,
-        bool confirmouQuestionarioSaude,
+        bool confirmouLeituraEAutorizacao,
         int versaoEvidencia,
         string evidenciaJson,
         string evidenciaHash,
         string? enderecoIp,
         string? agenteUsuario,
-        DateTimeOffset aceitoEmUtc)
+        DateTimeOffset aceitoEmUtc,
+        string? assinaturaDesenhada = null)
     {
         if (fichaId == Guid.Empty)
         {
@@ -103,12 +101,11 @@ public sealed class AceiteTermoConsentimento
                 nameof(nomeAssinante));
         }
 
-        if (!confirmouMaioridade ||
-            !confirmouDadosPessoais ||
-            !confirmouQuestionarioSaude)
+        if (!confirmouLeituraEAutorizacao)
         {
             throw new ArgumentException(
-                "Todas as declarações da ficha precisam ser confirmadas.");
+                "A leitura e a autorização do procedimento precisam ser confirmadas.",
+                nameof(confirmouLeituraEAutorizacao));
         }
 
         if (versaoEvidencia <= 0)
@@ -158,15 +155,19 @@ public sealed class AceiteTermoConsentimento
         ConteudoTermo = conteudoTermo.Trim();
         ConteudoHash = conteudoHash.Trim().ToLowerInvariant();
         NomeAssinante = nomeAssinante.Trim();
-        ConfirmouMaioridade = confirmouMaioridade;
-        ConfirmouDadosPessoais = confirmouDadosPessoais;
-        ConfirmouQuestionarioSaude = confirmouQuestionarioSaude;
+        ConfirmouLeituraEAutorizacao = confirmouLeituraEAutorizacao;
         VersaoEvidencia = versaoEvidencia;
         EvidenciaJson = evidenciaJson.Trim();
         EvidenciaHash = evidenciaHash.Trim().ToLowerInvariant();
         EnderecoIp = NormalizarOpcional(enderecoIp);
         AgenteUsuario = NormalizarOpcional(agenteUsuario);
         AceitoEmUtc = aceitoEmUtc;
+        AssinaturaDesenhada = assinaturaDesenhada is null
+            ? null
+            : global::FichaDigital.Api.Modules.Fichas.Domain.AssinaturaDesenhada
+                .ValidarENormalizar(
+                assinaturaDesenhada,
+                nameof(assinaturaDesenhada));
     }
 
     public Guid Id { get; private set; }
@@ -183,11 +184,7 @@ public sealed class AceiteTermoConsentimento
 
     public string NomeAssinante { get; private set; } = string.Empty;
 
-    public bool ConfirmouMaioridade { get; private set; }
-
-    public bool ConfirmouDadosPessoais { get; private set; }
-
-    public bool ConfirmouQuestionarioSaude { get; private set; }
+    public bool ConfirmouLeituraEAutorizacao { get; private set; }
 
     public int VersaoEvidencia { get; private set; }
 
@@ -200,6 +197,8 @@ public sealed class AceiteTermoConsentimento
     public string? AgenteUsuario { get; private set; }
 
     public DateTimeOffset AceitoEmUtc { get; private set; }
+
+    public string? AssinaturaDesenhada { get; private set; }
 
     private static void ValidarTamanhoOpcional(
         string? valor,

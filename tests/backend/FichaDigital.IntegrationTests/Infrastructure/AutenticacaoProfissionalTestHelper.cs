@@ -45,6 +45,7 @@ public static class AutenticacaoProfissionalTestHelper
                     ", ",
                     resultado.Errors.Select(erro => erro.Description)));
             }
+
         }
 
         var antiforgeryToken = await ObterAntiforgeryTokenAsync(
@@ -74,7 +75,8 @@ public static class AutenticacaoProfissionalTestHelper
         HttpClient client,
         string requestUri,
         HttpContent? content,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? chaveIdempotencia = null)
     {
         var antiforgeryToken = await ObterAntiforgeryTokenAsync(
             client,
@@ -84,6 +86,10 @@ public static class AutenticacaoProfissionalTestHelper
             Content = content
         };
         request.Headers.Add("X-CSRF-TOKEN", antiforgeryToken);
+        if (!string.IsNullOrWhiteSpace(chaveIdempotencia))
+        {
+            request.Headers.Add("Idempotency-Key", chaveIdempotencia);
+        }
 
         return await client.SendAsync(request, cancellationToken);
     }
@@ -92,13 +98,15 @@ public static class AutenticacaoProfissionalTestHelper
         HttpClient client,
         string requestUri,
         T value,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? chaveIdempotencia = null)
     {
         return PostProtegidoAsync(
             client,
             requestUri,
             JsonContent.Create(value),
-            cancellationToken);
+            cancellationToken,
+            chaveIdempotencia);
     }
 
     public static async Task<HttpResponseMessage> PutComoJsonProtegidoAsync<T>(

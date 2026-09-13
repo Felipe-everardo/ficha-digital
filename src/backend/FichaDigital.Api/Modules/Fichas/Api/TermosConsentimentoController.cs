@@ -1,3 +1,4 @@
+using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [Route("api/fichas/termo-consentimento")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class TermosConsentimentoController(
-    AceitarTermoConsentimentoService service) : ControllerBase
+    AceitarTermoConsentimentoService service,
+    AuditoriaService auditoriaService) : ControllerBase
 {
     [HttpPost("aceitar")]
     [ProducesResponseType<TermoConsentimentoAceitoResponse>(
@@ -38,13 +40,12 @@ public sealed class TermosConsentimentoController(
             request.VersaoTermo!.Value,
             request.ConteudoHash,
             request.NomeAssinante,
-            request.ConfirmouMaioridade!.Value,
-            request.ConfirmouDadosPessoais!.Value,
-            request.ConfirmouQuestionarioSaude!.Value,
+            request.ConfirmouLeituraEAutorizacao!.Value,
             LimitarMetadata(
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
                 64),
-            LimitarMetadata(Request.Headers.UserAgent.ToString(), 512));
+            LimitarMetadata(Request.Headers.UserAgent.ToString(), 512),
+            request.AssinaturaDesenhada);
 
         var resultado = await service.AceitarAsync(
             command,
@@ -52,13 +53,18 @@ public sealed class TermosConsentimentoController(
 
         if (resultado.Resultado == StatusAceiteTermoConsentimento.Aceito)
         {
+            await auditoriaService.RegistrarAcaoDoClienteAsync(
+                "Consentimento assinado e procedimento autorizado",
+                resultado.FichaId!.Value,
+                HttpContext.TraceIdentifier,
+                cancellationToken);
             var response = new TermoConsentimentoAceitoResponse(
                 resultado.AceiteId!.Value,
                 resultado.FichaId!.Value,
                 resultado.VersaoTermo!.Value,
                 resultado.AceitoEmUtc!.Value,
                 resultado.EvidenciaHash!,
-                StatusFicha.Concluida.ToString());
+                StatusFicha.AutorizadaParaProcedimento.ToString());
 
             return Created(
                 $"/api/fichas/{response.FichaId}/termo-consentimento",
@@ -101,6 +107,21 @@ public sealed class TermosConsentimentoController(
                 statusCode: StatusCodes.Status422UnprocessableEntity,
                 title: "Atendimento indisponível.",
                 detail: "O estúdio realiza procedimentos somente em pessoas com 18 anos ou mais."),
+
+            StatusAceiteTermoConsentimento.ConfirmacaoObrigatoria => Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Confirmação obrigatória.",
+                detail: "Confirme que leu, entendeu e autoriza o procedimento."),
+
+            StatusAceiteTermoConsentimento.AssinaturaInvalida => Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Assinatura inválida.",
+                detail: "Desenhe a assinatura antes de autorizar o procedimento."),
+
+            StatusAceiteTermoConsentimento.NomeAssinanteDivergente => Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Nome divergente.",
+                detail: "O nome digitado deve corresponder ao nome completo confirmado."),
 
             _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,

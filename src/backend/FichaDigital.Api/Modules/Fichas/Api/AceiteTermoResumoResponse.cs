@@ -4,8 +4,7 @@ public sealed record AceiteTermoResumoResponse(
     int VersaoTermo,
     string NomeAssinante,
     DateTimeOffset AceitoEmUtc,
-    bool ConfirmouMaioridade,
-    bool ConfirmouDadosPessoais,
-    bool ConfirmouQuestionarioSaude,
+    bool ConfirmouLeituraEAutorizacao,
+    string? AssinaturaDesenhada,
     string EvidenciaHash,
     bool EvidenciaIntegra);

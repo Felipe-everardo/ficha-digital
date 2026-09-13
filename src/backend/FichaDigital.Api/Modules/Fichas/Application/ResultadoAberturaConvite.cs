@@ -12,4 +12,5 @@ public sealed record ResultadoAberturaConvite(
     string? ProfissionalResponsavelNome = null,
     TipoProcedimento? TipoProcedimento = null,
     DadosPessoaisConvite? DadosPessoais = null,
-    QuestionarioSaudeConvite? QuestionarioSaude = null);
+    QuestionarioSaudeConvite? QuestionarioSaude = null,
+    TermoConsentimentoConvite? TermoConsentimento = null);

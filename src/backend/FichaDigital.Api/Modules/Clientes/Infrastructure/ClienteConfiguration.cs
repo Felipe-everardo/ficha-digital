@@ -32,10 +32,19 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(cliente => cliente.Pronomes)
             .HasMaxLength(50);
 
+        builder.Property(cliente => cliente.EstadoCivil)
+            .HasMaxLength(50);
+
         builder.Property(cliente => cliente.DataNascimento)
             .HasColumnType("date");
 
+        builder.Property(cliente => cliente.Cpf)
+            .HasMaxLength(11);
+
         builder.Property(cliente => cliente.Celular)
+            .HasMaxLength(25);
+
+        builder.Property(cliente => cliente.TelefoneAdicional)
             .HasMaxLength(25);
 
         builder.Property(cliente => cliente.Email)
@@ -50,6 +59,27 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(cliente => cliente.ContatoEmergenciaCelular)
             .HasMaxLength(25);
 
+        builder.Property(cliente => cliente.Cep)
+            .HasMaxLength(8);
+
+        builder.Property(cliente => cliente.Logradouro)
+            .HasMaxLength(150);
+
+        builder.Property(cliente => cliente.Numero)
+            .HasMaxLength(20);
+
+        builder.Property(cliente => cliente.Complemento)
+            .HasMaxLength(100);
+
+        builder.Property(cliente => cliente.Bairro)
+            .HasMaxLength(100);
+
+        builder.Property(cliente => cliente.Cidade)
+            .HasMaxLength(100);
+
+        builder.Property(cliente => cliente.Estado)
+            .HasMaxLength(2);
+
         builder.Property(cliente => cliente.CriadoEmUtc)
             .IsRequired();
 
@@ -58,5 +88,8 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.HasIndex(cliente => cliente.NomeReferencia);
 
         builder.HasIndex(cliente => cliente.Celular);
+
+        builder.HasIndex(cliente => cliente.Cpf);
+
     }
 }

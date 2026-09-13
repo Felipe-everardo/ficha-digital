@@ -8,6 +8,7 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 public sealed class EmitirConviteFichaService(
     FichaDigitalDbContext dbContext,
     GeradorTokenConvite geradorToken,
+    ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider)
 {
     private static readonly TimeSpan DuracaoConvite =
@@ -30,11 +31,16 @@ public sealed class EmitirConviteFichaService(
             return null;
         }
 
+        var modelo = resolvedorModelo.ObterModeloAtual(tipoProcedimento);
         var ficha = new Ficha(
             clienteId,
             profissionalResponsavelId,
             profissionalResponsavelNome,
-            tipoProcedimento);
+            tipoProcedimento,
+            modelo.VersaoModelo,
+            modelo.VersaoQuestionario,
+            modelo.VersaoTermo,
+            modelo.CnpjApresentado);
         var tokenGerado = geradorToken.Gerar();
         var expiraEmUtc = timeProvider
             .GetUtcNow()

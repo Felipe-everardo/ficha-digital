@@ -1,3 +1,4 @@
+using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
@@ -14,7 +15,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class AberturaConvitesFichaController(
     AbrirConviteFichaService service,
-    CalculadorHashConteudo calculadorHash) : ControllerBase
+    CalculadorHashConteudo calculadorHash,
+    AuditoriaService auditoriaService) : ControllerBase
 {
     [HttpPost("abrir")]
     [ProducesResponseType<ConviteFichaAbertoResponse>(
@@ -37,6 +39,15 @@ public sealed class AberturaConvitesFichaController(
             request.Token,
             cancellationToken);
 
+        if (resultado.Resultado == StatusAberturaConvite.Aberto)
+        {
+            await auditoriaService.RegistrarAcaoDoClienteAsync(
+                "Convite aberto",
+                resultado.FichaId!.Value,
+                HttpContext.TraceIdentifier,
+                cancellationToken);
+        }
+
         return resultado.Resultado switch
         {
             StatusAberturaConvite.Aberto => Ok(
@@ -52,32 +63,52 @@ public sealed class AberturaConvitesFichaController(
                         resultado.DadosPessoais!.NomeCompleto,
                         resultado.DadosPessoais.NomeSocial,
                         resultado.DadosPessoais.Pronomes,
+                        resultado.DadosPessoais.EstadoCivil,
                         resultado.DadosPessoais.DataNascimento,
+                        resultado.DadosPessoais.Cpf,
                         resultado.DadosPessoais.Celular,
+                        resultado.DadosPessoais.TelefoneAdicional,
                         resultado.DadosPessoais.Email,
                         resultado.DadosPessoais.Instagram,
                         resultado.DadosPessoais.ContatoEmergenciaNome,
-                        resultado.DadosPessoais.ContatoEmergenciaCelular),
+                        resultado.DadosPessoais.ContatoEmergenciaCelular,
+                        resultado.DadosPessoais.Cep,
+                        resultado.DadosPessoais.Logradouro,
+                        resultado.DadosPessoais.Numero,
+                        resultado.DadosPessoais.Complemento,
+                        resultado.DadosPessoais.Bairro,
+                        resultado.DadosPessoais.Cidade,
+                        resultado.DadosPessoais.Estado),
                     resultado.QuestionarioSaude is null
                         ? null
                         : new QuestionarioSaudeDetalheResponse(
                             resultado.QuestionarioSaude.Versao,
                             resultado.QuestionarioSaude.TemDiabetes,
                             resultado.QuestionarioSaude.TipoDiabetes,
+                            resultado.QuestionarioSaude.TeveAnemia,
+                            resultado.QuestionarioSaude.DescricaoAnemia,
+                            resultado.QuestionarioSaude.TeveHepatite,
+                            resultado.QuestionarioSaude.TipoHepatite,
                             resultado.QuestionarioSaude.PossuiPressaoAlta,
                             resultado.QuestionarioSaude.TemAlergia,
                             resultado.QuestionarioSaude.DescricaoAlergia,
                             resultado.QuestionarioSaude.PossuiCondicaoCardiaca,
                             resultado.QuestionarioSaude.TemEpilepsia,
                             resultado.QuestionarioSaude.TemHemofilia,
+                            resultado.QuestionarioSaude.PossuiDoencaTransmissivel,
+                            resultado.QuestionarioSaude.DescricaoDoencaTransmissivel,
                             resultado.QuestionarioSaude.UsaMarcaPasso,
+                            resultado.QuestionarioSaude.Fuma,
+                            resultado.QuestionarioSaude.ConsumiuBebidaAlcoolicaUltimas24Horas,
+                            resultado.QuestionarioSaude.UsaMedicacao,
+                            resultado.QuestionarioSaude.DescricaoMedicacao,
                             resultado.QuestionarioSaude.EstaGravidaOuAmamentando,
                             resultado.QuestionarioSaude.RespondidoEmUtc),
                     new TermoConsentimentoResponse(
-                        TermoConsentimentoAtual.Versao,
-                        TermoConsentimentoAtual.Conteudo,
+                        resultado.TermoConsentimento!.Versao,
+                        resultado.TermoConsentimento.Conteudo,
                         calculadorHash.Calcular(
-                            TermoConsentimentoAtual.Conteudo)))),
+                            resultado.TermoConsentimento.Conteudo)))),
 
             StatusAberturaConvite.Expirado => Problem(
                 statusCode: StatusCodes.Status410Gone,

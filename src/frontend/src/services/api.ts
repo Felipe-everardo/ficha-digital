@@ -1,5 +1,4 @@
 export * from './clientesApi'
 export * from './fichasApi'
 export * from './http'
-export * from './profissionaisApi'
 export * from './statusApi'

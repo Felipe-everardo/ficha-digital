@@ -8,8 +8,6 @@ public sealed class ListarFichasRequest : IValidatableObject
     [MaxLength(150, ErrorMessage = "A busca deve ter no máximo 150 caracteres.")]
     public string? Busca { get; init; }
 
-    public Guid? ProfissionalId { get; init; }
-
     public TipoProcedimento? TipoProcedimento { get; init; }
 
     public StatusFicha? Status { get; init; }
@@ -49,13 +47,6 @@ public sealed class ListarFichasRequest : IValidatableObject
             yield return new ValidationResult(
                 "A data inicial de conclusão não pode ser posterior à data final.",
                 [nameof(ConcluidaDe), nameof(ConcluidaAte)]);
-        }
-
-        if (ProfissionalId == Guid.Empty)
-        {
-            yield return new ValidationResult(
-                "O profissional informado é inválido.",
-                [nameof(ProfissionalId)]);
         }
 
         if (TipoProcedimento is not null &&

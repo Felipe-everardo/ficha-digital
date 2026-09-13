@@ -1,5 +1,6 @@
 import type { FormEventHandler } from 'react'
 import type { ConviteFichaAberto } from '../../services/api'
+import { formatarCep, formatarCpf } from '../../utils/documentos'
 import { formatarTelefoneBrasileiro } from '../../utils/telefone'
 import { CalendarInput } from '../CalendarInput'
 import type { DadosPessoaisFormulario } from './model'
@@ -85,18 +86,43 @@ export function FormularioDadosPessoais({
         </label>
 
         <label className="personal-field">
+          <span>Estado civil *</span>
+          <input
+            type="text"
+            maxLength={50}
+            placeholder="Ex.: Solteira"
+            required
+            value={dados.estadoCivil}
+            onChange={(event) => aoAlterar('estadoCivil', event.target.value)}
+          />
+        </label>
+
+        <label className="personal-field">
           <span>Data de nascimento *</span>
           <CalendarInput
-            type="date"
             autoComplete="bday"
             max={dataMaximaNascimento}
             required
             value={dados.dataNascimento}
-            onChange={(event) =>
-              aoAlterar('dataNascimento', event.target.value)
-            }
+            onValueChange={(valor) => aoAlterar('dataNascimento', valor)}
           />
           <small>Atendimento exclusivo para maiores de 18 anos.</small>
+        </label>
+
+        <label className="personal-field">
+          <span>CPF *</span>
+          <input
+            type="text"
+            autoComplete="off"
+            maxLength={14}
+            inputMode="numeric"
+            placeholder="000.000.000-00"
+            required
+            value={dados.cpf}
+            onChange={(event) =>
+              aoAlterar('cpf', formatarCpf(event.target.value))
+            }
+          />
         </label>
 
         <label className="personal-field">
@@ -127,6 +153,23 @@ export function FormularioDadosPessoais({
             placeholder="Ex.: maria@email.com"
             value={dados.email}
             onChange={(event) => aoAlterar('email', event.target.value)}
+          />
+        </label>
+
+        <label className="personal-field">
+          <span>Telefone adicional (opcional)</span>
+          <input
+            type="tel"
+            maxLength={15}
+            inputMode="numeric"
+            placeholder="Ex.: (21) 3333-3333"
+            value={dados.telefoneAdicional}
+            onChange={(event) =>
+              aoAlterar(
+                'telefoneAdicional',
+                formatarTelefoneBrasileiro(event.target.value),
+              )
+            }
           />
         </label>
 
@@ -172,6 +215,108 @@ export function FormularioDadosPessoais({
                     'contatoEmergenciaCelular',
                     formatarTelefoneBrasileiro(event.target.value),
                   )
+                }
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="personal-field-group personal-field--full">
+          <div>
+            <h3>Endereço</h3>
+            <p>Informe seu endereço residencial atual.</p>
+          </div>
+          <div className="personal-data-grid">
+            <label className="personal-field">
+              <span>CEP *</span>
+              <input
+                type="text"
+                autoComplete="postal-code"
+                maxLength={9}
+                inputMode="numeric"
+                placeholder="00000-000"
+                required
+                value={dados.cep}
+                onChange={(event) =>
+                  aoAlterar('cep', formatarCep(event.target.value))
+                }
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Logradouro *</span>
+              <input
+                type="text"
+                autoComplete="street-address"
+                maxLength={150}
+                placeholder="Rua, avenida ou travessa"
+                required
+                value={dados.logradouro}
+                onChange={(event) =>
+                  aoAlterar('logradouro', event.target.value)
+                }
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Número *</span>
+              <input
+                type="text"
+                maxLength={20}
+                placeholder="Ex.: 123 ou S/N"
+                required
+                value={dados.numero}
+                onChange={(event) => aoAlterar('numero', event.target.value)}
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Complemento (opcional)</span>
+              <input
+                type="text"
+                maxLength={100}
+                placeholder="Ex.: Apto. 201"
+                value={dados.complemento}
+                onChange={(event) =>
+                  aoAlterar('complemento', event.target.value)
+                }
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Bairro *</span>
+              <input
+                type="text"
+                maxLength={100}
+                required
+                value={dados.bairro}
+                onChange={(event) => aoAlterar('bairro', event.target.value)}
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Cidade *</span>
+              <input
+                type="text"
+                autoComplete="address-level2"
+                maxLength={100}
+                required
+                value={dados.cidade}
+                onChange={(event) => aoAlterar('cidade', event.target.value)}
+              />
+            </label>
+
+            <label className="personal-field">
+              <span>Estado (UF) *</span>
+              <input
+                type="text"
+                autoComplete="address-level1"
+                maxLength={2}
+                placeholder="RJ"
+                required
+                value={dados.estado}
+                onChange={(event) =>
+                  aoAlterar('estado', event.target.value.toUpperCase())
                 }
               />
             </label>

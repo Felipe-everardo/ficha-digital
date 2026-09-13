@@ -69,4 +69,5 @@ public sealed class ProvisionadorProfissionalDesenvolvimento(
             "Profissional de desenvolvimento {ProfissionalId} criado.",
             profissional.Id);
     }
+
 }

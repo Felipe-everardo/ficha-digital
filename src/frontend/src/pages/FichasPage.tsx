@@ -13,7 +13,19 @@ import './FichasPage.css'
 
 const TAMANHO_PAGINA = 10
 
-type TipoPeriodo = 'todos' | 'dia' | 'mes' | 'ano'
+type TipoPeriodo = 'hoje' | 'todos' | 'dia' | 'mes' | 'ano'
+
+function obterDataLocalIso(data = new Date()) {
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+}
+
+function obterFiltrosDeHoje(): FiltrosFichas {
+  const hoje = obterDataLocalIso()
+  return { criadaDe: hoje, criadaAte: hoje }
+}
 
 function formatarDataHora(data: string | null) {
   if (!data) return 'Ainda não concluída'
@@ -33,7 +45,13 @@ function formatarProcedimento(tipo: TipoProcedimento) {
 function classeDoStatus(status: string) {
   if (status === 'Rascunho') return 'draft'
   if (status === 'ConviteEnviado') return 'sent'
-  if (status === 'EmPreenchimento') return 'progress'
+  if (
+    status === 'EmPreenchimento' ||
+    status === 'AnamnesePreenchida' ||
+    status === 'AguardandoConsentimento' ||
+    status === 'RevisadaPeloProfissional'
+  ) return 'progress'
+  if (status === 'AutorizadaParaProcedimento') return 'sent'
   if (status === 'Concluida') return 'completed'
   return 'cancelled'
 }
@@ -42,11 +60,21 @@ function rotuloDoStatus(status: string) {
   if (status === 'Rascunho') return 'Rascunho'
   if (status === 'ConviteEnviado') return 'Convite enviado'
   if (status === 'EmPreenchimento') return 'Em preenchimento'
+  if (status === 'AnamnesePreenchida') return 'Aguardando assinatura'
+  if (status === 'AguardandoConsentimento') return 'Aguardando assinatura'
+  if (status === 'AutorizadaParaProcedimento') return 'Autorizada'
+  if (status === 'RevisadaPeloProfissional') {
+    return 'Revisada · registro pendente'
+  }
   if (status === 'Concluida') return 'Concluída'
   return status
 }
 
 function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
+  if (tipo === 'hoje') {
+    return obterFiltrosDeHoje()
+  }
+
   if (tipo === 'dia' && valor) {
     return { concluidaDe: valor, concluidaAte: valor }
   }
@@ -87,10 +115,10 @@ export function FichasPage() {
   const [resultado, setResultado] = useState<FichasPaginadas | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
-  const [tipoPeriodo, setTipoPeriodo] = useState<TipoPeriodo>('todos')
+  const [tipoPeriodo, setTipoPeriodo] = useState<TipoPeriodo>('hoje')
   const [valorPeriodo, setValorPeriodo] = useState('')
   const [periodoAtivo, setPeriodoAtivo] = useState(false)
-  const [filtros, setFiltros] = useState<FiltrosFichas>({})
+  const [filtros, setFiltros] = useState<FiltrosFichas>(obterFiltrosDeHoje)
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -129,14 +157,14 @@ export function FichasPage() {
     event.preventDefault()
     const novosFiltros = obterLimitesDoPeriodo(tipoPeriodo, valorPeriodo)
     setFiltros(novosFiltros)
-    setPeriodoAtivo(Object.keys(novosFiltros).length > 0)
+    setPeriodoAtivo(tipoPeriodo !== 'hoje')
     setPagina(1)
   }
 
   function limparPeriodo() {
-    setTipoPeriodo('todos')
+    setTipoPeriodo('hoje')
     setValorPeriodo('')
-    setFiltros({})
+    setFiltros(obterFiltrosDeHoje())
     setPeriodoAtivo(false)
     setPagina(1)
   }
@@ -148,19 +176,16 @@ export function FichasPage() {
           <p className="eyebrow">Arquivo do estúdio</p>
           <h1>Histórico de fichas</h1>
           <p>
-            Consulte as fichas enviadas e concluídas, preservando o contexto
-            declarado em cada procedimento.
+            As fichas mais recentes de hoje aparecem primeiro para agilizar o
+            atendimento. Use o período para consultar o histórico.
           </p>
         </div>
-        <a className="records-primary-link" href="/profissional/clientes">
-          Localizar cliente
-        </a>
       </header>
 
       <form className="records-period-filter" onSubmit={aplicarPeriodo}>
         <div>
           <p className="eyebrow">Período</p>
-          <h2>Filtrar pela conclusão</h2>
+          <h2>Localizar fichas por período</h2>
         </div>
         <div className="records-period-filter__fields">
           <label>
@@ -173,6 +198,7 @@ export function FichasPage() {
                 setValorPeriodo('')
               }}
             >
+              <option value="hoje">Fichas criadas hoje</option>
               <option value="todos">Todo o histórico</option>
               <option value="dia">Dia</option>
               <option value="mes">Mês</option>
@@ -180,15 +206,14 @@ export function FichasPage() {
             </select>
           </label>
 
-          {tipoPeriodo !== 'todos' && (
+          {tipoPeriodo !== 'hoje' && tipoPeriodo !== 'todos' && (
             <label>
               <span>{obterRotuloDoValor(tipoPeriodo)}</span>
               {tipoPeriodo === 'dia' ? (
                 <CalendarInput
-                  type="date"
                   required
                   value={valorPeriodo}
-                  onChange={(event) => setValorPeriodo(event.target.value)}
+                  onValueChange={setValorPeriodo}
                 />
               ) : tipoPeriodo === 'mes' ? (
                 <MonthInput
@@ -215,7 +240,7 @@ export function FichasPage() {
             </button>
             {periodoAtivo && (
               <button type="button" className="secondary-button" onClick={limparPeriodo}>
-                Limpar
+                Voltar para hoje
               </button>
             )}
           </div>
@@ -240,14 +265,14 @@ export function FichasPage() {
             <h2>Nenhuma ficha encontrada</h2>
             <p>
               {periodoAtivo
-                ? 'Nenhuma ficha foi concluída nesse período.'
-                : 'As fichas aparecerão aqui quando forem enviadas aos clientes.'}
+                ? 'Nenhuma ficha foi encontrada para o período selecionado.'
+                : 'Ainda não há fichas criadas hoje.'}
             </p>
           </div>
         ) : resultado ? (
           <>
             <p className="records-summary">
-              <strong>Fichas registradas:</strong>
+              <strong>{periodoAtivo ? 'Fichas encontradas:' : 'Fichas de hoje:'}</strong>
               <span>
                 {resultado.totalItens}{' '}
                 {resultado.totalItens === 1 ? 'ficha' : 'fichas'}
@@ -261,7 +286,7 @@ export function FichasPage() {
                     <th>Cliente</th>
                     <th>Procedimento</th>
                     <th>Profissional</th>
-                    <th>Conclusão</th>
+                    <th>Criada em</th>
                     <th>Status</th>
                     <th>Ação</th>
                   </tr>
@@ -278,8 +303,8 @@ export function FichasPage() {
                       <td data-label="Profissional">
                         {ficha.profissionalResponsavelNome}
                       </td>
-                      <td data-label="Conclusão">
-                        {formatarDataHora(ficha.concluidaEmUtc)}
+                      <td data-label="Criada em">
+                        {formatarDataHora(ficha.criadaEmUtc)}
                       </td>
                       <td data-label="Status">
                         <span className={`record-status record-status--${classeDoStatus(ficha.status)}`}>

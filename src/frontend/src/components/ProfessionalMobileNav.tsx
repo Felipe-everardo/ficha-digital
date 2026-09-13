@@ -3,6 +3,7 @@ import './ProfessionalMobileNav.css'
 
 export type ProfessionalSection =
   | 'clientes'
+  | 'financeiro'
   | 'fichas'
   | 'inicio'
 
@@ -11,11 +12,25 @@ type ProfessionalMobileLayoutProps = {
   children: ReactNode
 }
 
-const itens = [
+type NavigationItem =
+  | {
+      id: Exclude<ProfessionalSection, 'financeiro'>
+      label: string
+      href: string
+      disabled?: false
+    }
+  | {
+      id: 'financeiro'
+      label: string
+      disabled: true
+    }
+
+const itens: readonly NavigationItem[] = [
   { id: 'inicio', label: 'Início', href: '/profissional' },
   { id: 'clientes', label: 'Clientes', href: '/profissional/clientes' },
   { id: 'fichas', label: 'Fichas', href: '/profissional/fichas' },
-] as const
+  { id: 'financeiro', label: 'Financeiro', disabled: true },
+]
 
 function NavigationIcon({ section }: { section: ProfessionalSection }) {
   if (section === 'clientes') {
@@ -42,6 +57,14 @@ function NavigationIcon({ section }: { section: ProfessionalSection }) {
     )
   }
 
+  if (section === 'financeiro') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7h16a2 2 0 0 1 2 2v10H3a2 2 0 0 1-2-2V6l15-3v4M16 13h5M17 13h.01" />
+      </svg>
+    )
+  }
+
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="m3 11 9-8 9 8M5.5 9.5V21h13V9.5M9.5 21v-6h5v6" />
@@ -63,10 +86,25 @@ export function ProfessionalMobileLayout({
         {itens.map((item) => {
           const ativo = activeSection === item.id
 
+          if (item.disabled === true) {
+            return (
+              <span
+                key={item.id}
+                className="professional-mobile-nav__item professional-mobile-nav__disabled"
+                role="link"
+                aria-disabled="true"
+                title="Financeiro disponível em breve"
+              >
+                <NavigationIcon section={item.id} />
+                <span>{item.label}</span>
+              </span>
+            )
+          }
+
           return (
             <a
               key={item.id}
-              className={ativo ? 'professional-mobile-nav__active' : undefined}
+              className={`professional-mobile-nav__item${ativo ? ' professional-mobile-nav__active' : ''}`}
               href={item.href}
               aria-current={ativo ? 'page' : undefined}
             >

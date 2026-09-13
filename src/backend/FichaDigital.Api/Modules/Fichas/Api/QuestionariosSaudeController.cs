@@ -1,3 +1,4 @@
+using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Application;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -11,7 +12,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [Route("api/fichas/questionario-saude")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class QuestionariosSaudeController(
-    ResponderQuestionarioSaudeService service) : ControllerBase
+    ResponderQuestionarioSaudeService service,
+    AuditoriaService auditoriaService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType<QuestionarioSaudeRespondidoResponse>(
@@ -34,13 +36,23 @@ public sealed class QuestionariosSaudeController(
             request.Token,
             request.TemDiabetes!.Value,
             request.TipoDiabetes,
+            request.TeveAnemia!.Value,
+            request.DescricaoAnemia,
+            request.TeveHepatite!.Value,
+            request.TipoHepatite,
             request.PossuiPressaoAlta!.Value,
             request.TemAlergia!.Value,
             request.DescricaoAlergia,
             request.PossuiCondicaoCardiaca!.Value,
             request.TemEpilepsia!.Value,
             request.TemHemofilia!.Value,
+            request.PossuiDoencaTransmissivel!.Value,
+            request.DescricaoDoencaTransmissivel,
             request.UsaMarcaPasso!.Value,
+            request.Fuma!.Value,
+            request.ConsumiuBebidaAlcoolicaUltimas24Horas!.Value,
+            request.UsaMedicacao!.Value,
+            request.DescricaoMedicacao,
             request.EstaGravidaOuAmamentando!.Value);
 
         var resultado = await service.ResponderAsync(
@@ -50,6 +62,11 @@ public sealed class QuestionariosSaudeController(
         if (resultado.Resultado ==
             StatusRespostaQuestionarioSaude.Respondido)
         {
+            await auditoriaService.RegistrarAcaoDoClienteAsync(
+                "Questionário de saúde respondido",
+                resultado.FichaId!.Value,
+                HttpContext.TraceIdentifier,
+                cancellationToken);
             var response = new QuestionarioSaudeRespondidoResponse(
                 resultado.QuestionarioId!.Value,
                 resultado.FichaId!.Value,

@@ -110,8 +110,11 @@ export function ClienteDetalhePage({ clienteId }: ClienteDetalhePageProps) {
           <div><dt>Nome completo</dt><dd>{cliente.nomeCompleto ?? 'Aguardando preenchimento'}</dd></div>
           <div><dt>Nome social</dt><dd>{cliente.nomeSocial ?? 'Não informado'}</dd></div>
           <div><dt>Pronomes</dt><dd>{cliente.pronomes ?? 'Não informado'}</dd></div>
+          <div><dt>Estado civil</dt><dd>{cliente.estadoCivil ?? 'Não informado'}</dd></div>
           <div><dt>Nascimento</dt><dd>{formatarDataNascimento(cliente.dataNascimento)}</dd></div>
+          <div><dt>CPF</dt><dd>{cliente.cpf ?? 'Não informado'}</dd></div>
           <div><dt>Celular</dt><dd>{cliente.celular ?? 'Aguardando preenchimento'}</dd></div>
+          <div><dt>Telefone adicional</dt><dd>{cliente.telefoneAdicional ?? 'Não informado'}</dd></div>
           <div><dt>E-mail</dt><dd>{cliente.email ?? 'Não informado'}</dd></div>
           <div><dt>Instagram</dt><dd>{cliente.instagram ?? 'Não informado'}</dd></div>
           <div>
@@ -121,6 +124,14 @@ export function ClienteDetalhePage({ clienteId }: ClienteDetalhePageProps) {
               {cliente.contatoEmergenciaCelular
                 ? ` · ${cliente.contatoEmergenciaCelular}`
                 : ''}
+            </dd>
+          </div>
+          <div>
+            <dt>Endereço</dt>
+            <dd>
+              {cliente.logradouro && cliente.numero
+                ? `${cliente.logradouro}, ${cliente.numero}${cliente.complemento ? ` — ${cliente.complemento}` : ''} — ${cliente.bairro}, ${cliente.cidade}/${cliente.estado} — CEP ${cliente.cep}`
+                : 'Não informado'}
             </dd>
           </div>
         </dl>

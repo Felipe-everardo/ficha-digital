@@ -3,21 +3,21 @@ import {
   ApiRequestError,
   emitirConviteFicha,
   listarClientes,
-  listarProfissionais,
   type ClientesPaginados,
   type FiltrosClientes,
-  type ProfissionalResumo,
   type TipoProcedimento,
 } from '../services/api'
 import { obterAntiforgeryToken } from '../services/autenticacao'
 import { CalendarInput } from '../components/CalendarInput'
+import { formatarTelefoneBrasileiro } from '../utils/telefone'
 import './ClientesPage.css'
 
 const TAMANHO_PAGINA = 10
 
 type FiltrosFormulario = {
   busca: string
-  profissionalId: string
+  telefone: string
+  instagram: string
   tipoProcedimento: string
   ultimaFichaDe: string
   ultimaFichaAte: string
@@ -25,7 +25,8 @@ type FiltrosFormulario = {
 
 const FILTROS_VAZIOS: FiltrosFormulario = {
   busca: '',
-  profissionalId: '',
+  telefone: '',
+  instagram: '',
   tipoProcedimento: '',
   ultimaFichaDe: '',
   ultimaFichaAte: '',
@@ -38,6 +39,7 @@ type ConviteEmPreparacao = {
 
 type ConviteGerado = {
   clienteNome: string
+  profissionalResponsavelNome: string
   procedimento: Exclude<TipoProcedimento, 'NaoInformado'>
   link: string
   expiraEmUtc: string
@@ -60,7 +62,8 @@ function formatarProcedimento(tipo: TipoProcedimento) {
 function criarFiltros(formulario: FiltrosFormulario): FiltrosClientes {
   return {
     busca: formulario.busca.trim() || undefined,
-    profissionalId: formulario.profissionalId || undefined,
+    telefone: formulario.telefone.trim() || undefined,
+    instagram: formulario.instagram.trim() || undefined,
     tipoProcedimento:
       (formulario.tipoProcedimento as TipoProcedimento) || undefined,
     ultimaFichaDe: formulario.ultimaFichaDe || undefined,
@@ -73,7 +76,10 @@ export function ClientesPage() {
   const [resultado, setResultado] = useState<ClientesPaginados | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [profissionais, setProfissionais] = useState<ProfissionalResumo[]>([])
+  const procedimentosPermitidos: Array<'Tatuagem' | 'Piercing'> = [
+    'Tatuagem',
+    'Piercing',
+  ]
   const [filtrosFormulario, setFiltrosFormulario] =
     useState<FiltrosFormulario>(FILTROS_VAZIOS)
   const [filtrosAplicados, setFiltrosAplicados] =
@@ -83,27 +89,14 @@ export function ClientesPage() {
   const [tipoProcedimento, setTipoProcedimento] = useState<
     '' | Exclude<TipoProcedimento, 'NaoInformado'>
   >('')
+  const [profissionalResponsavelNome, setProfissionalResponsavelNome] =
+    useState('')
   const [clienteEmitindoId, setClienteEmitindoId] = useState<string | null>(null)
   const [erroEmissao, setErroEmissao] = useState<string | null>(null)
   const [conviteGerado, setConviteGerado] = useState<ConviteGerado | null>(null)
   const [mensagemCopia, setMensagemCopia] = useState<string | null>(null)
   const convitePanelRef = useRef<HTMLElement>(null)
   const conviteInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const abortController = new AbortController()
-
-    listarProfissionais(abortController.signal)
-      .then(setProfissionais)
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        if (error instanceof ApiRequestError && error.status === 401) {
-          window.location.replace('/profissional/entrar')
-        }
-      })
-
-    return () => abortController.abort()
-  }, [])
 
   useEffect(() => {
     if (filtrosAplicados === null) {
@@ -174,11 +167,19 @@ export function ClientesPage() {
     setConviteGerado(null)
     setErroEmissao(null)
     setTipoProcedimento('')
+    setProfissionalResponsavelNome('')
     setConviteEmPreparacao({ clienteId, clienteNome })
   }
 
   async function handleEmitirConvite() {
-    if (!conviteEmPreparacao || !tipoProcedimento) return
+    if (
+      !conviteEmPreparacao ||
+      !tipoProcedimento ||
+      !profissionalResponsavelNome.trim()
+    ) {
+      setErroEmissao('Informe o profissional responsável e o procedimento.')
+      return
+    }
 
     setClienteEmitindoId(conviteEmPreparacao.clienteId)
     setErroEmissao(null)
@@ -188,12 +189,14 @@ export function ClientesPage() {
       const antiforgeryToken = await obterAntiforgeryToken()
       const convite = await emitirConviteFicha(
         conviteEmPreparacao.clienteId,
+        profissionalResponsavelNome.trim(),
         tipoProcedimento,
         antiforgeryToken,
       )
 
       setConviteGerado({
         clienteNome: conviteEmPreparacao.clienteNome,
+        profissionalResponsavelNome: profissionalResponsavelNome.trim(),
         procedimento: tipoProcedimento,
         link: new URL(
           convite.linkPreenchimento,
@@ -288,6 +291,36 @@ export function ClientesPage() {
             />
           </label>
           <label className="filter-field">
+            <span>Telefone</span>
+            <input
+              type="tel"
+              maxLength={15}
+              inputMode="numeric"
+              placeholder="Ex.: (21) 99999-9999"
+              autoComplete="off"
+              value={filtrosFormulario.telefone}
+              onChange={(event) =>
+                atualizarFiltro(
+                  'telefone',
+                  formatarTelefoneBrasileiro(event.target.value),
+                )
+              }
+            />
+          </label>
+          <label className="filter-field">
+            <span>Instagram</span>
+            <input
+              type="search"
+              maxLength={100}
+              placeholder="Ex.: @usuario"
+              autoComplete="off"
+              value={filtrosFormulario.instagram}
+              onChange={(event) =>
+                atualizarFiltro('instagram', event.target.value)
+              }
+            />
+          </label>
+          <label className="filter-field">
             <span>Último procedimento</span>
             <select
               value={filtrosFormulario.tipoProcedimento}
@@ -301,41 +334,19 @@ export function ClientesPage() {
             </select>
           </label>
           <label className="filter-field">
-            <span>Último profissional</span>
-            <select
-              value={filtrosFormulario.profissionalId}
-              onChange={(event) =>
-                atualizarFiltro('profissionalId', event.target.value)
-              }
-            >
-              <option value="">Todos</option>
-              {profissionais.map((profissional) => (
-                <option key={profissional.id} value={profissional.id}>
-                  {profissional.nomeCompleto}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="filter-field">
             <span>Última ficha de</span>
             <CalendarInput
-              type="date"
               max={filtrosFormulario.ultimaFichaAte || undefined}
               value={filtrosFormulario.ultimaFichaDe}
-              onChange={(event) =>
-                atualizarFiltro('ultimaFichaDe', event.target.value)
-              }
+              onValueChange={(valor) => atualizarFiltro('ultimaFichaDe', valor)}
             />
           </label>
           <label className="filter-field">
             <span>Última ficha até</span>
             <CalendarInput
-              type="date"
               min={filtrosFormulario.ultimaFichaDe || undefined}
               value={filtrosFormulario.ultimaFichaAte}
-              onChange={(event) =>
-                atualizarFiltro('ultimaFichaAte', event.target.value)
-              }
+              onValueChange={(valor) => atualizarFiltro('ultimaFichaAte', valor)}
             />
           </label>
         </div>
@@ -366,6 +377,20 @@ export function ClientesPage() {
               </button>
             </div>
             <label className="invitation-procedure-field">
+              <span>Profissional responsável *</span>
+              <input
+                type="text"
+                maxLength={150}
+                required
+                placeholder="Nome completo"
+                value={profissionalResponsavelNome}
+                onChange={(event) => {
+                  setProfissionalResponsavelNome(event.target.value)
+                  setErroEmissao(null)
+                }}
+              />
+            </label>
+            <label className="invitation-procedure-field">
               <span>Qual procedimento será realizado?</span>
               <select
                 required
@@ -379,13 +404,20 @@ export function ClientesPage() {
                 }
               >
                 <option value="">Selecione</option>
-                <option value="Tatuagem">Tatuagem</option>
-                <option value="Piercing">Piercing</option>
+                {procedimentosPermitidos.map((procedimento) => (
+                  <option key={procedimento} value={procedimento}>
+                    {procedimento}
+                  </option>
+                ))}
               </select>
             </label>
             <button
               type="button"
-              disabled={!tipoProcedimento || clienteEmitindoId !== null}
+              disabled={
+                !tipoProcedimento ||
+                !profissionalResponsavelNome.trim() ||
+                clienteEmitindoId !== null
+              }
               onClick={handleEmitirConvite}
             >
               {clienteEmitindoId ? 'Gerando...' : 'Gerar convite'}
@@ -418,7 +450,9 @@ export function ClientesPage() {
               </button>
             </div>
             <p>
-              Este link expira em{' '}
+              Profissional responsável:{' '}
+              <strong>{conviteGerado.profissionalResponsavelNome}</strong>.
+              {' '}Este link expira em{' '}
               <strong>
                 {new Intl.DateTimeFormat('pt-BR', {
                   dateStyle: 'short',
@@ -461,8 +495,9 @@ export function ClientesPage() {
             <p className="eyebrow">Lista sob demanda</p>
             <h2>Como deseja encontrar o cliente?</h2>
             <p>
-              Digite um nome ou combine os filtros acima. Para consultar a
-              base inteira, use “Mostrar todos os clientes”.
+              Digite um nome, telefone ou Instagram, ou combine os filtros
+              acima. Para consultar a base inteira, use “Mostrar todos os
+              clientes”.
             </p>
           </div>
         )}

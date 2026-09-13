@@ -29,6 +29,15 @@ public sealed class FichaConfiguration : IEntityTypeConfiguration<Ficha>
             .HasMaxLength(30)
             .IsRequired();
 
+        builder.Property(ficha => ficha.VersaoModelo);
+
+        builder.Property(ficha => ficha.VersaoQuestionario);
+
+        builder.Property(ficha => ficha.VersaoTermo);
+
+        builder.Property(ficha => ficha.CnpjApresentado)
+            .HasMaxLength(18);
+
         builder.Property(ficha => ficha.Status)
             .HasConversion<string>()
             .HasMaxLength(30)

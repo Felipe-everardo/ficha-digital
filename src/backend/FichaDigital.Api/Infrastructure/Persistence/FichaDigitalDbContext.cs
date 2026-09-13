@@ -1,3 +1,5 @@
+using FichaDigital.Api.Infrastructure.Auditing;
+using FichaDigital.Api.Infrastructure.Idempotency;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Profissionais.Domain;
@@ -14,6 +16,12 @@ public sealed class FichaDigitalDbContext(
         IdentityRole<Guid>,
         Guid>(options)
 {
+    public DbSet<RegistroAuditoria> RegistrosAuditoria =>
+        Set<RegistroAuditoria>();
+
+    public DbSet<RequisicaoIdempotente> RequisicoesIdempotentes =>
+        Set<RequisicaoIdempotente>();
+
     public DbSet<Cliente> Clientes => Set<Cliente>();
 
     public DbSet<Ficha> Fichas => Set<Ficha>();
@@ -24,6 +32,15 @@ public sealed class FichaDigitalDbContext(
     public DbSet<ConviteFicha> ConvitesFicha => Set<ConviteFicha>();
 
     public DbSet<QuestionarioSaude> QuestionariosSaude => Set<QuestionarioSaude>();
+
+    public DbSet<RevisaoProfissional> RevisoesProfissionais =>
+        Set<RevisaoProfissional>();
+
+    public DbSet<RegistroTatuagem> RegistrosTatuagem =>
+        Set<RegistroTatuagem>();
+
+    public DbSet<RegistroPiercing> RegistrosPiercing =>
+        Set<RegistroPiercing>();
 
     public DbSet<AceiteTermoConsentimento> AceitesTermoConsentimento =>
         Set<AceiteTermoConsentimento>();

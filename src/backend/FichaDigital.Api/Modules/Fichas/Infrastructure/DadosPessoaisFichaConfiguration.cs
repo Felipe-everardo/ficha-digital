@@ -26,12 +26,21 @@ public sealed class DadosPessoaisFichaConfiguration
         builder.Property(dados => dados.Pronomes)
             .HasMaxLength(50);
 
+        builder.Property(dados => dados.EstadoCivil)
+            .HasMaxLength(50);
+
         builder.Property(dados => dados.DataNascimento)
             .IsRequired();
+
+        builder.Property(dados => dados.Cpf)
+            .HasMaxLength(11);
 
         builder.Property(dados => dados.Celular)
             .HasMaxLength(25)
             .IsRequired();
+
+        builder.Property(dados => dados.TelefoneAdicional)
+            .HasMaxLength(25);
 
         builder.Property(dados => dados.Email)
             .HasMaxLength(254);
@@ -44,6 +53,27 @@ public sealed class DadosPessoaisFichaConfiguration
 
         builder.Property(dados => dados.ContatoEmergenciaCelular)
             .HasMaxLength(25);
+
+        builder.Property(dados => dados.Cep)
+            .HasMaxLength(8);
+
+        builder.Property(dados => dados.Logradouro)
+            .HasMaxLength(150);
+
+        builder.Property(dados => dados.Numero)
+            .HasMaxLength(20);
+
+        builder.Property(dados => dados.Complemento)
+            .HasMaxLength(100);
+
+        builder.Property(dados => dados.Bairro)
+            .HasMaxLength(100);
+
+        builder.Property(dados => dados.Cidade)
+            .HasMaxLength(100);
+
+        builder.Property(dados => dados.Estado)
+            .HasMaxLength(2);
 
         builder.Property(dados => dados.ConfirmadosEmUtc)
             .IsRequired();

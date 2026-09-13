@@ -26,4 +26,39 @@ public sealed class DatabaseStatusEndpointTests
         Assert.NotNull(response);
         Assert.Equal("Connected", response.Database);
     }
+
+    [Theory]
+    [InlineData("/health/live")]
+    [InlineData("/health/ready")]
+    public async Task HealthChecks_ComAplicacaoSaudavel_DeveRetornarOk(
+        string endpoint)
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            endpoint,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Api_DeveRetornarCabecalhosDeSegurancaECorrelacao()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(
+            "/api/status",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("nosniff", response.Headers
+            .GetValues("X-Content-Type-Options").Single());
+        Assert.Equal("DENY", response.Headers
+            .GetValues("X-Frame-Options").Single());
+        Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
+        Assert.True(response.Headers.Contains("X-Correlation-ID"));
+    }
 }

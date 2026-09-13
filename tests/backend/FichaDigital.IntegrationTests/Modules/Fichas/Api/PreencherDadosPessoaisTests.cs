@@ -111,10 +111,18 @@ public sealed class PreencherDadosPessoaisTests
         {
             Token = "token-nao-utilizado",
             NomeCompleto = "Ana Silva",
+            EstadoCivil = "Solteira",
             DataNascimento = new DateOnly(1995, 6, 15),
+            Cpf = "529.982.247-25",
             Celular = "(21) 99999-9999",
             ContatoEmergenciaNome = "Maria",
-            ContatoEmergenciaCelular = null
+            ContatoEmergenciaCelular = null,
+            Cep = "20040-002",
+            Logradouro = "Rua da Assembleia",
+            Numero = "10",
+            Bairro = "Centro",
+            Cidade = "Rio de Janeiro",
+            Estado = "RJ"
         };
 
         using var httpResponse = await client.PostAsJsonAsync(
@@ -164,12 +172,18 @@ public sealed class PreencherDadosPessoaisTests
             {
                 Token = token,
                 TemDiabetes = false,
+                TeveAnemia = false,
+                TeveHepatite = false,
                 PossuiPressaoAlta = false,
                 TemAlergia = false,
                 PossuiCondicaoCardiaca = false,
                 TemEpilepsia = false,
                 TemHemofilia = false,
+                PossuiDoencaTransmissivel = false,
                 UsaMarcaPasso = false,
+                Fuma = false,
+                ConsumiuBebidaAlcoolicaUltimas24Horas = false,
+                UsaMedicacao = false,
                 EstaGravidaOuAmamentando = false
             },
             TestContext.Current.CancellationToken);
@@ -196,12 +210,20 @@ public sealed class PreencherDadosPessoaisTests
             NomeCompleto = "  Ana Silva  ",
             NomeSocial = "  Ana  ",
             Pronomes = "  ela/dela  ",
+            EstadoCivil = "  Solteira  ",
             DataNascimento = dataNascimento ?? new DateOnly(1995, 6, 15),
+            Cpf = "529.982.247-25",
             Celular = celular,
             Email = email,
             Instagram = "  @ana  ",
             ContatoEmergenciaNome = "  Maria  ",
-            ContatoEmergenciaCelular = "  (21) 98888-8888  "
+            ContatoEmergenciaCelular = "  (21) 98888-8888  ",
+            Cep = "20040-002",
+            Logradouro = "  Rua da Assembleia  ",
+            Numero = "10",
+            Bairro = "  Centro  ",
+            Cidade = "  Rio de Janeiro  ",
+            Estado = "rj"
         };
     }
 

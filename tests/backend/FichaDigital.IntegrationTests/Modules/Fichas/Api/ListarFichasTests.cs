@@ -179,20 +179,15 @@ public sealed class ListarFichasTests
         var criacaoProfissional = await userManager.CreateAsync(profissional);
         Assert.True(criacaoProfissional.Succeeded);
 
-        var ana = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "21911111111",
-            "ana@example.com");
-        var bruno = new Cliente(
-            "Bruno Lima",
-            null,
-            "ele/dele",
-            new DateOnly(1990, 3, 20),
-            "21922222222",
-            "bruno@example.com");
+        var ana = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "21911111111"));
+        var bruno = new Cliente(DadosPessoaisTeste.Criar(
+            nomeCompleto: "Bruno Lima",
+            nomeSocial: null,
+            pronomes: "ele/dele",
+            dataNascimento: new DateOnly(1990, 3, 20),
+            celular: "21922222222",
+            email: "bruno@example.com"));
         var fichaExpirada = new Ficha(
             ana.Id,
             profissional.Id,
@@ -212,7 +207,7 @@ public sealed class ListarFichasTests
             TipoProcedimento.Piercing);
         fichaConcluida.EnviarConvite();
         fichaConcluida.IniciarPreenchimento();
-        fichaConcluida.Concluir();
+        fichaConcluida.ConcluirFluxoLegado();
         var conviteConcluido = new ConviteFicha(
             fichaConcluida.Id,
             new string('b', 64),
@@ -247,15 +242,7 @@ public sealed class ListarFichasTests
     {
         return new DadosPessoaisFicha(
             fichaId,
-            cliente.NomeCompleto!,
-            cliente.NomeSocial,
-            cliente.Pronomes,
-            cliente.DataNascimento!.Value,
-            cliente.Celular!,
-            cliente.Email,
-            cliente.Instagram,
-            cliente.ContatoEmergenciaNome,
-            cliente.ContatoEmergenciaCelular,
+            DadosPessoaisTeste.CriarDe(cliente),
             confirmadosEmUtc);
     }
 

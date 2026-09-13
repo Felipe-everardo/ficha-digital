@@ -7,7 +7,8 @@ namespace FichaDigital.Api.Modules.Clientes.Application;
 
 public sealed record FiltroConsultaClientes(
     string? Busca,
-    Guid? ProfissionalId,
+    string? Telefone,
+    string? Instagram,
     TipoProcedimento? TipoProcedimento,
     DateOnly? UltimaFichaDe,
     DateOnly? UltimaFichaAte,
@@ -48,12 +49,22 @@ public sealed record DetalheClienteConsultado(
     string? NomeSocial,
     string NomeParaExibicao,
     string? Pronomes,
+    string? EstadoCivil,
     DateOnly? DataNascimento,
+    string? Cpf,
     string? Celular,
+    string? TelefoneAdicional,
     string? Email,
     string? Instagram,
     string? ContatoEmergenciaNome,
     string? ContatoEmergenciaCelular,
+    string? Cep,
+    string? Logradouro,
+    string? Numero,
+    string? Complemento,
+    string? Bairro,
+    string? Cidade,
+    string? Estado,
     DateTimeOffset? DadosPessoaisPreenchidosEmUtc,
     DateTimeOffset CriadoEmUtc,
     IReadOnlyList<FichaClienteConsultada> Fichas);
@@ -77,6 +88,48 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
                  cliente.NomeSocial.StartsWith(busca)));
         }
 
+        if (!string.IsNullOrWhiteSpace(filtro.Telefone))
+        {
+            var telefone = SomenteDigitos(filtro.Telefone);
+
+            if (!string.IsNullOrEmpty(telefone))
+            {
+                consulta = consulta.Where(cliente =>
+                    (cliente.Celular != null &&
+                     cliente.Celular
+                         .Replace("(", string.Empty)
+                         .Replace(")", string.Empty)
+                         .Replace(" ", string.Empty)
+                         .Replace("-", string.Empty)
+                         .Contains(telefone)) ||
+                    (cliente.TelefoneAdicional != null &&
+                     cliente.TelefoneAdicional
+                         .Replace("(", string.Empty)
+                         .Replace(")", string.Empty)
+                         .Replace(" ", string.Empty)
+                         .Replace("-", string.Empty)
+                         .Contains(telefone)));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Instagram))
+        {
+            var instagram = filtro.Instagram
+                .Trim()
+                .TrimStart('@')
+                .ToLowerInvariant();
+
+            if (!string.IsNullOrEmpty(instagram))
+            {
+                consulta = consulta.Where(cliente =>
+                    cliente.Instagram != null &&
+                    cliente.Instagram
+                        .Replace("@", string.Empty)
+                        .ToLower()
+                        .Contains(instagram));
+            }
+        }
+
         var inicioUltimaFicha = filtro.UltimaFichaDe is null
             ? (DateTimeOffset?)null
             : new DateTimeOffset(
@@ -91,7 +144,6 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
                         .ToDateTime(TimeOnly.MinValue),
                     TimeSpan.Zero);
         var possuiFiltrosUltimaFicha =
-            filtro.ProfissionalId is not null ||
             filtro.TipoProcedimento is not null ||
             inicioUltimaFicha is not null ||
             fimUltimaFichaExclusivo is not null;
@@ -137,14 +189,12 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
             {
                 consulta = consulta.Where(cliente =>
                     dbContext.Fichas
-                        .Where(ficha => ficha.ClienteId == cliente.Id)
+                        .Where(ficha =>
+                            ficha.ClienteId == cliente.Id)
                         .OrderByDescending(ficha => ficha.CriadaEmUtc)
                         .ThenByDescending(ficha => ficha.Id)
                         .Take(1)
                         .Any(ficha =>
-                            (filtro.ProfissionalId == null ||
-                             ficha.ProfissionalResponsavelId ==
-                             filtro.ProfissionalId) &&
                             (filtro.TipoProcedimento == null ||
                              ficha.TipoProcedimento ==
                              filtro.TipoProcedimento) &&
@@ -204,9 +254,7 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
     {
         var cliente = await dbContext.Clientes
             .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.Id == clienteId,
-                cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == clienteId, cancellationToken);
 
         if (cliente is null)
         {
@@ -230,12 +278,22 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
             cliente.NomeSocial,
             cliente.NomeParaExibicao,
             cliente.Pronomes,
+            cliente.EstadoCivil,
             cliente.DataNascimento,
+            cliente.Cpf,
             cliente.Celular,
+            cliente.TelefoneAdicional,
             cliente.Email,
             cliente.Instagram,
             cliente.ContatoEmergenciaNome,
             cliente.ContatoEmergenciaCelular,
+            cliente.Cep,
+            cliente.Logradouro,
+            cliente.Numero,
+            cliente.Complemento,
+            cliente.Bairro,
+            cliente.Cidade,
+            cliente.Estado,
             cliente.DadosPessoaisPreenchidosEmUtc,
             cliente.CriadoEmUtc,
             fichas);
@@ -273,12 +331,15 @@ public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
         DateTimeOffset? inicio,
         DateTimeOffset? fimExclusivo)
     {
-        return (filtro.ProfissionalId is null ||
-                ficha.ProfissionalResponsavelId == filtro.ProfissionalId) &&
-            (filtro.TipoProcedimento is null ||
+        return (filtro.TipoProcedimento is null ||
              ficha.TipoProcedimento == filtro.TipoProcedimento) &&
             (inicio is null || ficha.CriadaEmUtc >= inicio) &&
             (fimExclusivo is null || ficha.CriadaEmUtc < fimExclusivo);
+    }
+
+    private static string SomenteDigitos(string valor)
+    {
+        return new string(valor.Where(char.IsDigit).ToArray());
     }
 
     private static FichaClienteConsultada CriarResumoFicha(Ficha ficha)

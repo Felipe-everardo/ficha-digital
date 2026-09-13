@@ -108,28 +108,15 @@ public sealed class ObterDetalheFichaTests
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
-        var cliente = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "21911111111",
-            "ana@example.com");
+        var cliente = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "21911111111"));
         var ficha = new Ficha(cliente.Id);
         ficha.EnviarConvite();
         ficha.IniciarPreenchimento();
-        ficha.Concluir();
+        ficha.ConcluirFluxoLegado();
         var dadosDaFicha = new DadosPessoaisFicha(
             ficha.Id,
-            cliente.NomeCompleto!,
-            cliente.NomeSocial,
-            cliente.Pronomes,
-            cliente.DataNascimento!.Value,
-            cliente.Celular!,
-            cliente.Email,
-            cliente.Instagram,
-            cliente.ContatoEmergenciaNome,
-            cliente.ContatoEmergenciaCelular,
+            DadosPessoaisTeste.CriarDe(cliente),
             agora.AddMinutes(-5));
         var convite = new ConviteFicha(
             ficha.Id,
@@ -139,13 +126,23 @@ public sealed class ObterDetalheFichaTests
             ficha.Id,
             temDiabetes: true,
             tipoDiabetes: "Tipo 1",
+            teveAnemia: false,
+            descricaoAnemia: null,
+            teveHepatite: false,
+            tipoHepatite: null,
             possuiPressaoAlta: false,
             temAlergia: true,
             descricaoAlergia: "Látex",
             possuiCondicaoCardiaca: false,
             temEpilepsia: false,
             temHemofilia: false,
+            possuiDoencaTransmissivel: false,
+            descricaoDoencaTransmissivel: null,
             usaMarcaPasso: false,
+            fuma: false,
+            consumiuBebidaAlcoolicaUltimas24Horas: false,
+            usaMedicacao: false,
+            descricaoMedicacao: null,
             estaGravidaOuAmamentando: false);
         var aceite = new AceiteTermoConsentimento(
             ficha.Id,
@@ -164,15 +161,12 @@ public sealed class ObterDetalheFichaTests
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         cliente.AtualizarDadosPessoais(
-            "Ana Silva Atualizada",
-            "Ana Atualizada",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "21999999999",
-            "ana-atualizada@example.com",
-            "@ana_atualizada",
-            null,
-            null,
+            DadosPessoaisTeste.Criar(
+                nomeCompleto: "Ana Silva Atualizada",
+                nomeSocial: "Ana Atualizada",
+                celular: "21999999999",
+                email: "ana-atualizada@example.com",
+                instagram: "@ana_atualizada"),
             agora);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 

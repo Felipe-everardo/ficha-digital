@@ -8,11 +8,7 @@ public sealed class ProfissionalUsuario : IdentityUser<Guid>
     {
     }
 
-    public ProfissionalUsuario(
-        string nomeCompleto,
-        string email,
-        EspecialidadesProfissional especialidades =
-            EspecialidadesProfissional.Nenhuma)
+    public ProfissionalUsuario(string nomeCompleto, string email)
     {
         if (string.IsNullOrWhiteSpace(nomeCompleto))
         {
@@ -30,18 +26,10 @@ public sealed class ProfissionalUsuario : IdentityUser<Guid>
 
         Id = Guid.NewGuid();
         NomeCompleto = nomeCompleto.Trim();
-        Especialidades = especialidades;
         Email = email.Trim();
         UserName = Email;
     }
 
     public string NomeCompleto { get; private set; } = string.Empty;
 
-    public EspecialidadesProfissional Especialidades { get; private set; }
-
-    public void AtualizarEspecialidades(
-        EspecialidadesProfissional especialidades)
-    {
-        Especialidades = especialidades;
-    }
 }

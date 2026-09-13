@@ -2,8 +2,10 @@
 
 ## Estado do projeto
 
-Este é um projeto educacional em desenvolvimento. Ele ainda não passou por
-auditoria de segurança, revisão jurídica ou preparação para uso em produção.
+Este é um projeto educacional em desenvolvimento. Ele possui controles de
+acesso, antiforgery, rate limiting, auditoria operacional e cabeçalhos
+defensivos, mas ainda não passou por auditoria independente de segurança nem
+pela validação completa do ambiente de produção.
 
 Não utilize esta versão para armazenar:
 
@@ -23,6 +25,14 @@ Não publique fichas reais em issues, pull requests, commits ou discussões.
 Senhas, tokens e connection strings de produção não devem ser adicionados ao
 repositório. Em uma implantação futura, esses valores serão fornecidos por
 variáveis de ambiente ou por um serviço de gerenciamento de segredos.
+
+As chaves do ASP.NET Data Protection devem ser persistidas em armazenamento
+protegido e compartilhado entre instâncias. Logs e ferramentas de suporte não
+devem receber corpos de fichas, CPF, respostas clínicas, assinaturas ou links
+de convite.
+
+Consulte [`docs/operacao-producao.md`](docs/operacao-producao.md) antes de
+publicar uma versão destinada a dados reais.
 
 ## Relato de vulnerabilidades
 

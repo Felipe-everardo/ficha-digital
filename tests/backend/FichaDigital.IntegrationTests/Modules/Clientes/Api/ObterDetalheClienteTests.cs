@@ -68,18 +68,12 @@ public sealed class ObterDetalheClienteTests
             .GetRequiredService<UserManager<ProfissionalUsuario>>();
         var profissional = new ProfissionalUsuario(
             "Marina Tattoo",
-            $"marina-{Guid.NewGuid():N}@example.com",
-            EspecialidadesProfissional.Tatuagem);
+            $"marina-{Guid.NewGuid():N}@example.com");
         var criacao = await userManager.CreateAsync(profissional);
         Assert.True(criacao.Succeeded);
 
-        var cliente = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "21911111111",
-            "ana@example.com");
+        var cliente = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "21911111111"));
         var ficha = new Ficha(
             cliente.Id,
             profissional.Id,

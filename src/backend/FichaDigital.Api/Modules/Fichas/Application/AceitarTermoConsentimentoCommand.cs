@@ -5,8 +5,7 @@ public sealed record AceitarTermoConsentimentoCommand(
     int VersaoTermo,
     string ConteudoHash,
     string NomeAssinante,
-    bool ConfirmouMaioridade,
-    bool ConfirmouDadosPessoais,
-    bool ConfirmouQuestionarioSaude,
+    bool ConfirmouLeituraEAutorizacao,
     string? EnderecoIp,
-    string? AgenteUsuario);
+    string? AgenteUsuario,
+    string? AssinaturaDesenhada = null);

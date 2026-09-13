@@ -35,7 +35,6 @@ public sealed class ResponderQuestionarioSaudeService(
         }
 
         var ficha = await dbContext.Fichas
-            .AsNoTracking()
             .SingleOrDefaultAsync(
                 item => item.Id == convite.FichaId,
                 cancellationToken);
@@ -44,6 +43,17 @@ public sealed class ResponderQuestionarioSaudeService(
         {
             return new ResultadoRespostaQuestionarioSaude(
                 StatusRespostaQuestionarioSaude.ConviteNaoEncontrado);
+        }
+
+        var questionarioJaExiste = await dbContext.QuestionariosSaude
+            .AnyAsync(
+                item => item.FichaId == ficha.Id,
+                cancellationToken);
+
+        if (questionarioJaExiste)
+        {
+            return new ResultadoRespostaQuestionarioSaude(
+                StatusRespostaQuestionarioSaude.JaRespondido);
         }
 
         if (ficha.Status != StatusFicha.EmPreenchimento)
@@ -64,31 +74,36 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.DadosPessoaisPendentes);
         }
 
-        var questionarioJaExiste = await dbContext.QuestionariosSaude
-            .AnyAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
-
-        if (questionarioJaExiste)
-        {
-            return new ResultadoRespostaQuestionarioSaude(
-                StatusRespostaQuestionarioSaude.JaRespondido);
-        }
-
         var questionario = new QuestionarioSaude(
             ficha.Id,
             command.TemDiabetes,
             command.TipoDiabetes,
+            command.TeveAnemia,
+            command.DescricaoAnemia,
+            command.TeveHepatite,
+            command.TipoHepatite,
             command.PossuiPressaoAlta,
             command.TemAlergia,
             command.DescricaoAlergia,
             command.PossuiCondicaoCardiaca,
             command.TemEpilepsia,
             command.TemHemofilia,
+            command.PossuiDoencaTransmissivel,
+            command.DescricaoDoencaTransmissivel,
             command.UsaMarcaPasso,
+            command.Fuma,
+            command.ConsumiuBebidaAlcoolicaUltimas24Horas,
+            command.UsaMedicacao,
+            command.DescricaoMedicacao,
             command.EstaGravidaOuAmamentando);
 
         dbContext.QuestionariosSaude.Add(questionario);
+
+        if (ficha.VersaoModelo is not null)
+        {
+            ficha.ConcluirAnamnese();
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return new ResultadoRespostaQuestionarioSaude(

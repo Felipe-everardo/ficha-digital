@@ -9,6 +9,12 @@ public sealed record FichaDetalheResponse(
     Guid? ProfissionalResponsavelId,
     string ProfissionalResponsavelNome,
     string TipoProcedimento,
+    int? VersaoModelo,
+    int? VersaoQuestionario,
+    int? VersaoTermo,
+    string? CnpjApresentado,
     ClienteFichaDetalheResponse Cliente,
     QuestionarioSaudeDetalheResponse? QuestionarioSaude,
-    AceiteTermoResumoResponse? AceiteTermo);
+    AceiteTermoResumoResponse? AceiteTermo,
+    RevisaoProfissionalResponse? RevisaoProfissional,
+    RegistroProcedimentoResponse? RegistroProcedimento);

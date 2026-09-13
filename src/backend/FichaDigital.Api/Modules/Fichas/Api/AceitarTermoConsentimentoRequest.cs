@@ -22,47 +22,23 @@ public sealed class AceitarTermoConsentimentoRequest : IValidatableObject
     [MaxLength(150, ErrorMessage = "O nome do assinante deve ter no máximo 150 caracteres.")]
     public string NomeAssinante { get; init; } = string.Empty;
 
-    [Required(ErrorMessage = "A confirmação do aceite é obrigatória.")]
-    public bool? AceitouTermo { get; init; }
+    [Required(ErrorMessage = "A confirmação de leitura e autorização é obrigatória.")]
+    public bool? ConfirmouLeituraEAutorizacao { get; init; }
 
-    [Required(ErrorMessage = "A confirmação de maioridade é obrigatória.")]
-    public bool? ConfirmouMaioridade { get; init; }
-
-    [Required(ErrorMessage = "A confirmação dos dados pessoais é obrigatória.")]
-    public bool? ConfirmouDadosPessoais { get; init; }
-
-    [Required(ErrorMessage = "A confirmação do questionário de saúde é obrigatória.")]
-    public bool? ConfirmouQuestionarioSaude { get; init; }
+    [MaxLength(
+        global::FichaDigital.Api.Modules.Fichas.Domain.AssinaturaDesenhada
+            .TamanhoMaximo,
+        ErrorMessage = "A assinatura desenhada excede o tamanho permitido.")]
+    public string? AssinaturaDesenhada { get; init; }
 
     public IEnumerable<ValidationResult> Validate(
         ValidationContext validationContext)
     {
-        if (AceitouTermo is false)
+        if (ConfirmouLeituraEAutorizacao is false)
         {
             yield return new ValidationResult(
-                "É necessário aceitar o termo para concluir a ficha.",
-                [nameof(AceitouTermo)]);
-        }
-
-        if (ConfirmouMaioridade is false)
-        {
-            yield return new ValidationResult(
-                "É necessário declarar que possui 18 anos ou mais.",
-                [nameof(ConfirmouMaioridade)]);
-        }
-
-        if (ConfirmouDadosPessoais is false)
-        {
-            yield return new ValidationResult(
-                "É necessário confirmar que os dados pessoais estão corretos.",
-                [nameof(ConfirmouDadosPessoais)]);
-        }
-
-        if (ConfirmouQuestionarioSaude is false)
-        {
-            yield return new ValidationResult(
-                "É necessário confirmar que as informações de saúde estão corretas.",
-                [nameof(ConfirmouQuestionarioSaude)]);
+                "Confirme que leu, entendeu e autoriza o procedimento.",
+                [nameof(ConfirmouLeituraEAutorizacao)]);
         }
     }
 }

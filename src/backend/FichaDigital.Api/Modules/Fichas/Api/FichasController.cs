@@ -22,7 +22,6 @@ public sealed class FichasController(ConsultaFichas consultaFichas)
         var resultado = await consultaFichas.ListarAsync(
             new FiltroConsultaFichas(
                 request.Busca,
-                request.ProfissionalId,
                 request.TipoProcedimento,
                 request.Status,
                 request.CriadaDe,
@@ -70,6 +69,10 @@ public sealed class FichasController(ConsultaFichas consultaFichas)
             ficha.ProfissionalResponsavelId,
             ficha.ProfissionalResponsavelNome,
             ficha.TipoProcedimento,
+            ficha.VersaoModelo,
+            ficha.VersaoQuestionario,
+            ficha.VersaoTermo,
+            ficha.CnpjApresentado,
             new ClienteFichaDetalheResponse(
                 ficha.Cliente.Id,
                 ficha.Cliente.NomeReferencia,
@@ -77,12 +80,22 @@ public sealed class FichasController(ConsultaFichas consultaFichas)
                 ficha.Cliente.NomeSocial,
                 ficha.Cliente.NomeParaExibicao,
                 ficha.Cliente.Pronomes,
+                ficha.Cliente.EstadoCivil,
                 ficha.Cliente.DataNascimento,
+                ficha.Cliente.Cpf,
                 ficha.Cliente.Celular,
+                ficha.Cliente.TelefoneAdicional,
                 ficha.Cliente.Email,
                 ficha.Cliente.Instagram,
                 ficha.Cliente.ContatoEmergenciaNome,
                 ficha.Cliente.ContatoEmergenciaCelular,
+                ficha.Cliente.Cep,
+                ficha.Cliente.Logradouro,
+                ficha.Cliente.Numero,
+                ficha.Cliente.Complemento,
+                ficha.Cliente.Bairro,
+                ficha.Cliente.Cidade,
+                ficha.Cliente.Estado,
                 ficha.Cliente.DadosPessoaisPreenchidosEmUtc),
             ficha.QuestionarioSaude is null
                 ? null
@@ -90,13 +103,23 @@ public sealed class FichasController(ConsultaFichas consultaFichas)
                     ficha.QuestionarioSaude.Versao,
                     ficha.QuestionarioSaude.TemDiabetes,
                     ficha.QuestionarioSaude.TipoDiabetes,
+                    ficha.QuestionarioSaude.TeveAnemia,
+                    ficha.QuestionarioSaude.DescricaoAnemia,
+                    ficha.QuestionarioSaude.TeveHepatite,
+                    ficha.QuestionarioSaude.TipoHepatite,
                     ficha.QuestionarioSaude.PossuiPressaoAlta,
                     ficha.QuestionarioSaude.TemAlergia,
                     ficha.QuestionarioSaude.DescricaoAlergia,
                     ficha.QuestionarioSaude.PossuiCondicaoCardiaca,
                     ficha.QuestionarioSaude.TemEpilepsia,
                     ficha.QuestionarioSaude.TemHemofilia,
+                    ficha.QuestionarioSaude.PossuiDoencaTransmissivel,
+                    ficha.QuestionarioSaude.DescricaoDoencaTransmissivel,
                     ficha.QuestionarioSaude.UsaMarcaPasso,
+                    ficha.QuestionarioSaude.Fuma,
+                    ficha.QuestionarioSaude.ConsumiuBebidaAlcoolicaUltimas24Horas,
+                    ficha.QuestionarioSaude.UsaMedicacao,
+                    ficha.QuestionarioSaude.DescricaoMedicacao,
                     ficha.QuestionarioSaude.EstaGravidaOuAmamentando,
                     ficha.QuestionarioSaude.RespondidoEmUtc),
             ficha.AceiteTermo is null
@@ -105,11 +128,38 @@ public sealed class FichasController(ConsultaFichas consultaFichas)
                     ficha.AceiteTermo.VersaoTermo,
                     ficha.AceiteTermo.NomeAssinante,
                     ficha.AceiteTermo.AceitoEmUtc,
-                    ficha.AceiteTermo.ConfirmouMaioridade,
-                    ficha.AceiteTermo.ConfirmouDadosPessoais,
-                    ficha.AceiteTermo.ConfirmouQuestionarioSaude,
+                    ficha.AceiteTermo.ConfirmouLeituraEAutorizacao,
+                    ficha.AceiteTermo.AssinaturaDesenhada,
                     ficha.AceiteTermo.EvidenciaHash,
-                    ficha.AceiteTermo.EvidenciaIntegra)));
+                    ficha.AceiteTermo.EvidenciaIntegra),
+            ficha.RevisaoProfissional is null
+                ? null
+                : new RevisaoProfissionalResponse(
+                    ficha.RevisaoProfissional.ProfissionalNome,
+                    ficha.RevisaoProfissional.DadosDaFichaConferidos,
+                    ficha.RevisaoProfissional.RevisadaEmUtc),
+            ficha.RegistroProcedimento is null
+                ? null
+                : new RegistroProcedimentoResponse(
+                    ficha.RegistroProcedimento.TipoProcedimento,
+                    ficha.RegistroProcedimento.ProfissionalNome,
+                    ficha.RegistroProcedimento.ArteEfetivamenteTatuada,
+                    ficha.RegistroProcedimento.MaterialUtilizado,
+                    ficha.RegistroProcedimento.LocalTatuagem,
+                    ficha.RegistroProcedimento.JoiaUtilizada,
+                    ficha.RegistroProcedimento.AgulhaUtilizada,
+                    ficha.RegistroProcedimento.LocalPerfuracao,
+                    ficha.RegistroProcedimento.Observacoes,
+                    ficha.RegistroProcedimento.ValorTotal,
+                    ficha.RegistroProcedimento.ValorSinal,
+                    ficha.RegistroProcedimento.ValorTotal -
+                        ficha.RegistroProcedimento.ValorSinal,
+                    ficha.RegistroProcedimento.FormaPagamento,
+                    ficha.RegistroProcedimento.NomeProfissionalAssinante,
+                    ficha.RegistroProcedimento.AssinaturaDesenhada,
+                    ficha.RegistroProcedimento.RegistradoEmUtc,
+                    ficha.RegistroProcedimento.EvidenciaHash,
+                    ficha.RegistroProcedimento.EvidenciaIntegra)));
     }
 
     private static FichaResumoResponse CriarResumo(FichaConsultada ficha)

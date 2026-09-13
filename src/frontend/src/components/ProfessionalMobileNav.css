@@ -25,7 +25,7 @@
     backdrop-filter: blur(14px);
   }
 
-  .professional-mobile-nav a {
+  .professional-mobile-nav__item {
     display: grid;
     min-width: 0;
     min-height: 54px;
@@ -54,6 +54,11 @@
   .professional-mobile-nav a.professional-mobile-nav__active {
     color: #fffef9;
     background: var(--moss);
+  }
+
+  .professional-mobile-nav__disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
   }
 
   .professional-mobile-nav svg {

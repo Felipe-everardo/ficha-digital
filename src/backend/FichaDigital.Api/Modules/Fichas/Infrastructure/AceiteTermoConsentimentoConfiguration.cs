@@ -36,13 +36,7 @@ public sealed class AceiteTermoConsentimentoConfiguration
 
         builder.Property(aceite => aceite.ConviteId);
 
-        builder.Property(aceite => aceite.ConfirmouMaioridade)
-            .IsRequired();
-
-        builder.Property(aceite => aceite.ConfirmouDadosPessoais)
-            .IsRequired();
-
-        builder.Property(aceite => aceite.ConfirmouQuestionarioSaude)
+        builder.Property(aceite => aceite.ConfirmouLeituraEAutorizacao)
             .IsRequired();
 
         builder.Property(aceite => aceite.VersaoEvidencia)
@@ -63,6 +57,8 @@ public sealed class AceiteTermoConsentimentoConfiguration
 
         builder.Property(aceite => aceite.AceitoEmUtc)
             .IsRequired();
+
+        builder.Property(aceite => aceite.AssinaturaDesenhada);
 
         builder.HasOne<Ficha>()
             .WithOne()

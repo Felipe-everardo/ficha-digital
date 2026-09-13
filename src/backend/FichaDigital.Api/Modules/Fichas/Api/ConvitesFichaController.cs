@@ -36,7 +36,7 @@ public sealed class ConvitesFichaController(
         var conviteEmitido = await service.EmitirAsync(
             clienteId,
             profissional.Id,
-            profissional.NomeCompleto,
+            request.ProfissionalResponsavelNome,
             request.TipoProcedimento!.Value,
             cancellationToken);
 

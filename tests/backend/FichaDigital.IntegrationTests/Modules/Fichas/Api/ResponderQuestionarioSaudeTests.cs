@@ -39,7 +39,7 @@ public sealed class ResponderQuestionarioSaudeTests
         Assert.NotNull(response);
         Assert.NotEqual(Guid.Empty, response.QuestionarioId);
         Assert.Equal(fichaId, response.FichaId);
-        Assert.Equal(2, response.Versao);
+        Assert.Equal(3, response.Versao);
         Assert.Equal(
             $"/api/fichas/{fichaId}/questionario-saude",
             httpResponse.Headers.Location?.OriginalString);
@@ -56,13 +56,25 @@ public sealed class ResponderQuestionarioSaudeTests
         Assert.Equal(fichaId, questionario.FichaId);
         Assert.True(questionario.TemDiabetes);
         Assert.Equal("Tipo 1", questionario.TipoDiabetes);
+        Assert.True(questionario.TeveAnemia);
+        Assert.Equal("Anemia ferropriva", questionario.DescricaoAnemia);
+        Assert.True(questionario.TeveHepatite);
+        Assert.Equal("Tipo A", questionario.TipoHepatite);
         Assert.False(questionario.PossuiPressaoAlta);
         Assert.True(questionario.TemAlergia);
         Assert.Equal("Látex", questionario.DescricaoAlergia);
         Assert.True(questionario.PossuiCondicaoCardiaca);
         Assert.False(questionario.TemEpilepsia);
         Assert.False(questionario.TemHemofilia);
+        Assert.True(questionario.PossuiDoencaTransmissivel);
+        Assert.Equal(
+            "Informação clínica",
+            questionario.DescricaoDoencaTransmissivel);
         Assert.True(questionario.UsaMarcaPasso);
+        Assert.False(questionario.Fuma);
+        Assert.False(questionario.ConsumiuBebidaAlcoolicaUltimas24Horas);
+        Assert.True(questionario.UsaMedicacao);
+        Assert.Equal("Medicação contínua", questionario.DescricaoMedicacao);
         Assert.False(questionario.EstaGravidaOuAmamentando);
     }
 
@@ -187,13 +199,19 @@ public sealed class ResponderQuestionarioSaudeTests
             Token = "token-nao-chegara-ao-servico",
             TemDiabetes = true,
             TipoDiabetes = null,
+            TeveAnemia = false,
+            TeveHepatite = false,
             PossuiPressaoAlta = false,
             TemAlergia = false,
             DescricaoAlergia = null,
             PossuiCondicaoCardiaca = false,
             TemEpilepsia = false,
             TemHemofilia = false,
+            PossuiDoencaTransmissivel = false,
             UsaMarcaPasso = false,
+            Fuma = false,
+            ConsumiuBebidaAlcoolicaUltimas24Horas = false,
+            UsaMedicacao = false,
             EstaGravidaOuAmamentando = false
         };
 
@@ -231,12 +249,18 @@ public sealed class ResponderQuestionarioSaudeTests
             Token = "token-nao-chegara-ao-servico",
             TemDiabetes = false,
             TipoDiabetes = null,
+            TeveAnemia = false,
+            TeveHepatite = false,
             PossuiPressaoAlta = false,
             TemAlergia = false,
             DescricaoAlergia = null,
             PossuiCondicaoCardiaca = false,
             TemEpilepsia = false,
             TemHemofilia = false,
+            PossuiDoencaTransmissivel = false,
+            Fuma = false,
+            ConsumiuBebidaAlcoolicaUltimas24Horas = false,
+            UsaMedicacao = false,
             EstaGravidaOuAmamentando = false
         };
 
@@ -265,13 +289,23 @@ public sealed class ResponderQuestionarioSaudeTests
             Token = token,
             TemDiabetes = true,
             TipoDiabetes = "  Tipo 1  ",
+            TeveAnemia = true,
+            DescricaoAnemia = "  Anemia ferropriva  ",
+            TeveHepatite = true,
+            TipoHepatite = "  Tipo A  ",
             PossuiPressaoAlta = false,
             TemAlergia = true,
             DescricaoAlergia = "  Látex  ",
             PossuiCondicaoCardiaca = true,
             TemEpilepsia = false,
             TemHemofilia = false,
+            PossuiDoencaTransmissivel = true,
+            DescricaoDoencaTransmissivel = "  Informação clínica  ",
             UsaMarcaPasso = true,
+            Fuma = false,
+            ConsumiuBebidaAlcoolicaUltimas24Horas = false,
+            UsaMedicacao = true,
+            DescricaoMedicacao = "  Medicação contínua  ",
             EstaGravidaOuAmamentando = false
         };
     }
@@ -302,6 +336,7 @@ public sealed class ResponderQuestionarioSaudeTests
             $"/api/clientes/{clienteId}/fichas/convites",
             new EmitirConviteFichaRequest
             {
+                ProfissionalResponsavelNome = "Bia Piercer",
                 TipoProcedimento = TipoProcedimento.Piercing
             },
             TestContext.Current.CancellationToken);
@@ -329,9 +364,17 @@ public sealed class ResponderQuestionarioSaudeTests
                 NomeCompleto = "Ana Silva",
                 NomeSocial = "Ana",
                 Pronomes = "ela/dela",
+                EstadoCivil = "Solteira",
                 DataNascimento = new DateOnly(1995, 6, 15),
+                Cpf = "529.982.247-25",
                 Celular = "(21) 99999-9999",
-                Email = "ana@example.com"
+                Email = "ana@example.com",
+                Cep = "20040-002",
+                Logradouro = "Rua da Assembleia",
+                Numero = "10",
+                Bairro = "Centro",
+                Cidade = "Rio de Janeiro",
+                Estado = "RJ"
             },
             TestContext.Current.CancellationToken);
         dadosResponse.EnsureSuccessStatusCode();
@@ -345,13 +388,8 @@ public sealed class ResponderQuestionarioSaudeTests
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
-        var cliente = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com");
+        var cliente = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "(21) 99999-9999"));
 
         dbContext.Clientes.Add(cliente);
         await dbContext.SaveChangesAsync(
@@ -370,13 +408,8 @@ public sealed class ResponderQuestionarioSaudeTests
             .GetRequiredService<FichaDigitalDbContext>();
         var geradorToken = scope.ServiceProvider
             .GetRequiredService<GeradorTokenConvite>();
-        var cliente = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com");
+        var cliente = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "(21) 99999-9999"));
         var ficha = new Ficha(cliente.Id);
         ficha.EnviarConvite();
 

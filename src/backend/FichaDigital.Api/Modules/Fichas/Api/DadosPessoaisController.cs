@@ -1,3 +1,4 @@
+using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Application;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [Route("api/fichas/dados-pessoais")]
 [EnableRateLimiting(PoliticasRateLimitingFichas.ConvitesPublicos)]
 public sealed class DadosPessoaisController(
-    PreencherDadosPessoaisService service) : ControllerBase
+    PreencherDadosPessoaisService service,
+    AuditoriaService auditoriaService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType<DadosPessoaisPreenchidosResponse>(
@@ -34,12 +36,22 @@ public sealed class DadosPessoaisController(
             request.NomeCompleto,
             request.NomeSocial,
             request.Pronomes,
+            request.EstadoCivil,
             request.DataNascimento!.Value,
+            request.Cpf,
             request.Celular,
+            request.TelefoneAdicional,
             request.Email,
             request.Instagram,
             request.ContatoEmergenciaNome,
-            request.ContatoEmergenciaCelular);
+            request.ContatoEmergenciaCelular,
+            request.Cep,
+            request.Logradouro,
+            request.Numero,
+            request.Complemento,
+            request.Bairro,
+            request.Cidade,
+            request.Estado);
         var resultado = await service.PreencherAsync(
             command,
             cancellationToken);
@@ -47,6 +59,11 @@ public sealed class DadosPessoaisController(
         if (resultado.Resultado ==
             StatusPreenchimentoDadosPessoais.Preenchidos)
         {
+            await auditoriaService.RegistrarAcaoDoClienteAsync(
+                "Dados pessoais confirmados",
+                resultado.FichaId!.Value,
+                HttpContext.TraceIdentifier,
+                cancellationToken);
             return Ok(new DadosPessoaisPreenchidosResponse(
                 resultado.FichaId!.Value,
                 resultado.ClienteId!.Value,

@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import type {
-  CampoConfirmacao,
   DadosPessoaisFormulario,
   RespostasQuestionario,
 } from '../components/ficha-publica/model'
+import { formatarCep, formatarCpf } from '../utils/documentos'
 import { formatarTelefoneBrasileiro } from '../utils/telefone'
 import {
   ApiRequestError,
@@ -25,13 +25,23 @@ type EstadoAbertura =
 const respostasIniciais: RespostasQuestionario = {
   temDiabetes: null,
   tipoDiabetes: '',
+  teveAnemia: null,
+  descricaoAnemia: '',
+  teveHepatite: null,
+  tipoHepatite: '',
   possuiPressaoAlta: null,
   temAlergia: null,
   descricaoAlergia: '',
   possuiCondicaoCardiaca: null,
   temEpilepsia: null,
   temHemofilia: null,
+  possuiDoencaTransmissivel: null,
+  descricaoDoencaTransmissivel: '',
   usaMarcaPasso: null,
+  fuma: null,
+  consumiuBebidaAlcoolicaUltimas24Horas: null,
+  usaMedicacao: null,
+  descricaoMedicacao: '',
   estaGravidaOuAmamentando: null,
 }
 
@@ -39,12 +49,22 @@ const dadosPessoaisIniciais: DadosPessoaisFormulario = {
   nomeCompleto: '',
   nomeSocial: '',
   pronomes: '',
+  estadoCivil: '',
   dataNascimento: '',
+  cpf: '',
   celular: '',
+  telefoneAdicional: '',
   email: '',
   instagram: '',
   contatoEmergenciaNome: '',
   contatoEmergenciaCelular: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  estado: '',
 }
 
 function formatarDataParaInput(data: Date) {
@@ -56,6 +76,7 @@ function formatarDataParaInput(data: Date) {
 }
 
 function obterTokenDoConvite(): string | null {
+  const chaveSessao = 'ficha-digital.token-convite'
   const segmentos = window.location.pathname.split('/').filter(Boolean)
   const tokenNoCaminho =
     segmentos[0] === 'fichas' && segmentos[1] === 'preencher'
@@ -63,6 +84,7 @@ function obterTokenDoConvite(): string | null {
       : undefined
 
   if (tokenNoCaminho) {
+    window.sessionStorage.setItem(chaveSessao, tokenNoCaminho)
     window.history.replaceState(
       window.history.state,
       '',
@@ -70,7 +92,7 @@ function obterTokenDoConvite(): string | null {
     )
   }
 
-  return tokenNoCaminho || null
+  return tokenNoCaminho || window.sessionStorage.getItem(chaveSessao)
 }
 
 function obterTituloDoErro(status: number) {
@@ -111,11 +133,11 @@ export function useFichaPublica() {
   const [enviandoQuestionario, setEnviandoQuestionario] = useState(false)
   const [erroQuestionario, setErroQuestionario] = useState<string | null>(null)
   const [nomeAssinante, setNomeAssinante] = useState('')
-  const [aceitouTermo, setAceitouTermo] = useState(false)
-  const [confirmouMaioridade, setConfirmouMaioridade] = useState(false)
-  const [confirmouDadosPessoais, setConfirmouDadosPessoais] = useState(false)
-  const [confirmouQuestionarioSaude, setConfirmouQuestionarioSaude] =
+  const [confirmouLeituraEAutorizacao, setConfirmouLeituraEAutorizacao] =
     useState(false)
+  const [assinaturaDesenhada, setAssinaturaDesenhada] = useState<
+    string | null
+  >(null)
   const [enviandoAceite, setEnviandoAceite] = useState(false)
   const [erroAceite, setErroAceite] = useState<string | null>(null)
   const [termoAceito, setTermoAceito] =
@@ -134,9 +156,14 @@ export function useFichaPublica() {
           nomeCompleto: convite.dadosPessoais.nomeCompleto ?? '',
           nomeSocial: convite.dadosPessoais.nomeSocial ?? '',
           pronomes: convite.dadosPessoais.pronomes ?? '',
+          estadoCivil: convite.dadosPessoais.estadoCivil ?? '',
           dataNascimento: convite.dadosPessoais.dataNascimento ?? '',
+          cpf: formatarCpf(convite.dadosPessoais.cpf ?? ''),
           celular: formatarTelefoneBrasileiro(
             convite.dadosPessoais.celular ?? '',
+          ),
+          telefoneAdicional: formatarTelefoneBrasileiro(
+            convite.dadosPessoais.telefoneAdicional ?? '',
           ),
           email: convite.dadosPessoais.email ?? '',
           instagram: convite.dadosPessoais.instagram ?? '',
@@ -145,11 +172,23 @@ export function useFichaPublica() {
           contatoEmergenciaCelular: formatarTelefoneBrasileiro(
             convite.dadosPessoais.contatoEmergenciaCelular ?? '',
           ),
+          cep: formatarCep(convite.dadosPessoais.cep ?? ''),
+          logradouro: convite.dadosPessoais.logradouro ?? '',
+          numero: convite.dadosPessoais.numero ?? '',
+          complemento: convite.dadosPessoais.complemento ?? '',
+          bairro: convite.dadosPessoais.bairro ?? '',
+          cidade: convite.dadosPessoais.cidade ?? '',
+          estado: convite.dadosPessoais.estado ?? '',
         })
         if (convite.questionarioSaude) {
           setRespostas({
             temDiabetes: convite.questionarioSaude.temDiabetes,
             tipoDiabetes: convite.questionarioSaude.tipoDiabetes ?? '',
+            teveAnemia: convite.questionarioSaude.teveAnemia,
+            descricaoAnemia:
+              convite.questionarioSaude.descricaoAnemia ?? '',
+            teveHepatite: convite.questionarioSaude.teveHepatite,
+            tipoHepatite: convite.questionarioSaude.tipoHepatite ?? '',
             possuiPressaoAlta:
               convite.questionarioSaude.possuiPressaoAlta,
             temAlergia: convite.questionarioSaude.temAlergia,
@@ -159,14 +198,26 @@ export function useFichaPublica() {
               convite.questionarioSaude.possuiCondicaoCardiaca,
             temEpilepsia: convite.questionarioSaude.temEpilepsia,
             temHemofilia: convite.questionarioSaude.temHemofilia,
+            possuiDoencaTransmissivel:
+              convite.questionarioSaude.possuiDoencaTransmissivel,
+            descricaoDoencaTransmissivel:
+              convite.questionarioSaude.descricaoDoencaTransmissivel ?? '',
             usaMarcaPasso: convite.questionarioSaude.usaMarcaPasso,
+            fuma: convite.questionarioSaude.fuma,
+            consumiuBebidaAlcoolicaUltimas24Horas:
+              convite.questionarioSaude
+                .consumiuBebidaAlcoolicaUltimas24Horas,
+            usaMedicacao: convite.questionarioSaude.usaMedicacao,
+            descricaoMedicacao:
+              convite.questionarioSaude.descricaoMedicacao ?? '',
             estaGravidaOuAmamentando:
               convite.questionarioSaude.estaGravidaOuAmamentando,
           })
         }
+        setNomeAssinante(convite.dadosPessoais.nomeCompleto ?? '')
         // Em um novo atendimento, os dados anteriores precisam ser
         // confirmados novamente antes do questionário de saúde.
-        setDadosPessoaisPreenchidos(convite.questionarioRespondido)
+        setDadosPessoaisPreenchidos(convite.dadosPessoaisPreenchidos)
         setQuestionarioRespondido(convite.questionarioRespondido)
       })
       .catch((error: unknown) => {
@@ -291,23 +342,35 @@ export function useFichaPublica() {
 
     const {
       temDiabetes,
+      teveAnemia,
+      teveHepatite,
       possuiPressaoAlta,
       temAlergia,
       possuiCondicaoCardiaca,
       temEpilepsia,
       temHemofilia,
+      possuiDoencaTransmissivel,
       usaMarcaPasso,
+      fuma,
+      consumiuBebidaAlcoolicaUltimas24Horas,
+      usaMedicacao,
       estaGravidaOuAmamentando,
     } = respostas
 
     if (
       temDiabetes === null ||
+      teveAnemia === null ||
+      teveHepatite === null ||
       possuiPressaoAlta === null ||
       temAlergia === null ||
       possuiCondicaoCardiaca === null ||
       temEpilepsia === null ||
       temHemofilia === null ||
+      possuiDoencaTransmissivel === null ||
       usaMarcaPasso === null ||
+      fuma === null ||
+      consumiuBebidaAlcoolicaUltimas24Horas === null ||
+      usaMedicacao === null ||
       estaGravidaOuAmamentando === null
     ) {
       setErroQuestionario('Responda todas as perguntas antes de continuar.')
@@ -324,6 +387,29 @@ export function useFichaPublica() {
       return
     }
 
+    if (teveAnemia && !respostas.descricaoAnemia.trim()) {
+      setErroQuestionario('Informe os detalhes sobre a anemia.')
+      return
+    }
+
+    if (teveHepatite && !respostas.tipoHepatite.trim()) {
+      setErroQuestionario('Informe o tipo de hepatite.')
+      return
+    }
+
+    if (
+      possuiDoencaTransmissivel &&
+      !respostas.descricaoDoencaTransmissivel.trim()
+    ) {
+      setErroQuestionario('Informe qual é a doença transmissível.')
+      return
+    }
+
+    if (usaMedicacao && !respostas.descricaoMedicacao.trim()) {
+      setErroQuestionario('Informe qual medicação você utiliza.')
+      return
+    }
+
     setEnviandoQuestionario(true)
     setErroQuestionario(null)
 
@@ -331,6 +417,14 @@ export function useFichaPublica() {
       await responderQuestionarioSaude(tokenDoConvite, {
         temDiabetes,
         tipoDiabetes: temDiabetes ? respostas.tipoDiabetes.trim() : null,
+        teveAnemia,
+        descricaoAnemia: teveAnemia
+          ? respostas.descricaoAnemia.trim()
+          : null,
+        teveHepatite,
+        tipoHepatite: teveHepatite
+          ? respostas.tipoHepatite.trim()
+          : null,
         possuiPressaoAlta,
         temAlergia,
         descricaoAlergia: temAlergia
@@ -339,11 +433,33 @@ export function useFichaPublica() {
         possuiCondicaoCardiaca,
         temEpilepsia,
         temHemofilia,
+        possuiDoencaTransmissivel,
+        descricaoDoencaTransmissivel: possuiDoencaTransmissivel
+          ? respostas.descricaoDoencaTransmissivel.trim()
+          : null,
         usaMarcaPasso,
+        fuma,
+        consumiuBebidaAlcoolicaUltimas24Horas,
+        usaMedicacao,
+        descricaoMedicacao: usaMedicacao
+          ? respostas.descricaoMedicacao.trim()
+          : null,
         estaGravidaOuAmamentando,
       })
 
       setQuestionarioRespondido(true)
+      setEstado((estadoAtual) =>
+        estadoAtual.tipo === 'aberto'
+          ? {
+              ...estadoAtual,
+              convite: {
+                ...estadoAtual.convite,
+                status: 'AnamnesePreenchida',
+                questionarioRespondido: true,
+              },
+            }
+          : estadoAtual,
+      )
     } catch (error) {
       if (error instanceof ApiValidationError) {
         setErroQuestionario(
@@ -380,15 +496,15 @@ export function useFichaPublica() {
       return
     }
 
-    if (
-      !confirmouMaioridade ||
-      !confirmouDadosPessoais ||
-      !confirmouQuestionarioSaude ||
-      !aceitouTermo
-    ) {
+    if (!confirmouLeituraEAutorizacao) {
       setErroAceite(
-        'Confirme todas as declarações antes de concluir a ficha.',
+        'Confirme que leu, entendeu e autoriza o procedimento.',
       )
+      return
+    }
+
+    if (!assinaturaDesenhada) {
+      setErroAceite('Desenhe sua assinatura antes de continuar.')
       return
     }
 
@@ -402,20 +518,17 @@ export function useFichaPublica() {
         versaoTermo: termo.versao,
         conteudoHash: termo.conteudoHash,
         nomeAssinante: nomeNormalizado,
-        aceitouTermo,
-        confirmouMaioridade,
-        confirmouDadosPessoais,
-        confirmouQuestionarioSaude,
+        confirmouLeituraEAutorizacao,
+        assinaturaDesenhada,
       })
 
       setTermoAceito(aceite)
       setNomeAssinante('')
-      setAceitouTermo(false)
-      setConfirmouMaioridade(false)
-      setConfirmouDadosPessoais(false)
-      setConfirmouQuestionarioSaude(false)
+      setAssinaturaDesenhada(null)
+      setConfirmouLeituraEAutorizacao(false)
       setQuestionarioRespondido(false)
       tokenInicialDoConvite = null
+      window.sessionStorage.removeItem('ficha-digital.token-convite')
       setTokenDoConvite(null)
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -433,18 +546,6 @@ export function useFichaPublica() {
     } finally {
       setEnviandoAceite(false)
     }
-  }
-
-  function atualizarConfirmacao(campo: CampoConfirmacao, valor: boolean) {
-    const atualizadores = {
-      maioridade: setConfirmouMaioridade,
-      dadosPessoais: setConfirmouDadosPessoais,
-      questionarioSaude: setConfirmouQuestionarioSaude,
-      aceiteTermo: setAceitouTermo,
-    }
-
-    atualizadores[campo](valor)
-    setErroAceite(null)
   }
 
   const conviteAberto = estado.tipo === 'aberto'
@@ -485,17 +586,20 @@ export function useFichaPublica() {
     },
     consentimento: {
       termoAceito,
-      confirmacoes: {
-        maioridade: confirmouMaioridade,
-        dadosPessoais: confirmouDadosPessoais,
-        questionarioSaude: confirmouQuestionarioSaude,
-        aceiteTermo: aceitouTermo,
-      },
+      confirmouLeituraEAutorizacao,
       nomeAssinante,
+      assinaturaDesenhada,
       erro: erroAceite,
       enviando: enviandoAceite,
       enviar: enviarAceite,
-      alterarConfirmacao: atualizarConfirmacao,
+      alterarConfirmacao: (valor: boolean) => {
+        setConfirmouLeituraEAutorizacao(valor)
+        setErroAceite(null)
+      },
+      alterarAssinatura: (valor: string | null) => {
+        setAssinaturaDesenhada(valor)
+        setErroAceite(null)
+      },
       alterarNomeAssinante: (valor: string) => {
         setNomeAssinante(valor)
         setErroAceite(null)

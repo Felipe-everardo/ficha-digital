@@ -1,3 +1,5 @@
+using FichaDigital.Api.Shared.Domain;
+
 namespace FichaDigital.Api.Modules.Clientes.Domain;
 
 public sealed class Cliente
@@ -20,26 +22,10 @@ public sealed class Cliente
         CriadoEmUtc = DateTimeOffset.UtcNow;
     }
 
-    public Cliente(
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email)
-        : this(nomeCompleto)
+    public Cliente(DadosPessoaisInformados dados)
+        : this(dados?.NomeCompleto ?? throw new ArgumentNullException(nameof(dados)))
     {
-        PreencherDadosPessoais(
-            nomeCompleto,
-            nomeSocial,
-            pronomes,
-            dataNascimento,
-            celular,
-            email,
-            instagram: null,
-            contatoEmergenciaNome: null,
-            contatoEmergenciaCelular: null,
-            preenchidosEmUtc: DateTimeOffset.UtcNow);
+        PreencherDadosPessoais(dados!, DateTimeOffset.UtcNow);
     }
 
     public Guid Id { get; private set; }
@@ -55,9 +41,15 @@ public sealed class Cliente
 
     public string? Pronomes { get; private set; }
 
+    public string? EstadoCivil { get; private set; }
+
     public DateOnly? DataNascimento { get; private set; }
 
+    public string? Cpf { get; private set; }
+
     public string? Celular { get; private set; }
+
+    public string? TelefoneAdicional { get; private set; }
 
     public string? Email { get; private set; }
 
@@ -67,6 +59,20 @@ public sealed class Cliente
 
     public string? ContatoEmergenciaCelular { get; private set; }
 
+    public string? Cep { get; private set; }
+
+    public string? Logradouro { get; private set; }
+
+    public string? Numero { get; private set; }
+
+    public string? Complemento { get; private set; }
+
+    public string? Bairro { get; private set; }
+
+    public string? Cidade { get; private set; }
+
+    public string? Estado { get; private set; }
+
     public DateTimeOffset? DadosPessoaisPreenchidosEmUtc { get; private set; }
 
     public bool DadosPessoaisPreenchidos =>
@@ -75,15 +81,7 @@ public sealed class Cliente
     public DateTimeOffset CriadoEmUtc { get; private set; }
 
     public void PreencherDadosPessoais(
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email,
-        string? instagram,
-        string? contatoEmergenciaNome,
-        string? contatoEmergenciaCelular,
+        DadosPessoaisInformados dados,
         DateTimeOffset preenchidosEmUtc)
     {
         if (DadosPessoaisPreenchidos)
@@ -92,29 +90,11 @@ public sealed class Cliente
                 "Os dados pessoais do cliente já foram preenchidos.");
         }
 
-        DefinirDadosPessoais(
-            nomeCompleto,
-            nomeSocial,
-            pronomes,
-            dataNascimento,
-            celular,
-            email,
-            instagram,
-            contatoEmergenciaNome,
-            contatoEmergenciaCelular,
-            preenchidosEmUtc);
+        DefinirDadosPessoais(dados, preenchidosEmUtc);
     }
 
     public void AtualizarDadosPessoais(
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email,
-        string? instagram,
-        string? contatoEmergenciaNome,
-        string? contatoEmergenciaCelular,
+        DadosPessoaisInformados dados,
         DateTimeOffset atualizadosEmUtc)
     {
         if (!DadosPessoaisPreenchidos)
@@ -123,77 +103,34 @@ public sealed class Cliente
                 "Os dados pessoais do cliente ainda não foram preenchidos.");
         }
 
-        DefinirDadosPessoais(
-            nomeCompleto,
-            nomeSocial,
-            pronomes,
-            dataNascimento,
-            celular,
-            email,
-            instagram,
-            contatoEmergenciaNome,
-            contatoEmergenciaCelular,
-            atualizadosEmUtc);
+        DefinirDadosPessoais(dados, atualizadosEmUtc);
     }
 
     private void DefinirDadosPessoais(
-        string nomeCompleto,
-        string? nomeSocial,
-        string? pronomes,
-        DateOnly dataNascimento,
-        string celular,
-        string? email,
-        string? instagram,
-        string? contatoEmergenciaNome,
-        string? contatoEmergenciaCelular,
+        DadosPessoaisInformados dados,
         DateTimeOffset preenchidosEmUtc)
     {
+        ArgumentNullException.ThrowIfNull(dados);
 
-        if (string.IsNullOrWhiteSpace(nomeCompleto))
-        {
-            throw new ArgumentException(
-                "O nome completo é obrigatório.",
-                nameof(nomeCompleto));
-        }
-
-        if (string.IsNullOrWhiteSpace(celular))
-        {
-            throw new ArgumentException(
-                "O celular é obrigatório.",
-                nameof(celular));
-        }
-
-        if (dataNascimento > DateOnly.FromDateTime(DateTime.UtcNow))
-        {
-            throw new ArgumentException(
-                "A data de nascimento não pode estar no futuro.",
-                nameof(dataNascimento));
-        }
-
-        var contatoNomeInformado =
-            !string.IsNullOrWhiteSpace(contatoEmergenciaNome);
-        var contatoCelularInformado =
-            !string.IsNullOrWhiteSpace(contatoEmergenciaCelular);
-
-        if (contatoNomeInformado != contatoCelularInformado)
-        {
-            throw new ArgumentException(
-                "Informe o nome e o celular do contato de emergência.",
-                contatoNomeInformado
-                    ? nameof(contatoEmergenciaCelular)
-                    : nameof(contatoEmergenciaNome));
-        }
-
-        NomeCompleto = nomeCompleto.Trim();
-        NomeSocial = NormalizarOpcional(nomeSocial);
-        Pronomes = NormalizarOpcional(pronomes);
-        DataNascimento = dataNascimento;
-        Celular = celular.Trim();
-        Email = NormalizarOpcional(email);
-        Instagram = NormalizarOpcional(instagram);
-        ContatoEmergenciaNome = NormalizarOpcional(contatoEmergenciaNome);
-        ContatoEmergenciaCelular =
-            NormalizarOpcional(contatoEmergenciaCelular);
+        NomeCompleto = dados.NomeCompleto;
+        NomeSocial = dados.NomeSocial;
+        Pronomes = dados.Pronomes;
+        EstadoCivil = dados.EstadoCivil;
+        DataNascimento = dados.DataNascimento;
+        Cpf = dados.Cpf;
+        Celular = dados.Celular;
+        TelefoneAdicional = dados.TelefoneAdicional;
+        Email = dados.Email;
+        Instagram = dados.Instagram;
+        ContatoEmergenciaNome = dados.ContatoEmergenciaNome;
+        ContatoEmergenciaCelular = dados.ContatoEmergenciaCelular;
+        Cep = dados.Cep;
+        Logradouro = dados.Logradouro;
+        Numero = dados.Numero;
+        Complemento = dados.Complemento;
+        Bairro = dados.Bairro;
+        Cidade = dados.Cidade;
+        Estado = dados.Estado;
         DadosPessoaisPreenchidosEmUtc = preenchidosEmUtc;
     }
 

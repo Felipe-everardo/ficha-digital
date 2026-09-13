@@ -11,9 +11,10 @@ public sealed class AceitarTermoConsentimentoService(
     FichaDigitalDbContext dbContext,
     GeradorTokenConvite geradorToken,
     CalculadorHashConteudo calculadorHash,
+    ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider)
 {
-    private const int VersaoEvidenciaAtual = 1;
+    private const int VersaoEvidenciaAtual = 4;
 
     private static readonly JsonSerializerOptions OpcoesJsonEvidencia = new()
     {
@@ -54,12 +55,6 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.ConviteNaoEncontrado);
         }
 
-        if (ficha.Status != StatusFicha.EmPreenchimento)
-        {
-            return new ResultadoAceiteTermoConsentimento(
-                StatusAceiteTermoConsentimento.FichaIndisponivel);
-        }
-
         var questionario = await dbContext.QuestionariosSaude
             .AsNoTracking()
             .SingleOrDefaultAsync(
@@ -82,14 +77,6 @@ public sealed class AceitarTermoConsentimentoService(
         {
             return new ResultadoAceiteTermoConsentimento(
                 StatusAceiteTermoConsentimento.DadosPessoaisPendentes);
-        }
-
-        if (!RegraMaioridade.EhMaiorDeIdade(
-                dadosDaFicha.DataNascimento,
-                timeProvider.GetUtcNow()))
-        {
-            return new ResultadoAceiteTermoConsentimento(
-                StatusAceiteTermoConsentimento.ClienteMenorDeIdade);
         }
 
         var cliente = await dbContext.Clientes
@@ -115,10 +102,64 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.JaAceito);
         }
 
-        var conteudoHashAtual = calculadorHash.Calcular(
-            TermoConsentimentoAtual.Conteudo);
+        var fluxoVersionado = ficha.VersaoModelo is not null;
+        var statusValido = fluxoVersionado
+            ? ficha.Status is StatusFicha.AnamnesePreenchida or
+                StatusFicha.AguardandoConsentimento
+            : ficha.Status == StatusFicha.EmPreenchimento;
 
-        if (command.VersaoTermo != TermoConsentimentoAtual.Versao ||
+        if (!statusValido)
+        {
+            return new ResultadoAceiteTermoConsentimento(
+                StatusAceiteTermoConsentimento.FichaIndisponivel);
+        }
+
+        if (!command.ConfirmouLeituraEAutorizacao)
+        {
+            return new ResultadoAceiteTermoConsentimento(
+                StatusAceiteTermoConsentimento.ConfirmacaoObrigatoria);
+        }
+
+        if (!RegraMaioridade.EhMaiorDeIdade(
+                dadosDaFicha.DataNascimento,
+                timeProvider.GetUtcNow()))
+        {
+            return new ResultadoAceiteTermoConsentimento(
+                StatusAceiteTermoConsentimento.ClienteMenorDeIdade);
+        }
+
+        string? assinaturaDesenhada = null;
+
+        if (fluxoVersionado)
+        {
+            if (!ComparadorNomes.Correspondem(
+                    command.NomeAssinante,
+                    dadosDaFicha.NomeCompleto))
+            {
+                return new ResultadoAceiteTermoConsentimento(
+                    StatusAceiteTermoConsentimento.NomeAssinanteDivergente);
+            }
+
+            try
+            {
+                assinaturaDesenhada = AssinaturaDesenhada
+                    .ValidarENormalizar(
+                        command.AssinaturaDesenhada,
+                        nameof(command.AssinaturaDesenhada));
+            }
+            catch (ArgumentException)
+            {
+                return new ResultadoAceiteTermoConsentimento(
+                    StatusAceiteTermoConsentimento.AssinaturaInvalida);
+            }
+
+        }
+
+        var modelo = resolvedorModelo.ObterModeloDaFicha(ficha);
+        var conteudoHashAtual = calculadorHash.Calcular(
+            modelo.ConteudoTermo);
+
+        if (command.VersaoTermo != modelo.VersaoTermo ||
             !string.Equals(
                 command.ConteudoHash,
                 conteudoHashAtual,
@@ -135,28 +176,37 @@ public sealed class AceitarTermoConsentimentoService(
             cliente,
             dadosDaFicha,
             questionario,
+            modelo,
             command,
+            assinaturaDesenhada,
             conteudoHashAtual,
             aceitoEmUtc);
         var evidenciaHash = calculadorHash.Calcular(evidenciaJson);
         var aceite = new AceiteTermoConsentimento(
             ficha.Id,
             convite.Id,
-            TermoConsentimentoAtual.Versao,
-            TermoConsentimentoAtual.Conteudo,
+            modelo.VersaoTermo,
+            modelo.ConteudoTermo,
             conteudoHashAtual,
             command.NomeAssinante,
-            command.ConfirmouMaioridade,
-            command.ConfirmouDadosPessoais,
-            command.ConfirmouQuestionarioSaude,
+            command.ConfirmouLeituraEAutorizacao,
             VersaoEvidenciaAtual,
             evidenciaJson,
             evidenciaHash,
             command.EnderecoIp,
             command.AgenteUsuario,
-            aceitoEmUtc);
+            aceitoEmUtc,
+            assinaturaDesenhada);
 
-        ficha.Concluir();
+        if (fluxoVersionado)
+        {
+            ficha.AutorizarProcedimento();
+        }
+        else
+        {
+            ficha.ConcluirFluxoLegado();
+        }
+
         dbContext.AceitesTermoConsentimento.Add(aceite);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -175,7 +225,9 @@ public sealed class AceitarTermoConsentimentoService(
         Cliente cliente,
         DadosPessoaisFicha dadosDaFicha,
         QuestionarioSaude questionario,
+        ModeloFichaSelecionado modelo,
         AceitarTermoConsentimentoCommand command,
+        string? assinaturaDesenhada,
         string conteudoHashTermo,
         DateTimeOffset aceitoEmUtc)
     {
@@ -189,9 +241,8 @@ public sealed class AceitarTermoConsentimentoService(
                 convite.CriadoEmUtc,
                 convite.ExpiraEmUtc,
                 command.NomeAssinante,
-                command.ConfirmouMaioridade,
-                command.ConfirmouDadosPessoais,
-                command.ConfirmouQuestionarioSaude,
+                command.ConfirmouLeituraEAutorizacao,
+                assinaturaDesenhada,
                 aceitoEmUtc
             },
             procedimento = new
@@ -199,6 +250,10 @@ public sealed class AceitarTermoConsentimentoService(
                 ficha.ProfissionalResponsavelId,
                 ficha.ProfissionalResponsavelNome,
                 tipoProcedimento = ficha.TipoProcedimento.ToString(),
+                modelo.VersaoModelo,
+                modelo.VersaoQuestionario,
+                modelo.VersaoTermo,
+                modelo.CnpjApresentado,
                 ficha.CriadaEmUtc
             },
             cliente = new
@@ -208,12 +263,22 @@ public sealed class AceitarTermoConsentimentoService(
                 dadosDaFicha.NomeCompleto,
                 dadosDaFicha.NomeSocial,
                 dadosDaFicha.Pronomes,
+                dadosDaFicha.EstadoCivil,
                 dadosDaFicha.DataNascimento,
+                dadosDaFicha.Cpf,
                 dadosDaFicha.Celular,
+                dadosDaFicha.TelefoneAdicional,
                 dadosDaFicha.Email,
                 dadosDaFicha.Instagram,
                 dadosDaFicha.ContatoEmergenciaNome,
                 dadosDaFicha.ContatoEmergenciaCelular,
+                dadosDaFicha.Cep,
+                dadosDaFicha.Logradouro,
+                dadosDaFicha.Numero,
+                dadosDaFicha.Complemento,
+                dadosDaFicha.Bairro,
+                dadosDaFicha.Cidade,
+                dadosDaFicha.Estado,
                 dadosDaFicha.ConfirmadosEmUtc
             },
             questionarioSaude = new
@@ -221,13 +286,23 @@ public sealed class AceitarTermoConsentimentoService(
                 questionario.Versao,
                 questionario.TemDiabetes,
                 questionario.TipoDiabetes,
+                questionario.TeveAnemia,
+                questionario.DescricaoAnemia,
+                questionario.TeveHepatite,
+                questionario.TipoHepatite,
                 questionario.PossuiPressaoAlta,
                 questionario.TemAlergia,
                 questionario.DescricaoAlergia,
                 questionario.PossuiCondicaoCardiaca,
                 questionario.TemEpilepsia,
                 questionario.TemHemofilia,
+                questionario.PossuiDoencaTransmissivel,
+                questionario.DescricaoDoencaTransmissivel,
                 questionario.UsaMarcaPasso,
+                questionario.Fuma,
+                questionario.ConsumiuBebidaAlcoolicaUltimas24Horas,
+                questionario.UsaMedicacao,
+                questionario.DescricaoMedicacao,
                 questionario.EstaGravidaOuAmamentando,
                 questionario.RespondidoEmUtc
             },
@@ -238,12 +313,13 @@ public sealed class AceitarTermoConsentimentoService(
             },
             termo = new
             {
-                versao = TermoConsentimentoAtual.Versao,
+                versao = modelo.VersaoTermo,
                 conteudoHash = conteudoHashTermo,
-                conteudo = TermoConsentimentoAtual.Conteudo
+                conteudo = modelo.ConteudoTermo
             }
         };
 
         return JsonSerializer.Serialize(evidencia, OpcoesJsonEvidencia);
     }
+
 }

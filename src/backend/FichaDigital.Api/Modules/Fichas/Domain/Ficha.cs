@@ -63,6 +63,62 @@ public sealed class Ficha
         CriadaEmUtc = DateTimeOffset.UtcNow;
     }
 
+    public Ficha(
+        Guid clienteId,
+        Guid profissionalResponsavelId,
+        string profissionalResponsavelNome,
+        TipoProcedimento tipoProcedimento,
+        int versaoModelo,
+        int versaoQuestionario,
+        int versaoTermo,
+        string cnpjApresentado)
+        : this(
+            clienteId,
+            profissionalResponsavelId,
+            profissionalResponsavelNome,
+            tipoProcedimento)
+    {
+        if (versaoModelo <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(versaoModelo),
+                "A versão do modelo deve ser maior que zero.");
+        }
+
+        if (versaoQuestionario <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(versaoQuestionario),
+                "A versão do questionário deve ser maior que zero.");
+        }
+
+        if (versaoTermo <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(versaoTermo),
+                "A versão do termo deve ser maior que zero.");
+        }
+
+        if (string.IsNullOrWhiteSpace(cnpjApresentado))
+        {
+            throw new ArgumentException(
+                "O CNPJ apresentado é obrigatório.",
+                nameof(cnpjApresentado));
+        }
+
+        if (cnpjApresentado.Trim().Length > 18)
+        {
+            throw new ArgumentException(
+                "O CNPJ apresentado deve ter no máximo 18 caracteres.",
+                nameof(cnpjApresentado));
+        }
+
+        VersaoModelo = versaoModelo;
+        VersaoQuestionario = versaoQuestionario;
+        VersaoTermo = versaoTermo;
+        CnpjApresentado = cnpjApresentado.Trim();
+    }
+
     public Guid Id { get; private set; }
 
     public Guid ClienteId { get; private set; }
@@ -73,6 +129,14 @@ public sealed class Ficha
         string.Empty;
 
     public TipoProcedimento TipoProcedimento { get; private set; }
+
+    public int? VersaoModelo { get; private set; }
+
+    public int? VersaoQuestionario { get; private set; }
+
+    public int? VersaoTermo { get; private set; }
+
+    public string? CnpjApresentado { get; private set; }
 
     public StatusFicha Status { get; private set; }
 
@@ -100,12 +164,60 @@ public sealed class Ficha
         Status = StatusFicha.EmPreenchimento;
     }
 
-    public void Concluir()
+    public void ConcluirAnamnese()
     {
         if (Status != StatusFicha.EmPreenchimento)
         {
             throw new InvalidOperationException(
-                "Somente uma ficha em preenchimento pode ser concluída.");
+                "Somente uma ficha em preenchimento pode concluir a anamnese.");
+        }
+
+        Status = StatusFicha.AnamnesePreenchida;
+    }
+
+    public void AutorizarProcedimento()
+    {
+        if (Status is not (
+                StatusFicha.AnamnesePreenchida or
+                StatusFicha.AguardandoConsentimento))
+        {
+            throw new InvalidOperationException(
+                "Somente uma ficha com anamnese preenchida pode autorizar o procedimento.");
+        }
+
+        Status = StatusFicha.AutorizadaParaProcedimento;
+    }
+
+    public void ConfirmarRevisaoProfissional()
+    {
+        if (Status != StatusFicha.AutorizadaParaProcedimento)
+        {
+            throw new InvalidOperationException(
+                "Somente uma ficha autorizada pode ser revisada pelo profissional.");
+        }
+
+        Status = StatusFicha.RevisadaPeloProfissional;
+    }
+
+    public void ConcluirProcedimento()
+    {
+        if (Status != StatusFicha.RevisadaPeloProfissional)
+        {
+            throw new InvalidOperationException(
+                "Somente uma ficha revisada pelo profissional pode ser concluída.");
+        }
+
+        Status = StatusFicha.Concluida;
+    }
+
+    // Compatibilidade temporária com a ficha atual. Deve ser removido quando
+    // o fluxo de consentimento prévio e registro pós-procedimento estiver ativo.
+    public void ConcluirFluxoLegado()
+    {
+        if (Status != StatusFicha.EmPreenchimento)
+        {
+            throw new InvalidOperationException(
+                "Somente uma ficha em preenchimento pode concluir o fluxo legado.");
         }
 
         Status = StatusFicha.Concluida;

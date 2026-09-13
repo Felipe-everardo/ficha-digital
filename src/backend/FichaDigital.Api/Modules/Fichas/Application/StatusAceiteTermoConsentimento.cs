@@ -10,5 +10,8 @@ public enum StatusAceiteTermoConsentimento
     JaAceito = 6,
     TermoDesatualizado = 7,
     ClienteMenorDeIdade = 8,
-    DadosPessoaisPendentes = 9
+    DadosPessoaisPendentes = 9,
+    ConfirmacaoObrigatoria = 10,
+    AssinaturaInvalida = 11,
+    NomeAssinanteDivergente = 12
 }

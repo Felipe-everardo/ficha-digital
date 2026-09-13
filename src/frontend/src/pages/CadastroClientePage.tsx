@@ -8,8 +8,6 @@ import {
   ApiValidationError,
   criarCliente,
   emitirConviteFicha,
-  getApiStatus,
-  type ApiStatus,
   type ClienteCriado,
   type ConviteFichaCriado,
   type CriarClienteInput,
@@ -27,8 +25,6 @@ const formularioInicial: CriarClienteInput = {
 }
 
 function FormularioCadastroCliente() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
-  const [statusError, setStatusError] = useState<string | null>(null)
   const [formulario, setFormulario] = useState<CriarClienteInput>(formularioInicial)
   const [clienteCriado, setClienteCriado] = useState<ClienteCriado | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -40,21 +36,15 @@ function FormularioCadastroCliente() {
   const [tipoProcedimento, setTipoProcedimento] = useState<
     '' | Exclude<TipoProcedimento, 'NaoInformado'>
   >('')
+  const [profissionalResponsavelNome, setProfissionalResponsavelNome] =
+    useState('')
   const [erroConvite, setErroConvite] = useState<string | null>(null)
   const [mensagemCopia, setMensagemCopia] = useState<string | null>(null)
   const conviteInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    getApiStatus()
-      .then(setApiStatus)
-      .catch(() => setStatusError('Não foi possível acessar a API.'))
-  }, [])
-
-  const connectionState = statusError
-    ? 'error'
-    : apiStatus
-      ? 'success'
-      : 'loading'
+  const procedimentosPermitidos: Array<'Tatuagem' | 'Piercing'> = [
+    'Tatuagem',
+    'Piercing',
+  ]
 
   function atualizarCampo(campo: keyof CriarClienteInput, valor: string) {
     setFormulario((formularioAtual) => ({
@@ -99,6 +89,7 @@ function FormularioCadastroCliente() {
       setErroConvite(null)
       setMensagemCopia(null)
       setTipoProcedimento('')
+      setProfissionalResponsavelNome('')
       setFormulario(formularioInicial)
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -115,7 +106,12 @@ function FormularioCadastroCliente() {
   }
 
   async function handleGerarConvite() {
-    if (!clienteCriado || !tipoProcedimento) {
+    if (
+      !clienteCriado ||
+      !tipoProcedimento ||
+      !profissionalResponsavelNome.trim()
+    ) {
+      setErroConvite('Informe o profissional responsável e o procedimento.')
       return
     }
 
@@ -127,6 +123,7 @@ function FormularioCadastroCliente() {
       const antiforgeryToken = await obterAntiforgeryToken()
       const convite = await emitirConviteFicha(
         clienteCriado.id,
+        profissionalResponsavelNome.trim(),
         tipoProcedimento,
         antiforgeryToken,
       )
@@ -174,10 +171,6 @@ function FormularioCadastroCliente() {
   return (
     <main className="page-shell">
       <section className="form-card" aria-labelledby="page-title">
-        <a className="page-back-link" href="/profissional">
-          ← Voltar para a área profissional
-        </a>
-
         <header className="page-header">
           <div>
             <p className="eyebrow">Área profissional</p>
@@ -189,19 +182,6 @@ function FormularioCadastroCliente() {
           </div>
         </header>
 
-        <div
-          className={`status-card status-card--${connectionState}`}
-          aria-live="polite"
-        >
-          <span className="status-dot" aria-hidden="true" />
-          <p className="status-message">
-            {statusError ??
-              (apiStatus
-                ? `Sistema disponível — versão ${apiStatus.version}`
-                : 'Verificando disponibilidade do sistema...')}
-          </p>
-        </div>
-
         {clienteCriado ? (
           <div className="success-panel" role="status">
             <p className="eyebrow">Cliente cadastrado</p>
@@ -210,6 +190,21 @@ function FormularioCadastroCliente() {
               O nome de referência foi salvo. Agora gere o link para que o
               cliente complete seus dados e a ficha.
             </p>
+            <label className="success-procedure-field">
+              <span>Profissional responsável *</span>
+              <input
+                type="text"
+                maxLength={150}
+                required
+                disabled={conviteGerado !== null}
+                placeholder="Nome completo"
+                value={profissionalResponsavelNome}
+                onChange={(event) => {
+                  setProfissionalResponsavelNome(event.target.value)
+                  setErroConvite(null)
+                }}
+              />
+            </label>
             <label className="success-procedure-field">
               <span>Procedimento *</span>
               <select
@@ -225,15 +220,21 @@ function FormularioCadastroCliente() {
                 }
               >
                 <option value="">Selecione</option>
-                <option value="Tatuagem">Tatuagem</option>
-                <option value="Piercing">Piercing</option>
+                {procedimentosPermitidos.map((procedimento) => (
+                  <option key={procedimento} value={procedimento}>
+                    {procedimento}
+                  </option>
+                ))}
               </select>
             </label>
             <div className="success-actions">
               <button
                 type="button"
                 disabled={
-                  !tipoProcedimento || gerandoConvite || conviteGerado !== null
+                  !tipoProcedimento ||
+                  !profissionalResponsavelNome.trim() ||
+                  gerandoConvite ||
+                  conviteGerado !== null
                 }
                 onClick={handleGerarConvite}
               >
@@ -261,7 +262,8 @@ function FormularioCadastroCliente() {
                   Envie este link para {clienteCriado.nomeParaExibicao}
                 </h3>
                 <p>
-                  Válido até{' '}
+                  Responsável: <strong>{profissionalResponsavelNome}</strong>.
+                  {' '}Válido até{' '}
                   <strong>
                     {new Intl.DateTimeFormat('pt-BR', {
                       dateStyle: 'short',
@@ -353,8 +355,10 @@ function FormularioCadastroCliente() {
 
 export function CadastroClientePage() {
   const [estadoSessao, setEstadoSessao] = useState<
-    'verificando' | 'autenticado' | 'erro'
-  >('verificando')
+    | { tipo: 'verificando' }
+    | { tipo: 'autenticado' }
+    | { tipo: 'erro' }
+  >({ tipo: 'verificando' })
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -366,20 +370,20 @@ export function CadastroClientePage() {
           return
         }
 
-        setEstadoSessao('autenticado')
+        setEstadoSessao({ tipo: 'autenticado' })
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return
         }
 
-        setEstadoSessao('erro')
+        setEstadoSessao({ tipo: 'erro' })
       })
 
     return () => abortController.abort()
   }, [])
 
-  if (estadoSessao === 'verificando') {
+  if (estadoSessao.tipo === 'verificando') {
     return (
       <main className="page-shell">
         <p className="status-message" aria-live="polite">
@@ -389,7 +393,7 @@ export function CadastroClientePage() {
     )
   }
 
-  if (estadoSessao === 'erro') {
+  if (estadoSessao.tipo === 'erro') {
     return (
       <main className="page-shell">
         <section className="form-card" role="alert">

@@ -7,106 +7,141 @@ public sealed class QuestionarioSaudeTests
     [Fact]
     public void Criar_ComRespostasValidas_DeveNormalizarEArmazenarOsDados()
     {
-        var fichaId = Guid.NewGuid();
-        var antesDaCriacao = DateTimeOffset.UtcNow;
-
-        var questionario = new QuestionarioSaude(
-            fichaId,
+        var questionario = CriarQuestionario(
             temDiabetes: true,
             tipoDiabetes: "  Tipo 1  ",
-            possuiPressaoAlta: false,
+            teveAnemia: true,
+            descricaoAnemia: "  Anemia ferropriva  ",
+            teveHepatite: true,
+            tipoHepatite: "  Tipo A  ",
             temAlergia: true,
             descricaoAlergia: "  Látex  ",
-            possuiCondicaoCardiaca: true,
-            temEpilepsia: false,
-            temHemofilia: true,
-            usaMarcaPasso: false,
-            estaGravidaOuAmamentando: false);
+            possuiDoencaTransmissivel: true,
+            descricaoDoencaTransmissivel: "  Informação clínica  ",
+            usaMedicacao: true,
+            descricaoMedicacao: "  Medicação contínua  ");
 
-        var depoisDaCriacao = DateTimeOffset.UtcNow;
-
-        Assert.NotEqual(Guid.Empty, questionario.Id);
-        Assert.Equal(fichaId, questionario.FichaId);
         Assert.Equal(QuestionarioSaude.VersaoAtual, questionario.Versao);
-        Assert.True(questionario.TemDiabetes);
         Assert.Equal("Tipo 1", questionario.TipoDiabetes);
-        Assert.False(questionario.PossuiPressaoAlta);
-        Assert.True(questionario.TemAlergia);
+        Assert.Equal("Anemia ferropriva", questionario.DescricaoAnemia);
+        Assert.Equal("Tipo A", questionario.TipoHepatite);
         Assert.Equal("Látex", questionario.DescricaoAlergia);
-        Assert.True(questionario.PossuiCondicaoCardiaca);
-        Assert.False(questionario.TemEpilepsia);
-        Assert.True(questionario.TemHemofilia);
-        Assert.False(questionario.UsaMarcaPasso);
-        Assert.False(questionario.EstaGravidaOuAmamentando);
-        Assert.InRange(
-            questionario.RespondidoEmUtc,
-            antesDaCriacao,
-            depoisDaCriacao);
+        Assert.Equal(
+            "Informação clínica",
+            questionario.DescricaoDoencaTransmissivel);
+        Assert.Equal("Medicação contínua", questionario.DescricaoMedicacao);
     }
 
     [Fact]
     public void Criar_ComRespostasNegativas_DeveDescartarDetalhesCondicionais()
     {
-        var questionario = new QuestionarioSaude(
+        var questionario = CriarQuestionario(
+            tipoDiabetes: "valor anterior",
+            descricaoAnemia: "valor anterior",
+            tipoHepatite: "valor anterior",
+            descricaoAlergia: "valor anterior",
+            descricaoDoencaTransmissivel: "valor anterior",
+            descricaoMedicacao: "valor anterior");
+
+        Assert.Null(questionario.TipoDiabetes);
+        Assert.Null(questionario.DescricaoAnemia);
+        Assert.Null(questionario.TipoHepatite);
+        Assert.Null(questionario.DescricaoAlergia);
+        Assert.Null(questionario.DescricaoDoencaTransmissivel);
+        Assert.Null(questionario.DescricaoMedicacao);
+    }
+
+    [Fact]
+    public void Criar_ComDiabetesSemTipo_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(temDiabetes: true, tipoDiabetes: "   "));
+
+        Assert.Equal("tipoDiabetes", exception.ParamName);
+    }
+
+    [Fact]
+    public void Criar_ComAnemiaSemDetalhes_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(teveAnemia: true, descricaoAnemia: null));
+
+        Assert.Equal("descricaoAnemia", exception.ParamName);
+    }
+
+    [Fact]
+    public void Criar_ComHepatiteSemTipo_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(teveHepatite: true, tipoHepatite: null));
+
+        Assert.Equal("tipoHepatite", exception.ParamName);
+    }
+
+    [Fact]
+    public void Criar_ComAlergiaSemDescricao_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(temAlergia: true, descricaoAlergia: "   "));
+
+        Assert.Equal("descricaoAlergia", exception.ParamName);
+    }
+
+    [Fact]
+    public void Criar_ComDoencaTransmissivelSemDescricao_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(
+                possuiDoencaTransmissivel: true,
+                descricaoDoencaTransmissivel: null));
+
+        Assert.Equal("descricaoDoencaTransmissivel", exception.ParamName);
+    }
+
+    [Fact]
+    public void Criar_ComMedicacaoSemDescricao_DeveRejeitar()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarQuestionario(usaMedicacao: true, descricaoMedicacao: null));
+
+        Assert.Equal("descricaoMedicacao", exception.ParamName);
+    }
+
+    private static QuestionarioSaude CriarQuestionario(
+        bool temDiabetes = false,
+        string? tipoDiabetes = null,
+        bool teveAnemia = false,
+        string? descricaoAnemia = null,
+        bool teveHepatite = false,
+        string? tipoHepatite = null,
+        bool temAlergia = false,
+        string? descricaoAlergia = null,
+        bool possuiDoencaTransmissivel = false,
+        string? descricaoDoencaTransmissivel = null,
+        bool usaMedicacao = false,
+        string? descricaoMedicacao = null)
+    {
+        return new QuestionarioSaude(
             Guid.NewGuid(),
-            temDiabetes: false,
-            tipoDiabetes: "valor anterior do formulário",
+            temDiabetes,
+            tipoDiabetes,
+            teveAnemia,
+            descricaoAnemia,
+            teveHepatite,
+            tipoHepatite,
             possuiPressaoAlta: false,
-            temAlergia: false,
-            descricaoAlergia: "valor anterior do formulário",
+            temAlergia,
+            descricaoAlergia,
             possuiCondicaoCardiaca: false,
             temEpilepsia: false,
             temHemofilia: false,
+            possuiDoencaTransmissivel,
+            descricaoDoencaTransmissivel,
             usaMarcaPasso: false,
+            fuma: false,
+            consumiuBebidaAlcoolicaUltimas24Horas: false,
+            usaMedicacao,
+            descricaoMedicacao,
             estaGravidaOuAmamentando: false);
-
-        Assert.Null(questionario.TipoDiabetes);
-        Assert.Null(questionario.DescricaoAlergia);
-    }
-
-    [Fact]
-    public void Criar_ComDiabetesSemTipo_DeveLancarArgumentException()
-    {
-        var exception = Assert.Throws<ArgumentException>(() =>
-            new QuestionarioSaude(
-                Guid.NewGuid(),
-                temDiabetes: true,
-                tipoDiabetes: "   ",
-                possuiPressaoAlta: false,
-                temAlergia: false,
-                descricaoAlergia: null,
-                possuiCondicaoCardiaca: false,
-                temEpilepsia: false,
-                temHemofilia: false,
-                usaMarcaPasso: false,
-                estaGravidaOuAmamentando: false));
-
-        Assert.Equal("tipoDiabetes", exception.ParamName);
-        Assert.Contains(
-            "O tipo de diabetes é obrigatório quando a resposta for sim.",
-            exception.Message);
-    }
-
-    [Fact]
-    public void Criar_ComAlergiaSemDescricao_DeveLancarArgumentException()
-    {
-        var exception = Assert.Throws<ArgumentException>(() =>
-            new QuestionarioSaude(
-                Guid.NewGuid(),
-                temDiabetes: false,
-                tipoDiabetes: null,
-                possuiPressaoAlta: false,
-                temAlergia: true,
-                descricaoAlergia: "   ",
-                possuiCondicaoCardiaca: false,
-                temEpilepsia: false,
-                temHemofilia: false,
-                usaMarcaPasso: false,
-                estaGravidaOuAmamentando: false));
-
-        Assert.Equal("descricaoAlergia", exception.ParamName);
-        Assert.Contains(
-            "A descrição da alergia é obrigatória quando a resposta for sim.",
-            exception.Message);
     }
 }

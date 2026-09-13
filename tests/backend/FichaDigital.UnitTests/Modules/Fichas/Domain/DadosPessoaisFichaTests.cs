@@ -1,33 +1,27 @@
 using FichaDigital.Api.Modules.Fichas.Domain;
+using FichaDigital.Api.Shared.Domain;
 
 namespace FichaDigital.UnitTests.Modules.Fichas.Domain;
 
 public sealed class DadosPessoaisFichaTests
 {
     [Fact]
-    public void Criar_ComDadosValidos_DeveNormalizarORetrato()
+    public void Criar_ComDadosValidos_DeveGuardarRetratoNormalizado()
     {
         var fichaId = Guid.NewGuid();
         var confirmadoEmUtc = DateTimeOffset.UtcNow;
 
         var dados = new DadosPessoaisFicha(
             fichaId,
-            "  Ana Silva  ",
-            "  Ana  ",
-            "  ela/dela  ",
-            new DateOnly(1995, 6, 15),
-            "  (21) 99999-9999  ",
-            "  ana@example.com  ",
-            null,
-            "  Maria  ",
-            "  (21) 98888-8888  ",
+            CriarDados(),
             confirmadoEmUtc);
 
         Assert.Equal(fichaId, dados.FichaId);
         Assert.Equal("Ana Silva", dados.NomeCompleto);
-        Assert.Equal("Ana", dados.NomeSocial);
         Assert.Equal("Ana", dados.NomeParaExibicao);
-        Assert.Equal("ana@example.com", dados.Email);
+        Assert.Equal("52998224725", dados.Cpf);
+        Assert.Equal("20040002", dados.Cep);
+        Assert.Equal("RJ", dados.Estado);
         Assert.Equal(confirmadoEmUtc, dados.ConfirmadosEmUtc);
     }
 
@@ -35,18 +29,16 @@ public sealed class DadosPessoaisFichaTests
     public void Atualizar_DeveManterVinculoComAFicha()
     {
         var fichaId = Guid.NewGuid();
-        var dados = CriarDados(fichaId);
+        var dados = new DadosPessoaisFicha(
+            fichaId,
+            CriarDados(),
+            DateTimeOffset.UtcNow);
 
         dados.Atualizar(
-            "Ana Silva Atualizada",
-            null,
-            null,
-            new DateOnly(1995, 6, 15),
-            "(21) 97777-7777",
-            "novo@example.com",
-            null,
-            null,
-            null,
+            CriarDados(
+                nomeCompleto: "Ana Silva Atualizada",
+                nomeSocial: null,
+                email: "novo@example.com"),
             DateTimeOffset.UtcNow.AddMinutes(1));
 
         Assert.Equal(fichaId, dados.FichaId);
@@ -54,36 +46,54 @@ public sealed class DadosPessoaisFichaTests
         Assert.Equal("novo@example.com", dados.Email);
     }
 
-    [Fact]
-    public void Criar_ComContatoEmergenciaIncompleto_DeveRejeitar()
+    [Theory]
+    [InlineData("111.111.111-11")]
+    [InlineData("529.982.247-24")]
+    [InlineData("123")]
+    public void CriarDados_ComCpfInvalido_DeveRejeitar(string cpf)
     {
-        Assert.Throws<ArgumentException>(() => new DadosPessoaisFicha(
-            Guid.NewGuid(),
-            "Ana Silva",
-            null,
-            null,
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            null,
-            null,
-            "Maria",
-            null,
-            DateTimeOffset.UtcNow));
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarDados(cpf: cpf));
+
+        Assert.Equal("cpf", exception.ParamName);
     }
 
-    private static DadosPessoaisFicha CriarDados(Guid fichaId)
+    [Fact]
+    public void CriarDados_ComContatoEmergenciaIncompleto_DeveRejeitar()
     {
-        return new DadosPessoaisFicha(
-            fichaId,
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com",
-            null,
-            null,
-            null,
-            DateTimeOffset.UtcNow);
+        var exception = Assert.Throws<ArgumentException>(() =>
+            CriarDados(contatoEmergenciaNome: "Maria"));
+
+        Assert.Equal("contatoEmergenciaCelular", exception.ParamName);
+    }
+
+    private static DadosPessoaisInformados CriarDados(
+        string nomeCompleto = "  Ana Silva  ",
+        string? nomeSocial = "  Ana  ",
+        string? email = "  ana@example.com  ",
+        string cpf = "529.982.247-25",
+        string? contatoEmergenciaNome = null,
+        string? contatoEmergenciaCelular = null)
+    {
+        return new DadosPessoaisInformados(
+            nomeCompleto,
+            nomeSocial,
+            pronomes: "  ela/dela  ",
+            estadoCivil: "  Solteira  ",
+            dataNascimento: new DateOnly(1995, 6, 15),
+            cpf,
+            celular: "  (21) 99999-9999  ",
+            telefoneAdicional: null,
+            email,
+            instagram: null,
+            contatoEmergenciaNome,
+            contatoEmergenciaCelular,
+            cep: "20040-002",
+            logradouro: "  Rua da Assembleia  ",
+            numero: "  10  ",
+            complemento: null,
+            bairro: "  Centro  ",
+            cidade: "  Rio de Janeiro  ",
+            estado: "rj");
     }
 }

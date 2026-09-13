@@ -138,11 +138,8 @@ public sealed class ListarClientesTests
         Assert.Equal(nomeEsperado, cliente.NomeParaExibicao);
     }
 
-    [Theory]
-    [InlineData("ana@example.com")]
-    [InlineData("21911111111")]
-    public async Task Listar_ComEmailOuTelefone_NaoDeveUsarEssesDadosNaBusca(
-        string busca)
+    [Fact]
+    public async Task Listar_ComEmail_NaoDeveUsarEsseDadoNaBuscaPorNome()
     {
         using var factory = new FichaDigitalApiFactory();
         await CriarClientesAsync(factory);
@@ -152,7 +149,7 @@ public sealed class ListarClientesTests
                 TestContext.Current.CancellationToken);
 
         using var response = await client.GetAsync(
-            $"/api/clientes?busca={Uri.EscapeDataString(busca)}",
+            "/api/clientes?busca=ana%40example.com",
             TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
@@ -162,6 +159,36 @@ public sealed class ListarClientesTests
 
         Assert.NotNull(resultado);
         Assert.Empty(resultado.Itens);
+    }
+
+    [Theory]
+    [InlineData("telefone", "(21) 91111-1111", "Ana Silva")]
+    [InlineData("instagram", "bia.tattoo", "Bia")]
+    [InlineData("instagram", "@bia.tattoo", "Bia")]
+    public async Task Listar_ComTelefoneOuInstagram_DeveRetornarCorrespondente(
+        string filtro,
+        string valor,
+        string nomeEsperado)
+    {
+        using var factory = new FichaDigitalApiFactory();
+        await CriarClientesAsync(factory);
+        using var client = await AutenticacaoProfissionalTestHelper
+            .CriarClienteAutenticadoAsync(
+                factory,
+                TestContext.Current.CancellationToken);
+
+        using var response = await client.GetAsync(
+            $"/api/clientes?{filtro}={Uri.EscapeDataString(valor)}",
+            TestContext.Current.CancellationToken);
+
+        response.EnsureSuccessStatusCode();
+        var resultado = await response.Content
+            .ReadFromJsonAsync<ClientesPaginadosResponse>(
+                TestContext.Current.CancellationToken);
+
+        Assert.NotNull(resultado);
+        var cliente = Assert.Single(resultado.Itens);
+        Assert.Equal(nomeEsperado, cliente.NomeParaExibicao);
     }
 
     [Fact]
@@ -207,27 +234,24 @@ public sealed class ListarClientesTests
             .GetRequiredService<FichaDigitalDbContext>();
 
         dbContext.Clientes.AddRange(
-            new Cliente(
-                "Carlos Lima",
-                null,
-                "ele/dele",
-                new DateOnly(1988, 4, 12),
-                "21933333333",
-                null),
-            new Cliente(
-                "Ana Silva",
-                null,
-                "ela/dela",
-                new DateOnly(1995, 6, 15),
-                "21911111111",
-                "ana@example.com"),
-            new Cliente(
-                "Beatriz Souza",
-                "Bia",
-                null,
-                new DateOnly(1992, 10, 3),
-                "21922222222",
-                "bia@example.com"));
+            new Cliente(DadosPessoaisTeste.Criar(
+                nomeCompleto: "Carlos Lima",
+                nomeSocial: null,
+                pronomes: "ele/dele",
+                dataNascimento: new DateOnly(1988, 4, 12),
+                celular: "21933333333",
+                email: null)),
+            new Cliente(DadosPessoaisTeste.Criar(
+                nomeSocial: null,
+                celular: "21911111111")),
+            new Cliente(DadosPessoaisTeste.Criar(
+                nomeCompleto: "Beatriz Souza",
+                nomeSocial: "Bia",
+                pronomes: null,
+                dataNascimento: new DateOnly(1992, 10, 3),
+                celular: "21922222222",
+                email: "bia@example.com",
+                instagram: "@bia.tattoo")));
 
         await dbContext.SaveChangesAsync(
             TestContext.Current.CancellationToken);

@@ -31,6 +31,7 @@ public sealed class EmitirConviteFichaTests
             $"/api/clientes/{clienteId}/fichas/convites",
             new EmitirConviteFichaRequest
             {
+                ProfissionalResponsavelNome = "Lia Tatuadora",
                 TipoProcedimento = TipoProcedimento.Tatuagem
             },
             TestContext.Current.CancellationToken);
@@ -65,8 +66,12 @@ public sealed class EmitirConviteFichaTests
             .SingleAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(profissional.Id, ficha.ProfissionalResponsavelId);
-        Assert.Equal(profissional.NomeCompleto, ficha.ProfissionalResponsavelNome);
+        Assert.Equal("Lia Tatuadora", ficha.ProfissionalResponsavelNome);
         Assert.Equal(TipoProcedimento.Tatuagem, ficha.TipoProcedimento);
+        Assert.Equal(1, ficha.VersaoModelo);
+        Assert.Equal(QuestionarioSaude.VersaoAtual, ficha.VersaoQuestionario);
+        Assert.Equal(1, ficha.VersaoTermo);
+        Assert.Equal("00.000.000/0000-00", ficha.CnpjApresentado);
     }
 
     [Fact]
@@ -84,6 +89,7 @@ public sealed class EmitirConviteFichaTests
             $"/api/clientes/{Guid.NewGuid()}/fichas/convites",
             new EmitirConviteFichaRequest
             {
+                ProfissionalResponsavelNome = "Bia Piercer",
                 TipoProcedimento = TipoProcedimento.Piercing
             },
             TestContext.Current.CancellationToken);
@@ -117,6 +123,7 @@ public sealed class EmitirConviteFichaTests
                 $"/api/clientes/{clienteId}/fichas/convites",
                 new EmitirConviteFichaRequest
                 {
+                    ProfissionalResponsavelNome = "Lia Tatuadora",
                     TipoProcedimento = TipoProcedimento.NaoInformado
                 },
                 TestContext.Current.CancellationToken);
@@ -168,13 +175,8 @@ public sealed class EmitirConviteFichaTests
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
 
-        var cliente = new Cliente(
-            "Ana Silva",
-            "Ana",
-            "ela/dela",
-            new DateOnly(1995, 6, 15),
-            "(21) 99999-9999",
-            "ana@example.com");
+        var cliente = new Cliente(DadosPessoaisTeste.Criar(
+            celular: "(21) 99999-9999"));
 
         dbContext.Clientes.Add(cliente);
         await dbContext.SaveChangesAsync(

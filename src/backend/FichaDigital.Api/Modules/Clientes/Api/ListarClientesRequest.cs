@@ -8,7 +8,11 @@ public sealed class ListarClientesRequest : IValidatableObject
     [MaxLength(150, ErrorMessage = "A busca deve ter no máximo 150 caracteres.")]
     public string? Busca { get; init; }
 
-    public Guid? ProfissionalId { get; init; }
+    [MaxLength(25, ErrorMessage = "O telefone deve ter no máximo 25 caracteres.")]
+    public string? Telefone { get; init; }
+
+    [MaxLength(100, ErrorMessage = "O Instagram deve ter no máximo 100 caracteres.")]
+    public string? Instagram { get; init; }
 
     public TipoProcedimento? TipoProcedimento { get; init; }
 
@@ -36,13 +40,6 @@ public sealed class ListarClientesRequest : IValidatableObject
             yield return new ValidationResult(
                 "A data inicial da ficha não pode ser posterior à data final.",
                 [nameof(UltimaFichaDe), nameof(UltimaFichaAte)]);
-        }
-
-        if (ProfissionalId == Guid.Empty)
-        {
-            yield return new ValidationResult(
-                "O profissional informado é inválido.",
-                [nameof(ProfissionalId)]);
         }
 
         if (TipoProcedimento is not null &&

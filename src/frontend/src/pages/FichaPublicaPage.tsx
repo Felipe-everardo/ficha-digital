@@ -19,7 +19,6 @@ export function FichaPublicaPage() {
           <StudioBrand compacta />
 
           <div>
-            <p className="eyebrow">Área segura do cliente</p>
             <h1 id="public-page-title">Sua ficha digital</h1>
             <p className="intro">
               Preencha as informações com calma. Seus dados serão utilizados
@@ -114,13 +113,17 @@ export function FichaPublicaPage() {
                 convite={estado.convite}
                 dados={dadosPessoais.valores}
                 respostas={questionario.respostas}
-                confirmacoes={consentimento.confirmacoes}
+                confirmouLeituraEAutorizacao={
+                  consentimento.confirmouLeituraEAutorizacao
+                }
                 nomeAssinante={consentimento.nomeAssinante}
+                assinaturaDesenhada={consentimento.assinaturaDesenhada}
                 erro={consentimento.erro}
                 enviando={consentimento.enviando}
                 aoEnviar={consentimento.enviar}
                 aoAlterarConfirmacao={consentimento.alterarConfirmacao}
                 aoAlterarNomeAssinante={consentimento.alterarNomeAssinante}
+                aoAlterarAssinatura={consentimento.alterarAssinatura}
               />
             )}
 

@@ -14,10 +14,6 @@ public sealed class ProfissionalUsuarioConfiguration
             .HasMaxLength(150)
             .IsRequired();
 
-        builder.Property(profissional => profissional.Especialidades)
-            .HasConversion<int>()
-            .IsRequired();
-
         builder.Property(profissional => profissional.Email)
             .HasMaxLength(254)
             .IsRequired();

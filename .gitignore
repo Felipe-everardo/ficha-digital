@@ -17,6 +17,11 @@
 # Tests and coverage
 **/TestResults/
 **/coverage/
+**/playwright-report/
+**/test-results/
+*.db
+*.db-shm
+*.db-wal
 
 # Editors and operating systems
 .vs/

@@ -68,3 +68,7 @@ export function adicionarFiltros(
     }
   })
 }
+
+export function criarChaveIdempotencia() {
+  return crypto.randomUUID()
+}

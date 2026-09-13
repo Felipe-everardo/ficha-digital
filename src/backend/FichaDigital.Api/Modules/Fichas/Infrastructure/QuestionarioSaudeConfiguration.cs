@@ -28,6 +28,18 @@ public sealed class QuestionarioSaudeConfiguration
         builder.Property(questionario => questionario.TipoDiabetes)
             .HasMaxLength(100);
 
+        builder.Property(questionario => questionario.TeveAnemia)
+            .IsRequired();
+
+        builder.Property(questionario => questionario.DescricaoAnemia)
+            .HasMaxLength(300);
+
+        builder.Property(questionario => questionario.TeveHepatite)
+            .IsRequired();
+
+        builder.Property(questionario => questionario.TipoHepatite)
+            .HasMaxLength(100);
+
         builder.Property(questionario => questionario.PossuiPressaoAlta)
             .IsRequired();
 
@@ -46,8 +58,27 @@ public sealed class QuestionarioSaudeConfiguration
         builder.Property(questionario => questionario.TemHemofilia)
             .IsRequired();
 
+        builder.Property(questionario => questionario.PossuiDoencaTransmissivel)
+            .IsRequired();
+
+        builder.Property(questionario => questionario.DescricaoDoencaTransmissivel)
+            .HasMaxLength(300);
+
         builder.Property(questionario => questionario.UsaMarcaPasso)
             .IsRequired();
+
+        builder.Property(questionario => questionario.Fuma)
+            .IsRequired();
+
+        builder.Property(
+                questionario => questionario.ConsumiuBebidaAlcoolicaUltimas24Horas)
+            .IsRequired();
+
+        builder.Property(questionario => questionario.UsaMedicacao)
+            .IsRequired();
+
+        builder.Property(questionario => questionario.DescricaoMedicacao)
+            .HasMaxLength(300);
 
         builder.Property(
                 questionario => questionario.EstaGravidaOuAmamentando)
