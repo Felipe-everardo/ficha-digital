@@ -13,7 +13,6 @@ env:
   SOLUTION_PATH: FichaDigital.sln
   API_PROJECT_PATH: src/backend/FichaDigital.Api/FichaDigital.Api.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
-  MIGRATION_BUNDLE_PATH: ${{ github.workspace }}/migrations/efbundle.exe
 
 jobs:
   build:
@@ -45,21 +44,6 @@ jobs:
       - name: Executar testes
         run: dotnet test "${{ env.SOLUTION_PATH }}" --configuration Release --no-build
 
-      - name: Gerar pacote de migrations
-        shell: pwsh
-        run: |
-          dotnet tool restore
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path (Split-Path "${{ env.MIGRATION_BUNDLE_PATH }}") | Out-Null
-          dotnet ef migrations bundle `
-            --project "${{ env.API_PROJECT_PATH }}" `
-            --configuration Release `
-            --no-build `
-            --output "${{ env.MIGRATION_BUNDLE_PATH }}" `
-            --force
-
       - name: Publicar API e frontend
         run: >-
           dotnet publish "${{ env.API_PROJECT_PATH }}"
@@ -73,13 +57,6 @@ jobs:
         with:
           name: fichadigital-app
           path: ${{ env.PUBLISH_PATH }}
-          if-no-files-found: error
-
-      - name: Armazenar pacote de migrations
-        uses: actions/upload-artifact@v4
-        with:
-          name: fichadigital-migrations
-          path: ${{ env.MIGRATION_BUNDLE_PATH }}
           if-no-files-found: error
 
   deploy:
@@ -97,116 +74,12 @@ jobs:
           name: fichadigital-app
           path: ./publish
 
-      - name: Baixar pacote de migrations
-        uses: actions/download-artifact@v4
-        with:
-          name: fichadigital-migrations
-          path: ./migrations
-
-      - name: Configurar .NET para migrations
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.x
-
       - name: Autenticar no Azure sem senha
-        id: azure_login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_33448E77B0FF4583BD698196CAE0C13C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5CACC9EA6D5E4E06BC45F690A8D75296 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FEE4F91E60CB41ABB64C6779B91ED2E5 }}
-
-      - name: Localizar o App Service
-        id: resolve_app
-        shell: pwsh
-        run: |
-          $resourceGroup = az resource list `
-            --name fichaDigital `
-            --resource-type Microsoft.Web/sites `
-            --query "[0].resourceGroup" `
-            --output tsv
-
-          if ([string]::IsNullOrWhiteSpace($resourceGroup)) {
-            throw "O grupo de recursos do App Service fichaDigital não foi encontrado."
-          }
-
-          "AZURE_RESOURCE_GROUP=$resourceGroup" |
-            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Atualizar schema do banco
-        shell: pwsh
-        run: |
-          $connectionString = az webapp config connection-string list `
-            --resource-group $env:AZURE_RESOURCE_GROUP `
-            --name fichaDigital `
-            --only-show-errors `
-            --query "[?name=='DefaultConnection'].value | [0]" `
-            --output tsv
-
-          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
-            $connectionString = az webapp config appsettings list `
-              --resource-group $env:AZURE_RESOURCE_GROUP `
-              --name fichaDigital `
-              --only-show-errors `
-              --query "[?name=='ConnectionStrings__DefaultConnection'].value | [0]" `
-              --output tsv
-          }
-
-          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
-            $connectionString = az webapp config appsettings list `
-              --resource-group $env:AZURE_RESOURCE_GROUP `
-              --name fichaDigital `
-              --only-show-errors `
-              --query "[?name=='ConnectionStrings:DefaultConnection'].value | [0]" `
-              --output tsv
-          }
-
-          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
-            throw "A conexão DefaultConnection não foi encontrada no App Service."
-          }
-
-          $env:FICHADIGITAL_MIGRATION_CONNECTION = $connectionString
-
-          try {
-            $bundleOutput = @(
-              & "${{ env.MIGRATION_BUNDLE_PATH }}" `
-                --connection $env:FICHADIGITAL_MIGRATION_CONNECTION 2>&1
-            )
-            $bundleExitCode = $LASTEXITCODE
-
-            $safeOutput = $bundleOutput | ForEach-Object {
-              $line = $_.ToString()
-              $line = $line -replace `
-                '(?i)(password|pwd|user id|uid)\s*=\s*[^;\s]+', `
-                '$1=***'
-              $line = $line -replace `
-                '(?i)(server|data source)\s*=\s*[^;\s]+', `
-                '$1=***'
-              $line
-            }
-
-            $safeOutput | ForEach-Object { Write-Host $_ }
-
-            if ($bundleExitCode -ne 0) {
-              $diagnostic = ($safeOutput | Select-Object -Last 8) -join ' | '
-
-              if ([string]::IsNullOrWhiteSpace($diagnostic)) {
-                $diagnostic = "O pacote não retornou detalhes adicionais."
-              }
-
-              $diagnostic = $diagnostic `
-                -replace '%', '%25' `
-                -replace "`r", '%0D' `
-                -replace "`n", '%0A'
-
-              Write-Output "::error title=Falha ao atualizar schema::$diagnostic"
-              throw "O pacote de migrations terminou com o código $bundleExitCode."
-            }
-          }
-          finally {
-            Remove-Item Env:FICHADIGITAL_MIGRATION_CONNECTION `
-              -ErrorAction SilentlyContinue
-          }
 
       - name: Implantar no App Service
         uses: azure/webapps-deploy@v3
