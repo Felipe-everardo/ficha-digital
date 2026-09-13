@@ -99,7 +99,7 @@ jobs:
           "AZURE_RESOURCE_GROUP=$resourceGroup" |
             Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Aplicar migrations pendentes
+      - name: Habilitar aplicação das migrations
         shell: pwsh
         run: |
           az webapp config appsettings set `
@@ -109,36 +109,52 @@ jobs:
             --only-show-errors `
             --output none
 
-          $deadline = (Get-Date).AddMinutes(5)
-          do {
-            try {
-              $response = Invoke-WebRequest `
-                -Uri "https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/health/ready" `
-                -UseBasicParsing `
-                -TimeoutSec 20
-
-              if ($response.StatusCode -eq 200) {
-                Write-Host "Aplicação pronta após a atualização do banco."
-                break
-              }
-            }
-            catch {
-              Write-Host "Aguardando a aplicação reiniciar..."
-            }
-
-            Start-Sleep -Seconds 10
-          } while ((Get-Date) -lt $deadline)
-
-          if ($response.StatusCode -ne 200) {
-            throw "A aplicação não ficou pronta após a aplicação das migrations."
-          }
-
       - name: Implantar no App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: fichaDigital
           slot-name: Production
           package: ./publish
+
+      - name: Confirmar migrations aplicadas
+        shell: pwsh
+        run: |
+          $endpoint = "https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/api/fichas/convites/abrir"
+          $deadline = (Get-Date).AddMinutes(5)
+          $schemaAtualizado = $false
+
+          Start-Sleep -Seconds 30
+
+          do {
+            try {
+              $headers = @{ "Idempotency-Key" = [guid]::NewGuid().ToString() }
+              $response = Invoke-WebRequest `
+                -Uri $endpoint `
+                -Method Post `
+                -Headers $headers `
+                -ContentType "application/json" `
+                -Body '{"token":"verificacao-deploy-token-inexistente"}' `
+                -SkipHttpErrorCheck `
+                -TimeoutSec 20
+
+              if ($response.StatusCode -eq 404) {
+                $schemaAtualizado = $true
+                Write-Host "Migrations confirmadas pelo endpoint da aplicação."
+                break
+              }
+
+              Write-Host "Schema ainda indisponível (HTTP $($response.StatusCode)); aguardando..."
+            }
+            catch {
+              Write-Host "Aplicação reiniciando; aguardando as migrations..."
+            }
+
+            Start-Sleep -Seconds 15
+          } while ((Get-Date) -lt $deadline)
+
+          if (-not $schemaAtualizado) {
+            throw "Não foi possível confirmar a aplicação das migrations no prazo esperado."
+          }
 
       - name: Desabilitar migrations automáticas
         if: ${{ always() && steps.azure_login.outcome == 'success' && steps.resolve_app.outcome == 'success' }}
