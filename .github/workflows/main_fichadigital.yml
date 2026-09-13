@@ -75,11 +75,63 @@ jobs:
           path: ./publish
 
       - name: Autenticar no Azure sem senha
+        id: azure_login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_33448E77B0FF4583BD698196CAE0C13C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5CACC9EA6D5E4E06BC45F690A8D75296 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FEE4F91E60CB41ABB64C6779B91ED2E5 }}
+
+      - name: Localizar o App Service
+        id: resolve_app
+        shell: pwsh
+        run: |
+          $resourceGroup = az resource list `
+            --name fichaDigital `
+            --resource-type Microsoft.Web/sites `
+            --query "[0].resourceGroup" `
+            --output tsv
+
+          if ([string]::IsNullOrWhiteSpace($resourceGroup)) {
+            throw "O grupo de recursos do App Service fichaDigital não foi encontrado."
+          }
+
+          "AZURE_RESOURCE_GROUP=$resourceGroup" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Aplicar migrations pendentes
+        shell: pwsh
+        run: |
+          az webapp config appsettings set `
+            --resource-group $env:AZURE_RESOURCE_GROUP `
+            --name fichaDigital `
+            --settings DatabaseInitialization__ApplyMigrationsOnStartup=true `
+            --only-show-errors `
+            --output none
+
+          $deadline = (Get-Date).AddMinutes(5)
+          do {
+            try {
+              $response = Invoke-WebRequest `
+                -Uri "https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/health/ready" `
+                -UseBasicParsing `
+                -TimeoutSec 20
+
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Aplicação pronta após a atualização do banco."
+                break
+              }
+            }
+            catch {
+              Write-Host "Aguardando a aplicação reiniciar..."
+            }
+
+            Start-Sleep -Seconds 10
+          } while ((Get-Date) -lt $deadline)
+
+          if ($response.StatusCode -ne 200) {
+            throw "A aplicação não ficou pronta após a aplicação das migrations."
+          }
 
       - name: Implantar no App Service
         uses: azure/webapps-deploy@v3
@@ -87,3 +139,59 @@ jobs:
           app-name: fichaDigital
           slot-name: Production
           package: ./publish
+
+      - name: Desabilitar migrations automáticas
+        if: ${{ always() && steps.azure_login.outcome == 'success' && steps.resolve_app.outcome == 'success' }}
+        shell: pwsh
+        run: |
+          az webapp config appsettings set `
+            --resource-group $env:AZURE_RESOURCE_GROUP `
+            --name fichaDigital `
+            --settings DatabaseInitialization__ApplyMigrationsOnStartup=false `
+            --only-show-errors `
+            --output none
+
+      - name: Verificar aplicação publicada e schema
+        shell: pwsh
+        run: |
+          $baseUrl = "https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net"
+          $deadline = (Get-Date).AddMinutes(5)
+          $ready = $false
+
+          do {
+            try {
+              $response = Invoke-WebRequest `
+                -Uri "$baseUrl/health/ready" `
+                -UseBasicParsing `
+                -TimeoutSec 20
+
+              if ($response.StatusCode -eq 200) {
+                $ready = $true
+                break
+              }
+            }
+            catch {
+              Write-Host "Aguardando a aplicação reiniciar com a configuração segura..."
+            }
+
+            Start-Sleep -Seconds 10
+          } while ((Get-Date) -lt $deadline)
+
+          if (-not $ready) {
+            throw "A aplicação publicada não ficou pronta."
+          }
+
+          $headers = @{ "Idempotency-Key" = [guid]::NewGuid().ToString() }
+          $schemaResponse = Invoke-WebRequest `
+            -Uri "$baseUrl/api/fichas/convites/abrir" `
+            -Method Post `
+            -Headers $headers `
+            -ContentType "application/json" `
+            -Body '{"token":"verificacao-deploy-token-inexistente"}' `
+            -SkipHttpErrorCheck
+
+          if ($schemaResponse.StatusCode -ne 404) {
+            throw "A verificação do schema retornou HTTP $($schemaResponse.StatusCode), esperado 404."
+          }
+
+          Write-Host "Aplicação e schema validados com sucesso."
