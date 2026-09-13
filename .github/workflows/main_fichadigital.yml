@@ -13,6 +13,7 @@ env:
   SOLUTION_PATH: FichaDigital.sln
   API_PROJECT_PATH: src/backend/FichaDigital.Api/FichaDigital.Api.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
+  MIGRATION_BUNDLE_PATH: ${{ github.workspace }}/migrations/efbundle.exe
 
 jobs:
   build:
@@ -44,6 +45,21 @@ jobs:
       - name: Executar testes
         run: dotnet test "${{ env.SOLUTION_PATH }}" --configuration Release --no-build
 
+      - name: Gerar pacote de migrations
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path (Split-Path "${{ env.MIGRATION_BUNDLE_PATH }}") | Out-Null
+          dotnet ef migrations bundle `
+            --project "${{ env.API_PROJECT_PATH }}" `
+            --configuration Release `
+            --no-build `
+            --output "${{ env.MIGRATION_BUNDLE_PATH }}" `
+            --force
+
       - name: Publicar API e frontend
         run: >-
           dotnet publish "${{ env.API_PROJECT_PATH }}"
@@ -57,6 +73,13 @@ jobs:
         with:
           name: fichadigital-app
           path: ${{ env.PUBLISH_PATH }}
+          if-no-files-found: error
+
+      - name: Armazenar pacote de migrations
+        uses: actions/upload-artifact@v4
+        with:
+          name: fichadigital-migrations
+          path: ${{ env.MIGRATION_BUNDLE_PATH }}
           if-no-files-found: error
 
   deploy:
@@ -73,6 +96,17 @@ jobs:
         with:
           name: fichadigital-app
           path: ./publish
+
+      - name: Baixar pacote de migrations
+        uses: actions/download-artifact@v4
+        with:
+          name: fichadigital-migrations
+          path: ./migrations
+
+      - name: Configurar .NET para migrations
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.x
 
       - name: Autenticar no Azure sem senha
         id: azure_login
@@ -99,15 +133,52 @@ jobs:
           "AZURE_RESOURCE_GROUP=$resourceGroup" |
             Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Habilitar aplicação das migrations
+      - name: Atualizar schema do banco
         shell: pwsh
         run: |
-          az webapp config appsettings set `
+          $connectionString = az webapp config connection-string list `
             --resource-group $env:AZURE_RESOURCE_GROUP `
             --name fichaDigital `
-            --settings DatabaseInitialization__ApplyMigrationsOnStartup=true `
             --only-show-errors `
-            --output none
+            --query "[?name=='DefaultConnection'].value | [0]" `
+            --output tsv
+
+          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
+            $connectionString = az webapp config appsettings list `
+              --resource-group $env:AZURE_RESOURCE_GROUP `
+              --name fichaDigital `
+              --only-show-errors `
+              --query "[?name=='ConnectionStrings__DefaultConnection'].value | [0]" `
+              --output tsv
+          }
+
+          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
+            $connectionString = az webapp config appsettings list `
+              --resource-group $env:AZURE_RESOURCE_GROUP `
+              --name fichaDigital `
+              --only-show-errors `
+              --query "[?name=='ConnectionStrings:DefaultConnection'].value | [0]" `
+              --output tsv
+          }
+
+          if ([string]::IsNullOrWhiteSpace($connectionString) -or $connectionString -eq "null") {
+            throw "A conexão DefaultConnection não foi encontrada no App Service."
+          }
+
+          $env:FICHADIGITAL_MIGRATION_CONNECTION = $connectionString
+
+          try {
+            & "${{ env.MIGRATION_BUNDLE_PATH }}" `
+              --connection $env:FICHADIGITAL_MIGRATION_CONNECTION
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "O pacote de migrations terminou com o código $LASTEXITCODE."
+            }
+          }
+          finally {
+            Remove-Item Env:FICHADIGITAL_MIGRATION_CONNECTION `
+              -ErrorAction SilentlyContinue
+          }
 
       - name: Implantar no App Service
         uses: azure/webapps-deploy@v3
@@ -115,57 +186,6 @@ jobs:
           app-name: fichaDigital
           slot-name: Production
           package: ./publish
-
-      - name: Confirmar migrations aplicadas
-        shell: pwsh
-        run: |
-          $endpoint = "https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/api/fichas/convites/abrir"
-          $deadline = (Get-Date).AddMinutes(5)
-          $schemaAtualizado = $false
-
-          Start-Sleep -Seconds 30
-
-          do {
-            try {
-              $headers = @{ "Idempotency-Key" = [guid]::NewGuid().ToString() }
-              $response = Invoke-WebRequest `
-                -Uri $endpoint `
-                -Method Post `
-                -Headers $headers `
-                -ContentType "application/json" `
-                -Body '{"token":"verificacao-deploy-token-inexistente"}' `
-                -SkipHttpErrorCheck `
-                -TimeoutSec 20
-
-              if ($response.StatusCode -eq 404) {
-                $schemaAtualizado = $true
-                Write-Host "Migrations confirmadas pelo endpoint da aplicação."
-                break
-              }
-
-              Write-Host "Schema ainda indisponível (HTTP $($response.StatusCode)); aguardando..."
-            }
-            catch {
-              Write-Host "Aplicação reiniciando; aguardando as migrations..."
-            }
-
-            Start-Sleep -Seconds 15
-          } while ((Get-Date) -lt $deadline)
-
-          if (-not $schemaAtualizado) {
-            throw "Não foi possível confirmar a aplicação das migrations no prazo esperado."
-          }
-
-      - name: Desabilitar migrations automáticas
-        if: ${{ always() && steps.azure_login.outcome == 'success' && steps.resolve_app.outcome == 'success' }}
-        shell: pwsh
-        run: |
-          az webapp config appsettings set `
-            --resource-group $env:AZURE_RESOURCE_GROUP `
-            --name fichaDigital `
-            --settings DatabaseInitialization__ApplyMigrationsOnStartup=false `
-            --only-show-errors `
-            --output none
 
       - name: Verificar aplicação publicada e schema
         shell: pwsh
