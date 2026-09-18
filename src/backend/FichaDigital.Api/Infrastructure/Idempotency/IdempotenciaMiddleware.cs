@@ -140,6 +140,7 @@ public sealed class IdempotenciaMiddleware(
 
             try
             {
+                dbContext.ChangeTracker.Clear();
                 dbContext.Remove(requisicao);
                 await dbContext.SaveChangesAsync(CancellationToken.None);
             }

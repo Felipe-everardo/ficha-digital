@@ -71,6 +71,20 @@ public sealed class FichaTests
     }
 
     [Fact]
+    public void AlterarStatus_DeveIncrementarVersaoDeConcorrencia()
+    {
+        var ficha = new Ficha(Guid.NewGuid());
+
+        Assert.Equal(0, ficha.VersaoConcorrencia);
+
+        ficha.EnviarConvite();
+        Assert.Equal(1, ficha.VersaoConcorrencia);
+
+        ficha.IniciarPreenchimento();
+        Assert.Equal(2, ficha.VersaoConcorrencia);
+    }
+
+    [Fact]
     public void EnviarConvite_QuandoConviteJaFoiEnviado_DeveLancarInvalidOperationException()
     {
         var ficha = new Ficha(Guid.NewGuid());

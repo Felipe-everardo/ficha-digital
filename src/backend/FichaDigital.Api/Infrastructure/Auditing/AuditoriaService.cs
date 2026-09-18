@@ -4,11 +4,10 @@ public sealed class AuditoriaService(
     Persistence.FichaDigitalDbContext dbContext,
     TimeProvider timeProvider)
 {
-    public async Task RegistrarAcaoDoClienteAsync(
+    public void AdicionarAcaoDoCliente(
         string acao,
         Guid fichaId,
-        string correlacaoId,
-        CancellationToken cancellationToken)
+        string correlacaoId)
     {
         dbContext.RegistrosAuditoria.Add(
             RegistroAuditoria.CriarParaCliente(
@@ -16,6 +15,5 @@ public sealed class AuditoriaService(
                 fichaId,
                 correlacaoId,
                 timeProvider.GetUtcNow()));
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

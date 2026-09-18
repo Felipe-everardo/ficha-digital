@@ -69,6 +69,67 @@ public sealed class AbrirConviteFichaTests
         Assert.Equal(QuestionarioSaude.VersaoAtual, ficha.VersaoQuestionario);
         Assert.Equal(1, ficha.VersaoTermo);
         Assert.Equal("00.000.000/0000-00", ficha.CnpjApresentado);
+
+        var auditoria = await dbContext.RegistrosAuditoria
+            .AsNoTracking()
+            .SingleAsync(
+                registro =>
+                    registro.RecursoId == response.FichaId &&
+                    registro.Acao == "Convite aberto",
+                TestContext.Current.CancellationToken);
+        Assert.Equal("Cliente", auditoria.Origem);
+        Assert.Equal("Ficha", auditoria.Recurso);
+        Assert.Null(auditoria.ProfissionalId);
+        Assert.Equal(
+            httpResponse.Headers.GetValues("X-Correlation-ID").Single(),
+            auditoria.CorrelacaoId);
+    }
+
+    [Fact]
+    public async Task Abrir_QuandoAuditoriaFalha_DeveReverterMudancaDaFicha()
+    {
+        using var factory = new FichaDigitalApiFactory();
+        using var client = CriarHttpClient(factory);
+        var conviteEmitido = await EmitirConviteAsync(factory);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<FichaDigitalDbContext>();
+            await dbContext.Database.ExecuteSqlRawAsync(
+                """
+                CREATE TRIGGER FalharAuditoria
+                BEFORE INSERT ON RegistrosAuditoria
+                BEGIN
+                    SELECT RAISE(ABORT, 'falha de auditoria');
+                END;
+                """,
+                TestContext.Current.CancellationToken);
+        }
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/fichas/convites/abrir",
+            new AbrirConviteFichaRequest
+            {
+                Token = ObterToken(conviteEmitido.LinkPreenchimento)
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        using var verificacaoScope = factory.Services.CreateScope();
+        var verificacaoContext = verificacaoScope.ServiceProvider
+            .GetRequiredService<FichaDigitalDbContext>();
+        var status = await verificacaoContext.Fichas
+            .AsNoTracking()
+            .Where(ficha => ficha.Id == conviteEmitido.FichaId)
+            .Select(ficha => ficha.Status)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(StatusFicha.ConviteEnviado, status);
+        Assert.False(await verificacaoContext.RegistrosAuditoria.AnyAsync(
+            registro => registro.RecursoId == conviteEmitido.FichaId,
+            TestContext.Current.CancellationToken));
     }
 
     [Fact]

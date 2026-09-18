@@ -60,14 +60,3 @@ public sealed class AuditoriaController(
         return Ok(registros);
     }
 }
-
-public sealed record RegistroAuditoriaResponse(
-    Guid Id,
-    Guid? ProfissionalId,
-    string ProfissionalNome,
-    string Origem,
-    string Acao,
-    string Recurso,
-    Guid? RecursoId,
-    string CorrelacaoId,
-    DateTimeOffset OcorreuEmUtc);

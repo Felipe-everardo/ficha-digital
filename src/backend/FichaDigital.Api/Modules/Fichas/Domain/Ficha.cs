@@ -140,6 +140,8 @@ public sealed class Ficha
 
     public StatusFicha Status { get; private set; }
 
+    public long VersaoConcorrencia { get; private set; }
+
     public DateTimeOffset CriadaEmUtc { get; private set; }
 
     public void EnviarConvite()
@@ -150,7 +152,7 @@ public sealed class Ficha
                 "Somente uma ficha em rascunho pode ter o convite enviado.");
         }
 
-        Status = StatusFicha.ConviteEnviado;
+        AlterarStatus(StatusFicha.ConviteEnviado);
     }
 
     public void IniciarPreenchimento()
@@ -161,7 +163,7 @@ public sealed class Ficha
                 "Somente uma ficha com convite enviado pode iniciar o preenchimento.");
         }
 
-        Status = StatusFicha.EmPreenchimento;
+        AlterarStatus(StatusFicha.EmPreenchimento);
     }
 
     public void ConcluirAnamnese()
@@ -172,7 +174,7 @@ public sealed class Ficha
                 "Somente uma ficha em preenchimento pode concluir a anamnese.");
         }
 
-        Status = StatusFicha.AnamnesePreenchida;
+        AlterarStatus(StatusFicha.AnamnesePreenchida);
     }
 
     public void AutorizarProcedimento()
@@ -185,7 +187,7 @@ public sealed class Ficha
                 "Somente uma ficha com anamnese preenchida pode autorizar o procedimento.");
         }
 
-        Status = StatusFicha.AutorizadaParaProcedimento;
+        AlterarStatus(StatusFicha.AutorizadaParaProcedimento);
     }
 
     public void ConfirmarRevisaoProfissional()
@@ -196,7 +198,7 @@ public sealed class Ficha
                 "Somente uma ficha autorizada pode ser revisada pelo profissional.");
         }
 
-        Status = StatusFicha.RevisadaPeloProfissional;
+        AlterarStatus(StatusFicha.RevisadaPeloProfissional);
     }
 
     public void ConcluirProcedimento()
@@ -207,7 +209,7 @@ public sealed class Ficha
                 "Somente uma ficha revisada pelo profissional pode ser concluída.");
         }
 
-        Status = StatusFicha.Concluida;
+        AlterarStatus(StatusFicha.Concluida);
     }
 
     // Compatibilidade temporária com a ficha atual. Deve ser removido quando
@@ -220,6 +222,12 @@ public sealed class Ficha
                 "Somente uma ficha em preenchimento pode concluir o fluxo legado.");
         }
 
-        Status = StatusFicha.Concluida;
+        AlterarStatus(StatusFicha.Concluida);
+    }
+
+    private void AlterarStatus(StatusFicha novoStatus)
+    {
+        Status = novoStatus;
+        VersaoConcorrencia++;
     }
 }

@@ -43,6 +43,10 @@ public sealed class FichaConfiguration : IEntityTypeConfiguration<Ficha>
             .HasMaxLength(30)
             .IsRequired();
 
+        builder.Property(ficha => ficha.VersaoConcorrencia)
+            .IsConcurrencyToken()
+            .IsRequired();
+
         builder.Property(ficha => ficha.CriadaEmUtc)
             .IsRequired();
 

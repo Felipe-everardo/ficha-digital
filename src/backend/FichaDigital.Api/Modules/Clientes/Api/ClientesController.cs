@@ -1,6 +1,4 @@
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Application;
-using FichaDigital.Api.Modules.Clientes.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +9,7 @@ namespace FichaDigital.Api.Modules.Clientes.Api;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/clientes")]
 public sealed class ClientesController(
-    FichaDigitalDbContext dbContext,
+    CriarClienteService criarClienteService,
     ConsultaClientes consultaClientes) : ControllerBase
 {
     [HttpGet]
@@ -34,12 +32,7 @@ public sealed class ClientesController(
                 request.TamanhoPagina),
             cancellationToken);
 
-        return Ok(new ClientesPaginadosResponse(
-            resultado.Itens.Select(CriarResumoCliente).ToList(),
-            resultado.Pagina,
-            resultado.TamanhoPagina,
-            resultado.TotalItens,
-            resultado.TotalPaginas));
+        return Ok(resultado.ToResponse());
     }
 
     [HttpGet("{clienteId:guid}")]
@@ -62,32 +55,7 @@ public sealed class ClientesController(
                 detail: "Não existe um cliente com o identificador informado.");
         }
 
-        return Ok(new ClienteDetalheResponse(
-            cliente.Id,
-            cliente.NomeReferencia,
-            cliente.NomeCompleto,
-            cliente.NomeSocial,
-            cliente.NomeParaExibicao,
-            cliente.Pronomes,
-            cliente.EstadoCivil,
-            cliente.DataNascimento,
-            cliente.Cpf,
-            cliente.Celular,
-            cliente.TelefoneAdicional,
-            cliente.Email,
-            cliente.Instagram,
-            cliente.ContatoEmergenciaNome,
-            cliente.ContatoEmergenciaCelular,
-            cliente.Cep,
-            cliente.Logradouro,
-            cliente.Numero,
-            cliente.Complemento,
-            cliente.Bairro,
-            cliente.Cidade,
-            cliente.Estado,
-            cliente.DadosPessoaisPreenchidosEmUtc,
-            cliente.CriadoEmUtc,
-            cliente.Fichas.Select(CriarResumoFicha).ToList()));
+        return Ok(cliente.ToResponse());
     }
 
     [HttpPost]
@@ -99,46 +67,11 @@ public sealed class ClientesController(
         [FromBody] CriarClienteRequest request,
         CancellationToken cancellationToken)
     {
-        var cliente = new Cliente(request.NomeReferencia);
+        var cliente = await criarClienteService.CriarAsync(
+            new CriarClienteCommand(request.NomeReferencia),
+            cancellationToken);
+        var response = cliente.ToResponse();
 
-        dbContext.Clientes.Add(cliente);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var response = new ClienteCriadoResponse(
-            cliente.Id,
-            cliente.NomeParaExibicao,
-            cliente.CriadoEmUtc);
-
-        return Created($"/api/clientes/{cliente.Id}", response);
-    }
-
-    private static ClienteResumoResponse CriarResumoCliente(
-        ClienteConsultado cliente)
-    {
-        return new ClienteResumoResponse(
-            cliente.Id,
-            cliente.NomeReferencia,
-            cliente.NomeCompleto,
-            cliente.NomeParaExibicao,
-            cliente.Pronomes,
-            cliente.Celular,
-            cliente.Email,
-            cliente.Instagram,
-            cliente.CriadoEmUtc,
-            cliente.UltimaFicha is null
-                ? null
-                : CriarResumoFicha(cliente.UltimaFicha));
-    }
-
-    private static FichaClienteResumoResponse CriarResumoFicha(
-        FichaClienteConsultada ficha)
-    {
-        return new FichaClienteResumoResponse(
-            ficha.Id,
-            ficha.Status,
-            ficha.TipoProcedimento,
-            ficha.ProfissionalResponsavelId,
-            ficha.ProfissionalResponsavelNome,
-            ficha.CriadaEmUtc);
+        return Created($"/api/clientes/{response.Id}", response);
     }
 }
