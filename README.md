@@ -1,249 +1,134 @@
-# Ficha Digital — Manuscrito Estudio
+# Ficha Digital — Manuscrito Estúdio
 
 [![CI](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/ci.yml/badge.svg)](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/ci.yml)
 [![Deploy Azure](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/main_fichadigital.yml/badge.svg)](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/main_fichadigital.yml)
 
 Aplicação full stack criada para substituir fichas de anamnese em papel por um
-fluxo digital seguro, rastreável e acessível pelo celular em estúdios de
+fluxo digital seguro, rastreável e acessível pelo celular para estúdios de
 tatuagem e piercing.
 
-[Acessar a aplicação publicada](https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/profissional/entrar)
+**[Acessar a aplicação publicada](https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/profissional/entrar)**
 
-### Acesso de demonstração
-
-Para conhecer o fluxo da área profissional, utilize a conta de demonstração:
+## Acesso de demonstração
 
 ```text
 E-mail: feeverardo@gmail.com
 Senha: @FePassword123
 ```
 
-Essa conta e os dados disponíveis no ambiente são exclusivamente fictícios e
-destinados à avaliação do projeto.
+A conta e os dados disponíveis são fictícios e destinados exclusivamente à
+avaliação do projeto. O MVP ainda não deve receber dados pessoais reais.
 
-> O acesso profissional é protegido por autenticação. O projeto está publicado
-> como MVP de demonstração e ainda não deve receber dados pessoais reais.
+## Problema e solução
 
-## Visão geral
+O projeto nasceu de um problema real: formulários em papel dificultavam a
+leitura, a localização de fichas antigas e a preservação do histórico dos
+clientes.
 
-O projeto nasceu de um problema real: o estúdio utilizava formulários em papel,
-o que dificultava a leitura, a localização de fichas antigas e a preservação do
-histórico de cada cliente.
-
-A solução permite que o estúdio cadastre apenas um nome de referência,
-informe o profissional responsável, selecione tatuagem ou piercing e gere um link
-temporário para envio pelo aplicativo de mensagens de sua preferência. O
-cliente abre o link no celular, completa os próprios dados e responde ao
-histórico de saúde. Na mesma sequência, revisa o termo, confirma que leu e
-entendeu, informa o nome e assina. O profissional recebe a ficha autorizada,
-confere os dados e a identidade do cliente e registra uma única revisão. Depois
-do procedimento, preenche os dados técnicos, o pagamento e sua assinatura.
+Com o FichaDigital, o estúdio cadastra uma referência do cliente, informa o
+profissional e o procedimento e gera um convite temporário. Pelo celular, o
+cliente completa seus dados, responde ao questionário de saúde e registra o
+consentimento. Depois, o profissional revisa a ficha e conclui o registro
+técnico do atendimento.
 
 ```mermaid
 flowchart LR
-    A["Conta do estúdio autenticada"] --> B["Informa um nome de referência"]
-    B --> C["Informa o responsável, seleciona o procedimento e gera o convite"]
-    C --> D["Cliente recebe o link"]
-    D --> E["Cliente completa os dados pessoais"]
-    E --> F["Responde à ficha pelo celular"]
-    F --> G["Cliente revisa o termo, autoriza e assina"]
-    G --> H["Profissional revisa a ficha e a identidade"]
-    H --> I["Procedimento é realizado"]
-    I --> J["Profissional conclui o registro pós-procedimento"]
+    A["Estúdio gera o convite"] --> B["Cliente completa os dados"]
+    B --> C["Responde ao questionário"]
+    C --> D["Revisa, autoriza e assina"]
+    D --> E["Profissional revisa a ficha"]
+    E --> F["Registra o procedimento"]
 ```
 
-## Demonstração visual
-
-Esta seção está preparada para apresentar as principais etapas do produto:
-
-1. tela de login;
-2. painel do profissional;
-3. link de convite enviado ao cliente;
-4. clientes cadastrados.
-
-<!--
-Adicione os arquivos em docs/screenshots e remova este comentário.
-
-| Acesso profissional | Painel do profissional |
-| :---: | :---: |
-| ![Tela de login](docs/screenshots/login.png) | ![Painel do profissional](docs/screenshots/painel-profissional.png) |
-
-| Convite enviado | Clientes cadastrados |
-| :---: | :---: |
-| ![Link enviado ao cliente](docs/screenshots/convite-enviado.png) | ![Clientes cadastrados](docs/screenshots/clientes-cadastrados.png) |
--->
-
-## Funcionalidades do MVP
+## Principais funcionalidades
 
 ### Área profissional
 
-- autenticação com sessão protegida;
-- uma conta universal do estúdio para manter a operação do MVP simples;
-- cadastro inicial do cliente somente por nome de referência;
-- busca de clientes por nome, contato e dados da ficha mais recente;
-- histórico de fichas e procedimentos por cliente;
-- geração de convite com validade de 1 hora, procedimento e nome do profissional
-  responsável registrados na ficha;
-- link completo pronto para cópia e compartilhamento;
-- histórico completo das fichas, mantendo a ficha mais recente em
-  destaque na listagem de clientes;
-- fichas criadas no dia exibidas automaticamente, da mais recente para a mais
-  antiga;
-- consulta protegida dos dados preenchidos e do resumo do aceite;
-- revisão profissional bloqueada até existir consentimento íntegro;
-- confirmação conjunta dos dados da ficha e da identidade do cliente;
-- registro posterior específico para tatuagem ou piercing;
-- registro de valor, sinal e pagamento por Pix, dinheiro ou cartão;
-- preservação dos dados pessoais confirmados em cada ficha, sem reescrever o
-  histórico quando o cadastro geral do cliente for atualizado;
-- separação entre listagens administrativas e informações sensíveis.
+- autenticação e sessão protegida;
+- cadastro, busca e histórico de clientes;
+- emissão de convites temporários para tatuagem ou piercing;
+- acompanhamento e filtragem das fichas por estado;
+- revisão da ficha e confirmação da identidade do cliente;
+- registro técnico, financeiro e da assinatura do profissional.
 
 ### Experiência do cliente
 
-- abertura da ficha por link temporário;
-- validação segura do convite;
-- identificação do procedimento e do profissional responsável;
-- preenchimento dos próprios dados pessoais e de contato;
-- revisão e atualização dos dados anteriores quando o cliente retorna para um
-  novo atendimento;
+- acesso por link temporário e retomada pelo mesmo convite;
+- preenchimento ou atualização dos dados pessoais;
 - questionário de saúde com perguntas condicionais;
-- retomada do fluxo pelo link original;
-- revisão dos dados e do termo em uma sequência contínua;
-- um único aceite de leitura e autorização, nome digitado e assinatura
-  desenhada;
-- autorização separada da conclusão técnica do atendimento.
+- revisão do termo, autorização e assinatura pelo celular;
+- preservação do conteúdo confirmado em cada atendimento.
 
-## Destaques técnicos
+## Arquitetura e qualidade
 
-- **Monólito modular:** mantém a implantação simples sem misturar os domínios
-  de clientes, fichas e profissionais.
-- **Tokens seguros:** o token original do convite é exibido somente na emissão;
-  apenas seu hash é persistido no banco.
-- **Segurança em camadas:** cookies `HttpOnly`, proteção antifalsificação,
-  limitação de requisições públicas, bloqueio por tentativas de login e
-  respostas sensíveis sem cache.
-- **Auditoria sem conteúdo clínico:** registra quem acessou ou alterou o
-  recurso, horário, ação e código de correlação sem duplicar dados sensíveis.
-- **Operações idempotentes:** reenvios com a mesma chave não duplicam cadastros,
-  convites ou registros; respostas temporárias ficam protegidas no banco.
-- **Observabilidade:** health checks separados para processo e banco, erros no
-  padrão `ProblemDetails` e correlação ponta a ponta.
-- **Contratos HTTP explícitos:** DTOs de entrada e saída impedem que entidades
-  do domínio sejam expostas diretamente.
-- **Histórico imutável:** cada ficha mantém um retrato dos dados pessoais
-  confirmados pelo cliente naquele preenchimento.
-- **Evidência versionada:** modelo, dados, questionário, termo, aceite e
-  assinaturas são preservados com códigos de integridade.
-- **Validação em duas fronteiras:** dados inválidos são rejeitados tanto na API
-  quanto pelas regras internas do domínio.
-- **Qualidade automatizada:** testes unitários, de integração e Playwright no
-  navegador, além de lint e build executados pelo GitHub Actions.
-- **Entrega contínua:** publicação no Azure App Service por OIDC, sem senha de
-  implantação armazenada no workflow.
-
-## Arquitetura
-
-A aplicação utiliza React e TypeScript no frontend, ASP.NET Core no backend e
-SQL Server para persistência. O Entity Framework Core mantém o schema do banco
-versionado por migrations.
+O projeto é um **monólito modular** desenvolvido com princípios de **Clean
+Code** e **SOLID**, organizado por funcionalidades e com separação entre API,
+aplicação, domínio e infraestrutura. A arquitetura evolui gradualmente em
+direção à **Clean Architecture**, priorizando baixo acoplamento, regras de
+negócio isoladas e facilidade de manutenção e testes.
 
 ```mermaid
 flowchart LR
     A["React + TypeScript"] -->|"HTTPS / JSON"| B["ASP.NET Core API"]
-    B --> C["Módulos de negócio"]
-    C --> D["Entity Framework Core"]
-    D --> E["SQL Server / Azure SQL"]
-    B --> F["ASP.NET Core Identity"]
-    G["GitHub Actions"] --> H["Azure App Service"]
+    B --> C["Casos de uso"]
+    C --> D["Domínio"]
+    C --> E["Entity Framework Core"]
+    E --> F["SQL Server / Azure SQL"]
 ```
 
-```text
-Modules/
-├── Clientes/
-│   ├── Api/             # Controllers e contratos HTTP
-│   ├── Application/     # Casos de uso e consultas da aplicação
-│   ├── Domain/          # Entidades e regras de negócio
-│   └── Infrastructure/  # Persistência e mapeamentos
-├── Fichas/
-└── Profissionais/
-```
+Entre as decisões técnicas aplicadas estão:
 
-No frontend, as rotas ficam isoladas em `app`, as integrações HTTP são
-separadas por módulo em `services` e o fluxo público da ficha distribui estado,
-regras de interação e apresentação entre `hooks`, `pages` e `components`.
+- **Separação de responsabilidades:** controllers enxutos, contratos HTTP
+  explícitos e casos de uso separados das regras de domínio e persistência.
+- **Segurança:** ASP.NET Core Identity, cookies `HttpOnly`, antiforgery, rate
+  limiting, bloqueio de login e tokens de convite armazenados por hash.
+- **Integridade e confiabilidade:** auditoria gravada com a operação,
+  idempotência contra reenvios e concorrência otimista nas fichas.
+- **Privacidade e histórico:** dados confirmados, questionários, termos e
+  assinaturas são preservados sem duplicar conteúdo clínico na auditoria.
+- **Observabilidade:** health checks, respostas `ProblemDetails`, logs
+  estruturados e código de correlação ponta a ponta.
+- **Qualidade e entrega:** testes unitários, de integração e de navegador,
+  CI/CD com GitHub Actions e publicação no Azure App Service por OIDC.
 
 ## Tecnologias
 
 | Camada | Tecnologias |
 | --- | --- |
-| Backend | C#, .NET 10, ASP.NET Core Web API, Entity Framework Core 10 |
+| Backend | C#, .NET 10, ASP.NET Core Web API e Entity Framework Core 10 |
 | Autenticação | ASP.NET Core Identity, cookies seguros e antiforgery |
 | Frontend | React 19, TypeScript, Vite e CSS responsivo |
 | Banco de dados | SQL Server LocalDB e Azure SQL Database |
-| Testes | xUnit v3 e Playwright (unitários, integração e navegador) |
-| DevOps | GitHub Actions, Azure App Service e autenticação OIDC |
+| Testes | xUnit v3 e Playwright |
+| DevOps | GitHub Actions, Azure App Service e OIDC |
 
-## Estrutura do repositório
+## Estrutura do projeto
 
 ```text
-FichaDigital/
-├── .github/workflows/                 # CI e publicação no Azure
-├── src/
-│   ├── backend/FichaDigital.Api/      # API e domínio da aplicação
-│   └── frontend/                      # Interface React
-├── tests/backend/
-│   ├── FichaDigital.UnitTests/
-│   └── FichaDigital.IntegrationTests/
-├── FichaDigital.sln
-└── README.md
+src/
+├── backend/FichaDigital.Api/
+│   ├── Modules/                 # Clientes, fichas e profissionais
+│   └── Infrastructure/          # Banco, autenticação, auditoria e web
+└── frontend/                    # Interface React
+
+tests/backend/
+├── FichaDigital.UnitTests/
+└── FichaDigital.IntegrationTests/
 ```
 
-## Principais endpoints
+## Documentação
 
-| Método | Rota | Finalidade |
-| --- | --- | --- |
-| `POST` | `/api/autenticacao/entrar` | Iniciar a sessão profissional |
-| `GET` | `/api/status/database` | Verificar a conexão da aplicação com o banco |
-| `GET` | `/health/live` | Verificar se o processo está ativo |
-| `GET` | `/health/ready` | Verificar se aplicação e banco estão prontos |
-| `GET` | `/api/clientes` | Listar e filtrar clientes com paginação |
-| `GET` | `/api/clientes/{clienteId}` | Consultar dados e histórico do cliente |
-| `POST` | `/api/clientes` | Cadastrar o nome de referência do cliente |
-| `POST` | `/api/clientes/{clienteId}/fichas/convites` | Gerar ficha e convite com o procedimento informado |
-| `POST` | `/api/fichas/convites/abrir` | Validar o convite público |
-| `POST` | `/api/fichas/dados-pessoais` | Registrar os dados informados pelo cliente |
-| `POST` | `/api/fichas/questionario-saude` | Registrar o questionário |
-| `POST` | `/api/fichas/termo-consentimento/aceitar` | Assinar e autorizar o procedimento |
-| `POST` | `/api/fichas/{fichaId}/operacoes/revisar` | Confirmar a revisão profissional da ficha e da identidade |
-| `POST` | `/api/fichas/{fichaId}/operacoes/concluir` | Salvar o registro técnico posterior |
-| `GET` | `/api/fichas` | Acompanhar e filtrar fichas com paginação |
-| `GET` | `/api/auditoria` | Consultar a trilha operacional da conta do estúdio |
+- [Ambiente local, testes e referência da API](docs/desenvolvimento-local.md)
+- [Operação e publicação em produção](docs/operacao-producao.md)
+- [Decisões arquiteturais](docs/decisoes)
+- [Planejamento funcional](docs/planejamento-fichas.md)
+- [Política de segurança](SECURITY.md)
 
 ## Próximas evoluções
 
-- troca obrigatória da senha inicial e recuperação de acesso;
-- perfis individuais e permissões somente se a operação real do estúdio exigir;
-- validação jurídica do mecanismo digital e das adaptações do termo;
-- substituição do CNPJ fictício pelo dado oficial do estúdio;
-- exportação em PDF e Excel, backup e política de retenção;
-- atualização da carga de demonstração para exemplificar todos os novos
-  estados do atendimento.
-
-## Privacidade e segurança
-
-O sistema foi projetado considerando que informações de saúde são dados
-pessoais sensíveis. Mesmo com controle de acesso, auditoria e proteções
-técnicas, o MVP ainda precisa de política de retenção e validação completa do
-ambiente de produção antes de receber dados reais.
-
-Consulte a [política de segurança](SECURITY.md) para conhecer as orientações do
-repositório.
-
-O escopo, as regras e as decisões pendentes desta evolução estão registrados em
-[`docs/planejamento-fichas.md`](docs/planejamento-fichas.md).
-As decisões arquiteturais ficam em [`docs/decisoes`](docs/decisoes) e os
-cuidados de publicação em
-[`docs/operacao-producao.md`](docs/operacao-producao.md).
+- recuperação de acesso e troca obrigatória da senha inicial;
+- exportação de fichas e definição da política de retenção e backup;
+- validação jurídica e operacional antes do uso com dados reais.
 
 ## Autor
 
