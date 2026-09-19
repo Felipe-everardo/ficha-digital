@@ -1,4 +1,6 @@
 using FichaDigital.Api.Infrastructure.Persistence;
+using FichaDigital.Api.Modules.Clientes.Application;
+using FichaDigital.Api.Modules.Clientes.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Infrastructure.Configuration;
@@ -30,6 +32,7 @@ internal static class PersistenceServiceCollectionExtensions
                     maxRetryDelay: TimeSpan.FromSeconds(15),
                     errorNumbersToAdd: null));
         });
+        services.AddScoped<IClienteRepository, ClienteRepository>();
 
         return services;
     }

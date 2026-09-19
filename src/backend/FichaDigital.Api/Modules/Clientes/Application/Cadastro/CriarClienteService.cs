@@ -1,9 +1,8 @@
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 
 namespace FichaDigital.Api.Modules.Clientes.Application;
 
-public sealed class CriarClienteService(FichaDigitalDbContext dbContext)
+public sealed class CriarClienteService(IClienteRepository clienteRepository)
 {
     public async Task<ClienteCriado> CriarAsync(
         CriarClienteCommand command,
@@ -11,8 +10,7 @@ public sealed class CriarClienteService(FichaDigitalDbContext dbContext)
     {
         var cliente = new Cliente(command.NomeReferencia);
 
-        dbContext.Clientes.Add(cliente);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await clienteRepository.AdicionarAsync(cliente, cancellationToken);
 
         return new ClienteCriado(
             cliente.Id,
