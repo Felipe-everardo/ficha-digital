@@ -1,6 +1,7 @@
 using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
+using FichaDigital.Api.Modules.Profissionais.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.IntegrationTests.Infrastructure.SqlServer;
@@ -36,13 +37,17 @@ public sealed class SqlServerCompatibilityTests(
     {
         await using var dbContext = fixture.CreateDbContext();
         var sufixo = Guid.NewGuid().ToString("N");
+        var profissional = new ProfissionalUsuario(
+            "Profissional SQL Server",
+            $"profissional-sql-{sufixo}@example.com");
         var cliente = new Cliente($"Cliente SQL Server {sufixo}");
         var ficha = new Ficha(
             cliente.Id,
-            Guid.NewGuid(),
-            "Profissional SQL Server",
+            profissional.Id,
+            profissional.NomeCompleto,
             TipoProcedimento.Tatuagem);
 
+        dbContext.Users.Add(profissional);
         dbContext.Clientes.Add(cliente);
         dbContext.Fichas.Add(ficha);
         await dbContext.SaveChangesAsync(
