@@ -1,8 +1,11 @@
+using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Profissionais.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FichaDigital.IntegrationTests.Infrastructure.SqlServer;
 
@@ -35,11 +38,23 @@ public sealed class SqlServerCompatibilityTests(
         SkipType = typeof(SqlServerTestEnvironment))]
     public async Task ListarClientes_ComFiltroDaUltimaFicha_DeveFuncionar()
     {
-        await using var dbContext = fixture.CreateDbContext();
+        using var scope = fixture.CreateServiceScope();
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<FichaDigitalDbContext>();
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ProfissionalUsuario>>();
         var sufixo = Guid.NewGuid().ToString("N");
         var profissional = new ProfissionalUsuario(
             "Profissional SQL Server",
             $"profissional-sql-{sufixo}@example.com");
+        var criacaoProfissional = await userManager.CreateAsync(profissional);
+
+        Assert.True(
+            criacaoProfissional.Succeeded,
+            string.Join(
+                ", ",
+                criacaoProfissional.Errors.Select(erro => erro.Description)));
+
         var cliente = new Cliente($"Cliente SQL Server {sufixo}");
         var ficha = new Ficha(
             cliente.Id,
@@ -47,7 +62,6 @@ public sealed class SqlServerCompatibilityTests(
             profissional.NomeCompleto,
             TipoProcedimento.Tatuagem);
 
-        dbContext.Users.Add(profissional);
         dbContext.Clientes.Add(cliente);
         dbContext.Fichas.Add(ficha);
         await dbContext.SaveChangesAsync(

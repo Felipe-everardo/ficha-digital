@@ -1,6 +1,9 @@
 using FichaDigital.Api.Infrastructure.Persistence;
+using FichaDigital.Api.Modules.Profissionais.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 
 namespace FichaDigital.IntegrationTests.Infrastructure.SqlServer;
@@ -12,6 +15,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 
     private MsSqlContainer? _container;
     private string? _connectionString;
+    private ServiceProvider? _serviceProvider;
 
     public async ValueTask InitializeAsync()
     {
@@ -29,6 +33,18 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
             InitialCatalog = $"FichaDigitalTests_{Guid.NewGuid():N}"
         };
         _connectionString = connectionStringBuilder.ConnectionString;
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddDbContext<FichaDigitalDbContext>(options =>
+            options.UseSqlServer(_connectionString));
+        services
+            .AddIdentityCore<ProfissionalUsuario>(options =>
+                options.User.RequireUniqueEmail = true)
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<FichaDigitalDbContext>();
+        _serviceProvider = services.BuildServiceProvider(
+            validateScopes: true);
 
         await using var dbContext = CreateDbContext();
         await dbContext.Database.MigrateAsync();
@@ -49,8 +65,24 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
         return new FichaDigitalDbContext(options);
     }
 
+    public IServiceScope CreateServiceScope()
+    {
+        if (_serviceProvider is null)
+        {
+            throw new InvalidOperationException(
+                "Os serviços do teste ainda não foram inicializados.");
+        }
+
+        return _serviceProvider.CreateScope();
+    }
+
     public async ValueTask DisposeAsync()
     {
+        if (_serviceProvider is not null)
+        {
+            await _serviceProvider.DisposeAsync();
+        }
+
         if (_container is not null)
         {
             await _container.DisposeAsync();
