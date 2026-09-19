@@ -90,6 +90,23 @@ npm --prefix src/frontend exec -- playwright install chromium
 O teste de navegador inicia API e frontend isolados com SQLite e dados
 descartáveis; ele não utiliza o banco local de desenvolvimento.
 
+### Testes opcionais com SQL Server real
+
+A suíte de integração também valida migrations, consultas e concorrência em um
+SQL Server descartável criado com Testcontainers. Ela é executada
+automaticamente pelo CI e exige Docker para ser executada localmente.
+
+No PowerShell, com o Docker em execução:
+
+```powershell
+$env:RUN_SQLSERVER_TESTS = "true"
+dotnet test FichaDigital.sln --configuration Release
+Remove-Item Env:RUN_SQLSERVER_TESTS
+```
+
+Sem essa variável, os testes que dependem de Docker são ignorados e os testes
+rápidos com SQLite continuam sendo executados normalmente.
+
 ## Principais endpoints
 
 | Método | Rota | Finalidade |

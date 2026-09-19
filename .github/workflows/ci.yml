@@ -15,6 +15,7 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Obter código
@@ -31,7 +32,9 @@ jobs:
       - name: Compilar
         run: dotnet build FichaDigital.sln --configuration Release --no-restore
 
-      - name: Executar testes
+      - name: Executar testes, incluindo SQL Server real
+        env:
+          RUN_SQLSERVER_TESTS: "true"
         run: dotnet test FichaDigital.sln --configuration Release --no-build
 
   frontend:

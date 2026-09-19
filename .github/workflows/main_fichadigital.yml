@@ -15,9 +15,46 @@ env:
   PUBLISH_PATH: ${{ github.workspace }}/publish
 
 jobs:
+  sql-server:
+    name: Validar SQL Server real
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.x
+
+      - name: Restaurar dependências
+        run: >-
+          dotnet restore
+          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
+
+      - name: Compilar testes de integração
+        run: >-
+          dotnet build
+          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+
+      - name: Executar testes com SQL Server real
+        env:
+          RUN_SQLSERVER_TESTS: "true"
+        run: >-
+          dotnet test
+          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
+          --configuration Release
+          --no-build
+          --no-restore
+
   build:
     name: Testar e preparar aplicação
     runs-on: windows-latest
+    needs: sql-server
 
     steps:
       - name: Obter código
