@@ -1,6 +1,8 @@
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Modules.Clientes.Infrastructure;
+using FichaDigital.Api.Modules.Fichas.Application;
+using FichaDigital.Api.Modules.Fichas.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Infrastructure.Configuration;
@@ -33,6 +35,9 @@ internal static class PersistenceServiceCollectionExtensions
                     errorNumbersToAdd: null));
         });
         services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<
+            IEmissaoConviteRepository,
+            EmissaoConviteRepository>();
 
         return services;
     }

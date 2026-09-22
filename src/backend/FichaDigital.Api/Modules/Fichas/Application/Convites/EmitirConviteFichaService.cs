@@ -1,12 +1,10 @@
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class EmitirConviteFichaService(
-    FichaDigitalDbContext dbContext,
+    IEmissaoConviteRepository repository,
     GeradorTokenConvite geradorToken,
     ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider)
@@ -21,10 +19,9 @@ public sealed class EmitirConviteFichaService(
         TipoProcedimento tipoProcedimento,
         CancellationToken cancellationToken)
     {
-        var clienteExiste = await dbContext.Clientes
-            .AnyAsync(
-                cliente => cliente.Id == clienteId,
-                cancellationToken);
+        var clienteExiste = await repository.ClienteExisteAsync(
+            clienteId,
+            cancellationToken);
 
         if (!clienteExiste)
         {
@@ -53,10 +50,10 @@ public sealed class EmitirConviteFichaService(
 
         ficha.EnviarConvite();
 
-        dbContext.Fichas.Add(ficha);
-        dbContext.ConvitesFicha.Add(convite);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.AdicionarAsync(
+            ficha,
+            convite,
+            cancellationToken);
 
         return new ConviteFichaEmitido(
             ficha.Id,

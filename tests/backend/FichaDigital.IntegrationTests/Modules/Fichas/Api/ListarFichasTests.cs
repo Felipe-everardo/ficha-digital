@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
+using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.IntegrationTests.Infrastructure;
@@ -137,7 +138,9 @@ public sealed class ListarFichasTests
     {
         var agora = DateTimeOffset.UtcNow;
         var concluidaEmUtc = agora.AddHours(2);
-        var dataConclusao = concluidaEmUtc.ToString("yyyy-MM-dd");
+        var dataConclusao = HorarioEstudio
+            .ObterDataLocal(concluidaEmUtc)
+            .ToString("yyyy-MM-dd");
         using var factory = new FichaDigitalApiFactory(
             new FixedTimeProvider(concluidaEmUtc.AddHours(1)));
         var fichas = await CriarFichasAsync(
