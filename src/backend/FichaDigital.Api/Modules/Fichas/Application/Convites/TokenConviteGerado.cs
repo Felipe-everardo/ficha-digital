@@ -1,4 +1,4 @@
-namespace FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
+namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed record TokenConviteGerado(
     string TokenOriginal,

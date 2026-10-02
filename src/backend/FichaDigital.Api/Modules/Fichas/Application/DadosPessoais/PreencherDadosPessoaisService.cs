@@ -1,7 +1,6 @@
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.Api.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +8,7 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class PreencherDadosPessoaisService(
     FichaDigitalDbContext dbContext,
-    GeradorTokenConvite geradorToken,
+    IGeradorTokenConvite geradorToken,
     TimeProvider timeProvider,
     AuditoriaService auditoriaService)
 {

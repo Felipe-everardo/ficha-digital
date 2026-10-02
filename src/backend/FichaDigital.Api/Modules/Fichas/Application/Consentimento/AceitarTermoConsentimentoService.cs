@@ -10,7 +10,7 @@ namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class AceitarTermoConsentimentoService(
     FichaDigitalDbContext dbContext,
-    GeradorTokenConvite geradorToken,
+    IGeradorTokenConvite geradorToken,
     CalculadorHashConteudo calculadorHash,
     ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider,

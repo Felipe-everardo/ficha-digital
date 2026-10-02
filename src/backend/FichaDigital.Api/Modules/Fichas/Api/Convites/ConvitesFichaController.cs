@@ -51,7 +51,7 @@ public sealed class ConvitesFichaController(
         var response = new ConviteFichaCriadoResponse(
             conviteEmitido.FichaId,
             conviteEmitido.ConviteId,
-            $"/fichas/preencher/{conviteEmitido.TokenOriginal}",
+            $"/fichas/preencher#{conviteEmitido.TokenOriginal}",
             conviteEmitido.ExpiraEmUtc);
 
         return Created(

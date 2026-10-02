@@ -1,11 +1,10 @@
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class EmitirConviteFichaService(
     IEmissaoConviteRepository repository,
-    GeradorTokenConvite geradorToken,
+    IGeradorTokenConvite geradorToken,
     ResolvedorModeloFicha resolvedorModelo,
     TimeProvider timeProvider)
 {

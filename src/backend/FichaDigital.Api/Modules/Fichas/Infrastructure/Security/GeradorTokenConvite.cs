@@ -1,9 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
+using FichaDigital.Api.Modules.Fichas.Application;
 
 namespace FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 
-public sealed class GeradorTokenConvite
+public sealed class GeradorTokenConvite : IGeradorTokenConvite
 {
     private const int QuantidadeBytesToken = 32;
 

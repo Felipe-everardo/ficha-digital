@@ -29,7 +29,9 @@ internal static class ApplicationServiceCollectionExtensions
 
         services.AddSingleton(TimeProvider.System);
         services.AddHostedService<LimpezaIdempotenciaService>();
-        services.AddSingleton<GeradorTokenConvite>();
+        services.AddSingleton<
+            IGeradorTokenConvite,
+            GeradorTokenConvite>();
         services.AddSingleton<CalculadorHashConteudo>();
         services.AddSingleton<ResolvedorModeloFicha>();
 
