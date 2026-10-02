@@ -82,9 +82,11 @@ function obterTokenDoConvite(): string | null {
     segmentos[0] === 'fichas' && segmentos[1] === 'preencher'
       ? segmentos[2]?.trim()
       : undefined
+  // O fragmento não é enviado ao servidor na navegação inicial.
+  const tokenRecebido = window.location.hash.slice(1).trim() || tokenNoCaminho
 
-  if (tokenNoCaminho) {
-    window.sessionStorage.setItem(chaveSessao, tokenNoCaminho)
+  if (tokenRecebido) {
+    window.sessionStorage.setItem(chaveSessao, tokenRecebido)
     window.history.replaceState(
       window.history.state,
       '',
@@ -92,7 +94,7 @@ function obterTokenDoConvite(): string | null {
     )
   }
 
-  return tokenNoCaminho || window.sessionStorage.getItem(chaveSessao)
+  return tokenRecebido || window.sessionStorage.getItem(chaveSessao)
 }
 
 function obterTituloDoErro(status: number) {

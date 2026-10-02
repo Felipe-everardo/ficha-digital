@@ -5,7 +5,8 @@ Status: aceito em 11/09/2026.
 ## Decisão
 
 - `/health/live` confirma que o processo está ativo sem depender do banco.
-- `/health/ready` confirma que a aplicação consegue acessar o banco.
+- `/health/ready` confirma a conexão, a ausência de migrations pendentes no SQL
+  Server e a consulta da coluna de concorrência das fichas.
 - Toda resposta recebe `X-Correlation-ID`; o mesmo valor aparece no
   `ProblemDetails` de falhas não tratadas e deve ser usado para localizar logs.
 - Respostas da API usam `Cache-Control: no-store` e cabeçalhos defensivos.

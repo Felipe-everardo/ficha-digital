@@ -1,16 +1,12 @@
-using FichaDigital.Api.Infrastructure.Persistence;
-using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Shared.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class PreencherDadosPessoaisService(
-    FichaDigitalDbContext dbContext,
+    IDadosPessoaisRepository repository,
     IGeradorTokenConvite geradorToken,
-    TimeProvider timeProvider,
-    AuditoriaService auditoriaService)
+    TimeProvider timeProvider)
 {
     public async Task<ResultadoPreenchimentoDadosPessoais> PreencherAsync(
         PreencherDadosPessoaisCommand command,
@@ -18,11 +14,7 @@ public sealed class PreencherDadosPessoaisService(
         CancellationToken cancellationToken)
     {
         var tokenHash = geradorToken.CalcularHash(command.TokenOriginal);
-        var convite = await dbContext.ConvitesFicha
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.TokenHash == tokenHash,
-                cancellationToken);
+        var convite = await repository.ObterConviteAsync(tokenHash, cancellationToken);
 
         if (convite is null)
         {
@@ -36,11 +28,7 @@ public sealed class PreencherDadosPessoaisService(
                 StatusPreenchimentoDadosPessoais.ConviteExpirado);
         }
 
-        var ficha = await dbContext.Fichas
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.Id == convite.FichaId,
-                cancellationToken);
+        var ficha = await repository.ObterFichaAsync(convite.FichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -54,10 +42,7 @@ public sealed class PreencherDadosPessoaisService(
                 StatusPreenchimentoDadosPessoais.FichaIndisponivel);
         }
 
-        var cliente = await dbContext.Clientes
-            .SingleOrDefaultAsync(
-                item => item.Id == ficha.ClienteId,
-                cancellationToken);
+        var cliente = await repository.ObterClienteAsync(ficha.ClienteId, cancellationToken);
 
         if (cliente is null)
         {
@@ -109,10 +94,7 @@ public sealed class PreencherDadosPessoaisService(
                 preenchidosEmUtc);
         }
 
-        var dadosDaFicha = await dbContext.DadosPessoaisFichas
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var dadosDaFicha = await repository.ObterDadosPessoaisAsync(ficha.Id, cancellationToken);
 
         if (dadosDaFicha is null)
         {
@@ -120,7 +102,6 @@ public sealed class PreencherDadosPessoaisService(
                 ficha.Id,
                 dadosInformados,
                 preenchidosEmUtc);
-            dbContext.DadosPessoaisFichas.Add(dadosDaFicha);
         }
         else
         {
@@ -129,11 +110,7 @@ public sealed class PreencherDadosPessoaisService(
                 preenchidosEmUtc);
         }
 
-        auditoriaService.AdicionarAcaoDoCliente(
-            "Dados pessoais confirmados",
-            ficha.Id,
-            correlacaoId);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarConfirmacaoAsync(ficha, dadosDaFicha, correlacaoId, cancellationToken);
 
         return new ResultadoPreenchimentoDadosPessoais(
             StatusPreenchimentoDadosPessoais.Preenchidos,

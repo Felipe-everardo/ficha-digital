@@ -10,7 +10,7 @@ namespace FichaDigital.Api.Modules.Clientes.Api;
 [Route("api/clientes")]
 public sealed class ClientesController(
     CriarClienteService criarClienteService,
-    ConsultaClientes consultaClientes) : ControllerBase
+    IConsultaClientes consultaClientes) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<ClientesPaginadosResponse>(StatusCodes.Status200OK)]

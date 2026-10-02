@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { StudioBrand } from '../components/StudioBrand'
 import { FormularioConsentimento } from '../components/ficha-publica/FormularioConsentimento'
 import { FormularioDadosPessoais } from '../components/ficha-publica/FormularioDadosPessoais'
@@ -11,6 +12,21 @@ import './FichaPublicaPage.css'
 export function FichaPublicaPage() {
   const fluxo = useFichaPublica()
   const { estado, dadosPessoais, questionario, consentimento } = fluxo
+  const tituloRef = useRef<HTMLHeadingElement>(null)
+  const etapa = consentimento.termoAceito
+    ? 'concluida'
+    : estado.tipo !== 'aberto'
+      ? estado.tipo
+      : questionario.respondido
+        ? 'consentimento'
+        : dadosPessoais.preenchidos
+          ? 'questionario'
+          : 'dados-pessoais'
+
+  useLayoutEffect(() => {
+    tituloRef.current?.focus({ preventScroll: true })
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [etapa])
 
   return (
     <main className="public-page-shell">
@@ -19,7 +35,9 @@ export function FichaPublicaPage() {
           <StudioBrand compacta />
 
           <div>
-            <h1 id="public-page-title">Sua ficha digital</h1>
+            <h1 id="public-page-title" ref={tituloRef} tabIndex={-1}>
+              Sua ficha digital
+            </h1>
             <p className="intro">
               Preencha as informações com calma. Seus dados serão utilizados
               somente para o atendimento no estúdio.

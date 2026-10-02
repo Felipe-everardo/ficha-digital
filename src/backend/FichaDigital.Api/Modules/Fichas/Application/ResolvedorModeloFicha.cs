@@ -1,5 +1,4 @@
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure;
 using Microsoft.Extensions.Options;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;

@@ -2,7 +2,6 @@ using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Identity;
@@ -25,7 +24,7 @@ public sealed class EmitirConviteFichaServiceTests
         var service = scope.ServiceProvider
             .GetRequiredService<EmitirConviteFichaService>();
         var geradorToken = scope.ServiceProvider
-            .GetRequiredService<GeradorTokenConvite>();
+            .GetRequiredService<IGeradorTokenConvite>();
         var profissional = await CriarProfissionalAsync(scope);
 
         var cliente = CriarCliente();

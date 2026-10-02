@@ -1,13 +1,10 @@
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class RevisarFichaService(
-    FichaDigitalDbContext dbContext,
-    CalculadorHashConteudo calculadorHash,
+    IRevisaoFichaRepository repository,
+    ICalculadorHashConteudo calculadorHash,
     TimeProvider timeProvider)
 {
     public async Task<ResultadoRevisaoFicha> RevisarAsync(
@@ -16,9 +13,7 @@ public sealed class RevisarFichaService(
         bool dadosDaFichaConferidos,
         CancellationToken cancellationToken)
     {
-        var ficha = await dbContext.Fichas.SingleOrDefaultAsync(
-            item => item.Id == fichaId,
-            cancellationToken);
+        var ficha = await repository.ObterFichaAsync(fichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -44,11 +39,7 @@ public sealed class RevisarFichaService(
                 StatusRevisaoFicha.DadosNaoConferidos);
         }
 
-        var aceite = await dbContext.AceitesTermoConsentimento
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var aceite = await repository.ObterAceiteAsync(ficha.Id, cancellationToken);
 
         if (aceite is null ||
             aceite.AssinaturaDesenhada is null ||
@@ -70,8 +61,7 @@ public sealed class RevisarFichaService(
             timeProvider.GetUtcNow());
 
         ficha.ConfirmarRevisaoProfissional();
-        dbContext.RevisoesProfissionais.Add(revisao);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarRevisaoAsync(ficha, revisao, cancellationToken);
 
         return new ResultadoRevisaoFicha(
             StatusRevisaoFicha.Confirmada,

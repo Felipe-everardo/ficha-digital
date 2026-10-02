@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace FichaDigital.Api.Modules.Fichas.Infrastructure;
+namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class EstudioOptions
 {

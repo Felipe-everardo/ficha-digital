@@ -67,7 +67,7 @@ public sealed class SqlServerCompatibilityTests(
         await dbContext.SaveChangesAsync(
             TestContext.Current.CancellationToken);
 
-        var consulta = new ConsultaClientes(dbContext);
+        var consulta = scope.ServiceProvider.GetRequiredService<IConsultaClientes>();
         var hojeUtc = DateOnly.FromDateTime(DateTime.UtcNow);
         var resultado = await consulta.ListarAsync(
             new FiltroConsultaClientes(

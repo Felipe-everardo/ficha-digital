@@ -1,4 +1,6 @@
 using FichaDigital.Api.Infrastructure.Persistence;
+using FichaDigital.Api.Infrastructure.Configuration;
+using Microsoft.Extensions.Configuration;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
@@ -36,8 +38,12 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddDbContext<FichaDigitalDbContext>(options =>
-            options.UseSqlServer(_connectionString));
+        services.AddFichaDigitalPersistence(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = _connectionString
+            })
+            .Build());
         services
             .AddIdentityCore<ProfissionalUsuario>(options =>
                 options.User.RequireUniqueEmail = true)

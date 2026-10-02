@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { ConviteQrCode } from '../components/ConviteQrCode'
 import {
   ApiRequestError,
   emitirConviteFicha,
@@ -461,6 +462,7 @@ export function ClientesPage() {
               </strong>
               . Envie-o somente para a pessoa indicada.
             </p>
+            <ConviteQrCode link={conviteGerado.link} />
             <div className="invitation-link-row">
               <label>
                 <span>Link de preenchimento</span>

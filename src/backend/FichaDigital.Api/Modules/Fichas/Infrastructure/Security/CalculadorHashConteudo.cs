@@ -1,9 +1,10 @@
+using FichaDigital.Api.Modules.Fichas.Application;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 
-public sealed class CalculadorHashConteudo
+public sealed class CalculadorHashConteudo : ICalculadorHashConteudo
 {
     public string Calcular(string conteudo)
     {

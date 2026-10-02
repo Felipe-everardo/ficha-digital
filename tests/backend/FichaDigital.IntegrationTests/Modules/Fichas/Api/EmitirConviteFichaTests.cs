@@ -46,7 +46,7 @@ public sealed class EmitirConviteFichaTests
         Assert.NotEqual(Guid.Empty, response.FichaId);
         Assert.NotEqual(Guid.Empty, response.ConviteId);
         Assert.StartsWith(
-            "/fichas/preencher/",
+            "/fichas/preencher#",
             response.LinkPreenchimento);
         Assert.True(response.ExpiraEmUtc > DateTimeOffset.UtcNow);
         Assert.Equal(

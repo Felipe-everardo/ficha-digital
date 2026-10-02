@@ -76,7 +76,7 @@ function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
   }
 
   if (tipo === 'dia' && valor) {
-    return { concluidaDe: valor, concluidaAte: valor }
+    return { criadaDe: valor, criadaAte: valor }
   }
 
   if (tipo === 'mes') {
@@ -88,15 +88,15 @@ function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
     const ultimoDia = new Date(ano, mes, 0).getDate()
     const valorIso = `${mesAno.ano}-${mesAno.mes}`
     return {
-      concluidaDe: `${valorIso}-01`,
-      concluidaAte: `${valorIso}-${String(ultimoDia).padStart(2, '0')}`,
+      criadaDe: `${valorIso}-01`,
+      criadaAte: `${valorIso}-${String(ultimoDia).padStart(2, '0')}`,
     }
   }
 
   if (tipo === 'ano' && /^\d{4}$/.test(valor)) {
     return {
-      concluidaDe: `${valor}-01-01`,
-      concluidaAte: `${valor}-12-31`,
+      criadaDe: `${valor}-01-01`,
+      criadaAte: `${valor}-12-31`,
     }
   }
 
@@ -104,9 +104,9 @@ function obterLimitesDoPeriodo(tipo: TipoPeriodo, valor: string) {
 }
 
 function obterRotuloDoValor(tipo: TipoPeriodo) {
-  if (tipo === 'dia') return 'Dia da conclusão'
-  if (tipo === 'mes') return 'Mês da conclusão'
-  if (tipo === 'ano') return 'Ano da conclusão'
+  if (tipo === 'dia') return 'Dia da criação'
+  if (tipo === 'mes') return 'Mês da criação'
+  if (tipo === 'ano') return 'Ano da criação'
   return ''
 }
 
@@ -177,7 +177,8 @@ export function FichasPage() {
           <h1>Histórico de fichas</h1>
           <p>
             As fichas mais recentes de hoje aparecem primeiro para agilizar o
-            atendimento. Use o período para consultar o histórico.
+            atendimento. O período considera a data de criação da ficha,
+            independentemente de ela já ter sido concluída.
           </p>
         </div>
       </header>

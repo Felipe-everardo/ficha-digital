@@ -1,11 +1,12 @@
+using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace FichaDigital.Api.Modules.Clientes.Application;
+namespace FichaDigital.Api.Modules.Clientes.Infrastructure;
 
-public sealed class ConsultaClientes(FichaDigitalDbContext dbContext)
+internal sealed class ConsultaClientes(FichaDigitalDbContext dbContext) : IConsultaClientes
 {
     public async Task<PaginaClientesConsultada> ListarAsync(
         FiltroConsultaClientes filtro,

@@ -353,7 +353,7 @@ public sealed class AceitarTermoConsentimentoTests
         var conviteCriado = (await emitirResponse.Content
             .ReadFromJsonAsync<ConviteFichaCriadoResponse>(
                 TestContext.Current.CancellationToken))!;
-        var token = conviteCriado.LinkPreenchimento.Split('/').Last();
+        var token = conviteCriado.LinkPreenchimento.Split('#').Last();
 
         using var abrirResponse = await client.PostAsJsonAsync(
             "/api/fichas/convites/abrir",

@@ -421,3 +421,22 @@ button:disabled {
     width: 100%;
   }
 }
+.invitation-qr {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin-block: 1.5rem;
+  text-align: center;
+}
+
+.invitation-qr svg {
+  display: block;
+  width: min(100%, 256px);
+  height: auto;
+  background: #fff;
+}
+
+.invitation-qr p {
+  max-width: 42ch;
+  margin: 0;
+}

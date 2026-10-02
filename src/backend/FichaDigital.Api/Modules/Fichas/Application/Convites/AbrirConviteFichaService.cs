@@ -1,16 +1,12 @@
-using FichaDigital.Api.Infrastructure.Persistence;
-using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class AbrirConviteFichaService(
-    FichaDigitalDbContext dbContext,
+    IAberturaConviteRepository repository,
     IGeradorTokenConvite geradorToken,
     ResolvedorModeloFicha resolvedorModelo,
-    TimeProvider timeProvider,
-    AuditoriaService auditoriaService)
+    TimeProvider timeProvider)
 {
     public async Task<ResultadoAberturaConvite> AbrirAsync(
         string tokenOriginal,
@@ -19,11 +15,7 @@ public sealed class AbrirConviteFichaService(
     {
         var tokenHash = geradorToken.CalcularHash(tokenOriginal);
 
-        var convite = await dbContext.ConvitesFicha
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.TokenHash == tokenHash,
-                cancellationToken);
+        var convite = await repository.ObterConviteAsync(tokenHash, cancellationToken);
 
         if (convite is null)
         {
@@ -37,10 +29,7 @@ public sealed class AbrirConviteFichaService(
                 StatusAberturaConvite.Expirado);
         }
 
-        var ficha = await dbContext.Fichas
-            .SingleOrDefaultAsync(
-                item => item.Id == convite.FichaId,
-                cancellationToken);
+        var ficha = await repository.ObterFichaAsync(convite.FichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -61,23 +50,11 @@ public sealed class AbrirConviteFichaService(
                 StatusAberturaConvite.Indisponivel);
         }
 
-        var questionario = await dbContext.QuestionariosSaude
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var questionario = await repository.ObterQuestionarioAsync(ficha.Id, cancellationToken);
 
-        var dadosDaFicha = await dbContext.DadosPessoaisFichas
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var dadosDaFicha = await repository.ObterDadosPessoaisAsync(ficha.Id, cancellationToken);
 
-        var cliente = await dbContext.Clientes
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.Id == ficha.ClienteId,
-                cancellationToken);
+        var cliente = await repository.ObterClienteAsync(ficha.ClienteId, cancellationToken);
 
         if (cliente is null)
         {
@@ -87,11 +64,7 @@ public sealed class AbrirConviteFichaService(
 
         var modelo = resolvedorModelo.ObterModeloDaFicha(ficha);
 
-        auditoriaService.AdicionarAcaoDoCliente(
-            "Convite aberto",
-            ficha.Id,
-            correlacaoId);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarAberturaAsync(ficha, correlacaoId, cancellationToken);
 
         return new ResultadoAberturaConvite(
             StatusAberturaConvite.Aberto,

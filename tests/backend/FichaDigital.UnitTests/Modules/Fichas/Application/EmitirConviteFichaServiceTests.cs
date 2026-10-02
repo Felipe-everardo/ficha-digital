@@ -1,7 +1,6 @@
 using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
 using FichaDigital.Api.Modules.Fichas.Infrastructure;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using Microsoft.Extensions.Options;
 
 namespace FichaDigital.UnitTests.Modules.Fichas.Application;
@@ -13,7 +12,7 @@ public sealed class EmitirConviteFichaServiceTests
     {
         var instanteEmissao = DateTimeOffset.UtcNow.AddMinutes(1);
         var repository = new EmissaoConviteRepositorySpy(clienteExiste: true);
-        var geradorToken = new GeradorTokenConvite();
+        var geradorToken = new GeradorTokenConviteStub();
         var service = CriarService(
             repository,
             geradorToken,
@@ -36,9 +35,8 @@ public sealed class EmitirConviteFichaServiceTests
         Assert.Equal(profissionalId, ficha.ProfissionalResponsavelId);
         Assert.Equal(StatusFicha.ConviteEnviado, ficha.Status);
         Assert.Equal(ficha.Id, convite.FichaId);
-        Assert.Equal(
-            geradorToken.CalcularHash(resultado.TokenOriginal),
-            convite.TokenHash);
+        Assert.Equal(geradorToken.TokenOriginal, resultado.TokenOriginal);
+        Assert.Equal(geradorToken.TokenHash, convite.TokenHash);
         Assert.Equal(instanteEmissao.AddHours(1), convite.ExpiraEmUtc);
         Assert.Equal(convite.Id, resultado.ConviteId);
     }
@@ -48,9 +46,10 @@ public sealed class EmitirConviteFichaServiceTests
     {
         var repository = new EmissaoConviteRepositorySpy(
             clienteExiste: false);
+        var geradorToken = new GeradorTokenConviteStub();
         var service = CriarService(
             repository,
-            new GeradorTokenConvite(),
+            geradorToken,
             DateTimeOffset.UtcNow.AddMinutes(1));
 
         var resultado = await service.EmitirAsync(
@@ -63,11 +62,12 @@ public sealed class EmitirConviteFichaServiceTests
         Assert.Null(resultado);
         Assert.Null(repository.FichaAdicionada);
         Assert.Null(repository.ConviteAdicionado);
+        Assert.False(geradorToken.GerarFoiChamado);
     }
 
     private static EmitirConviteFichaService CriarService(
         IEmissaoConviteRepository repository,
-        GeradorTokenConvite geradorToken,
+        IGeradorTokenConvite geradorToken,
         DateTimeOffset instanteEmissao)
     {
         var resolvedorModelo = new ResolvedorModeloFicha(
@@ -81,6 +81,26 @@ public sealed class EmitirConviteFichaServiceTests
             geradorToken,
             resolvedorModelo,
             new FixedTimeProvider(instanteEmissao));
+    }
+
+    private sealed class GeradorTokenConviteStub : IGeradorTokenConvite
+    {
+        public string TokenOriginal => "token-unitario";
+
+        public string TokenHash => new('a', 64);
+
+        public bool GerarFoiChamado { get; private set; }
+
+        public TokenConviteGerado Gerar()
+        {
+            GerarFoiChamado = true;
+            return new TokenConviteGerado(TokenOriginal, TokenHash);
+        }
+
+        public string CalcularHash(string tokenOriginal)
+        {
+            return TokenHash;
+        }
     }
 
     private sealed class EmissaoConviteRepositorySpy(bool clienteExiste)

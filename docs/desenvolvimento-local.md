@@ -13,6 +13,18 @@ do produto, consulte o [README do projeto](../README.md).
 
 ## Preparação do ambiente
 
+Clone o repositório e entre na pasta:
+
+```powershell
+git clone https://github.com/Felipe-everardo/ficha-digital.git
+cd ficha-digital
+```
+
+A conexão padrão usa `(localdb)\MSSQLLocalDB` e o banco `FichaDigitalDb`.
+Se precisar usar outra instância SQL Server, configure
+`ConnectionStrings:DefaultConnection` com o Secret Manager. Confira o destino
+antes de atualizar o banco: o ambiente local não deve apontar para produção.
+
 Na raiz do repositório, restaure as dependências e aplique as migrations:
 
 ```powershell
@@ -25,13 +37,17 @@ dotnet tool run dotnet-ef database update `
 
 Configure uma conta profissional usando o
 [Secret Manager do .NET](https://learn.microsoft.com/aspnet/core/security/app-secrets)
-nas chaves abaixo, sem versionar a senha:
+com os comandos abaixo. Substitua a senha de exemplo antes de executar:
 
-```text
-ProfissionalDesenvolvimento:NomeCompleto
-ProfissionalDesenvolvimento:Email
-ProfissionalDesenvolvimento:Senha
+```powershell
+dotnet user-secrets set "ProfissionalDesenvolvimento:NomeCompleto" "Profissional Local" --project src/backend/FichaDigital.Api
+dotnet user-secrets set "ProfissionalDesenvolvimento:Email" "local@example.com" --project src/backend/FichaDigital.Api
+dotnet user-secrets set "ProfissionalDesenvolvimento:Senha" "SUBSTITUA-POR-UMA-SENHA-LOCAL" --project src/backend/FichaDigital.Api
 ```
+
+Use uma senha com maiúscula, minúscula, número e símbolo. A conta é criada
+quando a API inicia em `Development`; se o e-mail já existir, essa configuração
+não altera sua senha. O login local é independente da conta publicada na demo.
 
 Inicie a API e o frontend em terminais separados:
 
@@ -40,7 +56,7 @@ dotnet run --project src/backend/FichaDigital.Api --launch-profile http
 ```
 
 ```powershell
-npm --prefix src/frontend install
+npm --prefix src/frontend ci
 npm --prefix src/frontend run dev
 ```
 
@@ -49,6 +65,9 @@ em `http://localhost:5057`.
 
 No ambiente local, a API aplica automaticamente as migrations pendentes antes
 de provisionar a conta profissional.
+
+Entre com `local@example.com` e a senha configurada. Para conferir a API,
+acesse `http://localhost:5057/health/ready`; a resposta esperada é `Healthy`.
 
 ## Dados de demonstração
 
@@ -89,6 +108,9 @@ npm --prefix src/frontend exec -- playwright install chromium
 
 O teste de navegador inicia API e frontend isolados com SQLite e dados
 descartáveis; ele não utiliza o banco local de desenvolvimento.
+Pare seus servidores locais antes desse teste, pois ele usa as portas 5057 e
+5173. Os testes de navegador não exigem LocalDB nem Docker; o backend precisa
+estar compilado, o que o comando `npm run test:e2e` faz automaticamente.
 
 ### Testes opcionais com SQL Server real
 

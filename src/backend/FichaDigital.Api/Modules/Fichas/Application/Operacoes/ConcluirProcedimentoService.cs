@@ -1,23 +1,18 @@
 using System.Text.Json;
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class ConcluirProcedimentoService(
-    FichaDigitalDbContext dbContext,
-    CalculadorHashConteudo calculadorHash,
+    IConclusaoProcedimentoRepository repository,
+    ICalculadorHashConteudo calculadorHash,
     TimeProvider timeProvider)
 {
     public async Task<ResultadoConclusaoProcedimento> ConcluirAsync(
         ConcluirProcedimentoCommand command,
         CancellationToken cancellationToken)
     {
-        var ficha = await dbContext.Fichas.SingleOrDefaultAsync(
-            item => item.Id == command.FichaId,
-            cancellationToken);
+        var ficha = await repository.ObterFichaAsync(command.FichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -56,6 +51,9 @@ public sealed class ConcluirProcedimentoService(
         });
         var evidenciaHash = calculadorHash.Calcular(evidenciaJson);
 
+        RegistroTatuagem? tatuagem = null;
+        RegistroPiercing? piercing = null;
+
         try
         {
             switch (ficha.TipoProcedimento)
@@ -63,7 +61,7 @@ public sealed class ConcluirProcedimentoService(
                 case TipoProcedimento.Tatuagem
                     when command.Tatuagem is not null &&
                          command.Piercing is null:
-                    dbContext.RegistrosTatuagem.Add(new RegistroTatuagem(
+                    tatuagem = new RegistroTatuagem(
                         ficha.Id,
                         command.ProfissionalId,
                         profissionalNome,
@@ -78,13 +76,13 @@ public sealed class ConcluirProcedimentoService(
                         command.AssinaturaDesenhada,
                         evidenciaJson,
                         evidenciaHash,
-                        registradoEmUtc));
+                        registradoEmUtc);
                     break;
 
                 case TipoProcedimento.Piercing
                     when command.Piercing is not null &&
                          command.Tatuagem is null:
-                    dbContext.RegistrosPiercing.Add(new RegistroPiercing(
+                    piercing = new RegistroPiercing(
                         ficha.Id,
                         command.ProfissionalId,
                         profissionalNome,
@@ -99,7 +97,7 @@ public sealed class ConcluirProcedimentoService(
                         command.AssinaturaDesenhada,
                         evidenciaJson,
                         evidenciaHash,
-                        registradoEmUtc));
+                        registradoEmUtc);
                     break;
 
                 default:
@@ -114,7 +112,7 @@ public sealed class ConcluirProcedimentoService(
         }
 
         ficha.ConcluirProcedimento();
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarConclusaoAsync(ficha, tatuagem, piercing, cancellationToken);
 
         return new ResultadoConclusaoProcedimento(
             StatusConclusaoProcedimento.Concluido,

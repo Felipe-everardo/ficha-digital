@@ -21,10 +21,41 @@
 Em produção, a aplicação não aplica migrations automaticamente por padrão. A
 migration deve ser validada separadamente no Azure SQL antes da publicação.
 
-Depois dessa validação, o App Service pode aplicá-la durante a inicialização
-com a configuração `DatabaseInitialization__ApplyMigrationsOnStartup=true`.
-Uma falha de permissão ou conexão nesse processo impede a inicialização, por
-isso a configuração deve permanecer desabilitada quando não for necessária.
+Manter `DatabaseInitialization__ApplyMigrationsOnStartup=false` no App Service.
+A identidade gerenciada da aplicação tem acesso de leitura e escrita de dados;
+isso não inclui `ALTER TABLE`. Habilitar migrations na inicialização com essa
+identidade impede a aplicação de iniciar quando há alteração de esquema pendente.
+
+Aplicar migrations com uma sessão administrativa separada:
+
+1. Consultar a última migration em `dbo.__EFMigrationsHistory`.
+2. Executar `dotnet tool restore` e gerar o SQL entre essa versão e a versão
+   desejada: `dotnet ef migrations script MIGRATION_ATUAL MIGRATION_DESTINO --project src/backend/FichaDigital.Api --output migration.sql`.
+3. Revisar e testar o SQL em banco descartável. Confirmar banco de destino e
+   disponibilidade de backup antes de aplicá-lo no Editor de Consultas do Azure.
+4. Aplicar a mudança de esquema e o registro em `__EFMigrationsHistory` na mesma
+   transação, com reversão em caso de erro. Não registrar uma migration sem
+   executar suas alterações.
+5. Publicar e validar `/health/ready`, a busca de clientes, o histórico de um
+   cliente e os detalhes de uma ficha. O health check retorna 503 se houver
+   migrations pendentes no SQL Server ou falha na consulta da versão da ficha.
+
+Não conceder `db_owner` ou permissão de DDL à aplicação para contornar esse fluxo.
+
+## Compartilhamento de convites
+
+O QR Code é gerado no navegador do profissional e contém o mesmo link do botão
+de cópia, sem serviço externo. O convite continua válido por uma hora desde a
+emissão, para preenchimento e consentimento; a duração do procedimento não está
+limitada por esse prazo.
+
+Novos links usam `/fichas/preencher#TOKEN`. O fragmento não acompanha requisições
+HTTP de navegação, evitando sua inclusão nos logs de caminho do servidor. O
+frontend remove o fragmento do endereço e mantém o token na sessão da aba para
+permitir recarregar a página. As APIs recebem o token no corpo do POST; não
+habilitar captura de corpos de requisições/respostas no servidor, proxy ou APM.
+Links antigos com token no caminho continuam aceitos, mas sua primeira navegação
+ainda pode aparecer em logs. Esta mudança não remove registros antigos.
 
 ## Redefinição administrativa da senha
 

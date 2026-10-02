@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Infrastructure.Configuration;
 
-internal static class PersistenceServiceCollectionExtensions
+public static class PersistenceServiceCollectionExtensions
 {
     public static IServiceCollection AddFichaDigitalPersistence(
         this IServiceCollection services,
@@ -38,6 +38,16 @@ internal static class PersistenceServiceCollectionExtensions
         services.AddScoped<
             IEmissaoConviteRepository,
             EmissaoConviteRepository>();
+
+        services.AddScoped<IAberturaConviteRepository, AberturaConviteRepository>();
+        services.AddScoped<IDadosPessoaisRepository, DadosPessoaisRepository>();
+        services.AddScoped<IQuestionarioSaudeRepository, QuestionarioSaudeRepository>();
+        services.AddScoped<IConsentimentoRepository, ConsentimentoRepository>();
+        services.AddScoped<IRevisaoFichaRepository, RevisaoFichaRepository>();
+        services.AddScoped<IConclusaoProcedimentoRepository, ConclusaoProcedimentoRepository>();
+        services.AddScoped<IConsultaClientes, ConsultaClientes>();
+        services.AddScoped<IConsultaListagemFichas, ConsultaListagemFichas>();
+        services.AddScoped<IConsultaDetalheFicha, ConsultaDetalheFicha>();
 
         return services;
     }

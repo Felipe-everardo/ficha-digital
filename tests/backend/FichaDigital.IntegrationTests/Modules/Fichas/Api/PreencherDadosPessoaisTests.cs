@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
+using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -244,7 +244,7 @@ public sealed class PreencherDadosPessoaisTests
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
         var geradorToken = scope.ServiceProvider
-            .GetRequiredService<GeradorTokenConvite>();
+            .GetRequiredService<IGeradorTokenConvite>();
         var timeProvider = scope.ServiceProvider
             .GetRequiredService<TimeProvider>();
         var cliente = new Cliente("Ana");

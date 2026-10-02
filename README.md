@@ -3,134 +3,179 @@
 [![CI](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/ci.yml/badge.svg)](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/ci.yml)
 [![Deploy Azure](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/main_fichadigital.yml/badge.svg)](https://github.com/Felipe-everardo/ficha-digital/actions/workflows/main_fichadigital.yml)
 
-Aplicação full stack criada para substituir fichas de anamnese em papel por um
-fluxo digital seguro, rastreável e acessível pelo celular para estúdios de
-tatuagem e piercing.
+**Da anamnese em papel ao histórico digital de atendimento.** Aplicação full
+stack para estúdios de tatuagem e piercing, desenvolvida por
+[Felipe Everardo](https://github.com/Felipe-everardo) como projeto de portfólio
+e também voltado à resolver um problema do mundo real.
 
-**[Acessar a aplicação publicada](https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/profissional/entrar)**
+O profissional gera um convite; o cliente preenche e assina pelo celular; o
+estúdio revisa a ficha e registra o procedimento. O projeto reúne **C#/.NET 10,
+React, TypeScript, SQL Server, testes automatizados e deploy no Azure**.
 
-## Acesso de demonstração
+[Acessar demonstração](https://fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net/profissional/entrar)
+· [Roteiro de avaliação](docs/demonstracao.md)
+· [Executar localmente](docs/desenvolvimento-local.md)
+· [Decisões técnicas](docs/decisoes)
 
-```text
-E-mail: feeverardo@gmail.com
-Senha: @FePassword123
-```
+> **MVP de demonstração.** Use somente dados e assinaturas fictícios.
+> A preparação operacional para atender clientes reais ainda está pendente.
 
-A conta e os dados disponíveis são fictícios e destinados exclusivamente à
-avaliação do projeto. O MVP ainda não deve receber dados pessoais reais.
+![Histórico de fichas com filtros por período e acompanhamento de status](docs/images/historico-fichas.png)
 
-## Problema e solução
+## Experimente o projeto
 
-O projeto nasceu de um problema real: formulários em papel dificultavam a
-leitura, a localização de fichas antigas e a preservação do histórico dos
-clientes.
+| Acesso público de demonstração | Valor |
+| --- | --- |
+| E-mail | `feeverardo@gmail.com` |
+| Senha | `@FePassword123` |
 
-Com o FichaDigital, o estúdio cadastra uma referência do cliente, informa o
-profissional e o procedimento e gera um convite temporário. Pelo celular, o
-cliente completa seus dados, responde ao questionário de saúde e registra o
-consentimento. Depois, o profissional revisa a ficha e conclui o registro
-técnico do atendimento.
+Essas credenciais são exclusivas da demonstração. Não representam uma conta
+que deva ser reutilizada em produção.
 
-```mermaid
-flowchart LR
-    A["Estúdio gera o convite"] --> B["Cliente completa os dados"]
-    B --> C["Responde ao questionário"]
-    C --> D["Revisa, autoriza e assina"]
-    D --> E["Profissional revisa a ficha"]
-    E --> F["Registra o procedimento"]
-```
+1. Entre e consulte **Clientes** ou **Histórico** para explorar os registros.
+2. Cadastre uma referência fictícia de cliente e gere um convite, informando
+   profissional e procedimento.
+3. Copie o link para outra aba ou leia o QR Code com o celular.
+4. Preencha dados fictícios, responda ao questionário e registre uma assinatura
+   de teste. Depois, volte à área profissional e abra a ficha.
 
-## Principais funcionalidades
+O convite vale por **uma hora desde a emissão** para preenchimento e aceite;
+esse prazo não limita a duração do procedimento. O [roteiro completo](docs/demonstracao.md)
+inclui revisão profissional e registro posterior do atendimento.
 
-### Área profissional
+## O problema que orienta o projeto
 
-- autenticação e sessão protegida;
-- cadastro, busca e histórico de clientes;
-- emissão de convites temporários para tatuagem ou piercing;
-- acompanhamento e filtragem das fichas por estado;
-- revisão da ficha e confirmação da identidade do cliente;
-- registro técnico, financeiro e da assinatura do profissional.
-
-### Experiência do cliente
-
-- acesso por link temporário e retomada pelo mesmo convite;
-- preenchimento ou atualização dos dados pessoais;
-- questionário de saúde com perguntas condicionais;
-- revisão do termo, autorização e assinatura pelo celular;
-- preservação do conteúdo confirmado em cada atendimento.
-
-## Arquitetura e qualidade
-
-O projeto é um **monólito modular** desenvolvido com princípios de **Clean
-Code** e **SOLID**, organizado por funcionalidades e com separação entre API,
-aplicação, domínio e infraestrutura. A arquitetura evolui gradualmente em
-direção à **Clean Architecture**, priorizando baixo acoplamento, regras de
-negócio isoladas e facilidade de manutenção e testes.
+Formulários em papel dificultam a leitura, a busca de atendimentos anteriores
+e a conferência das informações antes de um procedimento. O Ficha Digital
+organiza esse trabalho em etapas e preserva os dados confirmados em cada ficha.
 
 ```mermaid
 flowchart LR
-    A["React + TypeScript"] -->|"HTTPS / JSON"| B["ASP.NET Core API"]
-    B --> C["Casos de uso"]
-    C --> D["Domínio"]
-    C --> E["Entity Framework Core"]
-    E --> F["SQL Server / Azure SQL"]
+    A[Estúdio gera link e QR Code] --> B[Cliente preenche os dados]
+    B --> C[Responde ao questionário]
+    C --> D[Confere, autoriza e assina]
+    D --> E[Profissional revisa a ficha]
+    E --> F[Registra o procedimento e consulta o histórico]
 ```
 
-Entre as decisões técnicas aplicadas estão:
+## Interface
 
-- **Separação de responsabilidades:** controllers enxutos, contratos HTTP
-  explícitos e casos de uso separados das regras de domínio e persistência.
-- **Segurança:** ASP.NET Core Identity, cookies `HttpOnly`, antiforgery, rate
-  limiting, bloqueio de login e tokens de convite armazenados por hash.
-- **Integridade e confiabilidade:** auditoria gravada com a operação,
-  idempotência contra reenvios e concorrência otimista nas fichas.
-- **Privacidade e histórico:** dados confirmados, questionários, termos e
-  assinaturas são preservados sem duplicar conteúdo clínico na auditoria.
-- **Observabilidade:** health checks, respostas `ProblemDetails`, logs
-  estruturados e código de correlação ponta a ponta.
-- **Qualidade e entrega:** testes unitários, de integração e de navegador,
-  CI/CD com GitHub Actions e publicação no Azure App Service por OIDC.
+Capturas da execução local, com banco temporário e dados exclusivamente fictícios.
+
+<table>
+  <tr>
+    <th>Compartilhamento do convite</th>
+    <th>Preenchimento no celular</th>
+  </tr>
+  <tr>
+    <td><img src="docs/images/convite-qr.png" alt="Convite com QR Code, validade e botão para copiar o link" width="540" /></td>
+    <td><img src="docs/images/ficha-celular.png" alt="Ficha responsiva com identificação do procedimento e etapas de preenchimento" width="280" /></td>
+  </tr>
+</table>
+
+Os convites das capturas pertencem ao ambiente temporário de teste e não são
+links para atendimento.
+
+## Funcionalidades implementadas
+
+| Área profissional | Experiência do cliente |
+| --- | --- |
+| Login da conta do estúdio | Acesso por convite temporário, sem criar conta |
+| Cadastro, busca e histórico de clientes | Confirmação ou preenchimento dos dados pessoais |
+| Convite para tatuagem ou piercing, por link e QR Code | Questionário de saúde com perguntas condicionais |
+| Filtros pela data de criação: hoje, dia, mês e ano | Revisão das informações, consentimento único e assinatura desenhada |
+| Revisão e registro técnico e financeiro do atendimento | Retomada do convite válido e início de cada etapa no topo da tela |
+
+## Arquitetura e decisões técnicas
+
+O backend é um **monólito organizado em módulos** de clientes, fichas e
+profissionais. Cada módulo separa contratos HTTP, casos de uso, domínio e
+infraestrutura. O frontend consome a API e usa componentes e hooks para
+organizar as telas e o fluxo de preenchimento.
+
+| Decisão | Motivação e evidência no código |
+| --- | --- |
+| Casos de uso independentes do EF Core | A aplicação depende de contratos de consulta e persistência; a infraestrutura implementa o acesso ao banco. Testes verificam as dependências, regras de revisão e atomicidade das gravações. [ADR 0004](docs/decisoes/0004-contratos-de-persistencia.md). |
+| Conta única do estúdio no MVP | Reduz o gerenciamento de usuários; o responsável é registrado por ficha. A limitação de autoria individual está documentada na [ADR 0001](docs/decisoes/0001-conta-unica-e-responsavel-por-ficha.md). |
+| Convite com token armazenado por hash | Permite acesso temporário sem cadastro do cliente. Novos links usam fragmento `#`, que não acompanha a requisição HTTP inicial; o QR é gerado no navegador. [Emissão](src/backend/FichaDigital.Api/Modules/Fichas/Api/Convites/ConvitesFichaController.cs) e [leitura do convite](src/frontend/src/hooks/useFichaPublica.ts). |
+| Auditoria e idempotência | Registra ações sem copiar informações clínicas para a auditoria e permite recuperar a resposta de uma operação reenviada com a mesma chave. [ADR 0002](docs/decisoes/0002-auditoria-e-idempotencia.md). |
+| Concorrência otimista | Detecta alterações concorrentes na ficha para evitar sobrescrita silenciosa. [Testes com SQL Server](tests/backend/FichaDigital.IntegrationTests/Infrastructure/SqlServer/SqlServerCompatibilityTests.cs). |
+| Dados preservados por atendimento | A ficha mantém as informações confirmadas, questionário, versão do termo e evidências do aceite. [Domínio de fichas](src/backend/FichaDigital.Api/Modules/Fichas/Domain). |
+| Saúde e diagnóstico | Separa processo ativo de banco pronto, detecta migrations pendentes no SQL Server e usa códigos de correlação. [ADR 0003](docs/decisoes/0003-observabilidade-e-falhas.md). |
+
+Autenticação utiliza ASP.NET Core Identity e cookies. A API também aplica
+antiforgery, limitação de requisições e cabeçalhos defensivos. Esses controles
+não representam certificação de segurança ou de conformidade jurídica.
 
 ## Tecnologias
 
 | Camada | Tecnologias |
 | --- | --- |
-| Backend | C#, .NET 10, ASP.NET Core Web API e Entity Framework Core 10 |
-| Autenticação | ASP.NET Core Identity, cookies seguros e antiforgery |
-| Frontend | React 19, TypeScript, Vite e CSS responsivo |
-| Banco de dados | SQL Server LocalDB e Azure SQL Database |
-| Testes | xUnit v3 e Playwright |
-| DevOps | GitHub Actions, Azure App Service e OIDC |
+| Backend | C#, .NET 10, ASP.NET Core, Entity Framework Core 10 |
+| Frontend | React 19, TypeScript, Vite, CSS responsivo, qrcode.react |
+| Persistência | SQL Server / Azure SQL; SQLite no E2E e em parte dos testes |
+| Testes | xUnit v3, Playwright e SQL Server descartável com Testcontainers |
+| Entrega | GitHub Actions e Azure App Service, com autenticação de deploy por OIDC |
 
-## Estrutura do projeto
+## Executar e verificar
 
-```text
-src/
-├── backend/FichaDigital.Api/
-│   ├── Modules/                 # Clientes, fichas e profissionais
-│   └── Infrastructure/          # Banco, autenticação, auditoria e web
-└── frontend/                    # Interface React
+Pré-requisitos para o ambiente local padrão: **.NET SDK 10, Node.js 24 com npm
+e SQL Server LocalDB**. Para outra instância SQL Server, configure a conexão.
+O [guia local](docs/desenvolvimento-local.md) descreve migrations, criação da
+conta e inicialização dos dois servidores.
 
-tests/backend/
-├── FichaDigital.UnitTests/
-└── FichaDigital.IntegrationTests/
+Na raiz do repositório:
+
+```powershell
+dotnet restore
+npm --prefix src/frontend ci
+dotnet test FichaDigital.sln
+npm --prefix src/frontend run lint
+npm --prefix src/frontend run build
 ```
 
-## Documentação
+Para o fluxo de navegador, pare os servidores locais que usam as portas 5057
+e 5173 e execute:
 
-- [Ambiente local, testes e referência da API](docs/desenvolvimento-local.md)
-- [Operação e publicação em produção](docs/operacao-producao.md)
-- [Decisões arquiteturais](docs/decisoes)
-- [Planejamento funcional](docs/planejamento-fichas.md)
-- [Política de segurança](SECURITY.md)
+```powershell
+npm --prefix src/frontend exec -- playwright install chromium
+npm --prefix src/frontend run test:e2e
+```
 
-## Próximas evoluções
+O E2E inicia API, frontend e banco SQLite temporário. Ele percorre login,
+cadastro, convites, preenchimento, assinatura e filtros, incluindo verificações
+de QR Code, rolagem no celular e URLs sem token nos novos convites.
 
-- recuperação de acesso e troca obrigatória da senha inicial;
-- exportação de fichas e definição da política de retenção e backup;
-- validação jurídica e operacional antes do uso com dados reais.
+Os testes específicos de SQL Server exigem Docker e `RUN_SQLSERVER_TESTS=true`.
+Sem essa configuração, são ignorados localmente; o CI os habilita. Consulte os
+[comandos e limites da suíte](docs/desenvolvimento-local.md#testes-opcionais-com-sql-server-real).
 
-## Autor
+## Organização do repositório
 
-Desenvolvido por [Felipe Everardo](https://github.com/Felipe-everardo) como
-solução para um problema real e projeto de portfólio full stack.
+```text
+src/backend/FichaDigital.Api/
+├── Modules/                    # Clientes, fichas e profissionais
+├── Features/Status/            # Saúde da aplicação
+└── Infrastructure/             # Persistência, auditoria, idempotência e web
+src/frontend/
+├── src/                        # Páginas, componentes, hooks e serviços HTTP
+└── e2e/                        # Fluxo automatizado no navegador
+tests/backend/                  # Testes unitários e de integração
+docs/                           # Guias, decisões e preparação para produção
+```
+
+## Evolução e limites atuais
+
+O foco atual é uma demonstração funcional e reproduzível para avaliação
+técnica. **Ainda não está validado para armazenar dados reais de clientes.**
+
+- A conta compartilhada não identifica individualmente cada operador.
+- A demonstração usa dados compartilhados; não há isolamento por visitante.
+- O deploy ainda precisa de uma etapa controlada para aplicar migrations.
+- Backup restaurado em ambiente isolado, recuperação das chaves e separação
+  entre demo e produção ainda precisam ser comprovados antes do uso real.
+- Recuperação de acesso, exportação de fichas e definição de retenção estão
+  entre as próximas evoluções.
+
+Veja o [plano de evolução por ambiente](docs/evolucao.md), o
+[runbook de produção](docs/operacao-producao.md) e a [política de segurança](SECURITY.md).

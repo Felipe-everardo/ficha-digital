@@ -9,8 +9,8 @@ namespace FichaDigital.Api.Modules.Fichas.Api;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [Route("api/fichas")]
 public sealed class FichasController(
-    ListarFichasService listarFichasService,
-    ObterFichaDetalheService obterFichaDetalheService) : ControllerBase
+    IConsultaListagemFichas listarFichasService,
+    IConsultaDetalheFicha obterFichaDetalheService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<FichasPaginadasResponse>(StatusCodes.Status200OK)]

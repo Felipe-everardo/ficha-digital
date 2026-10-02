@@ -2,7 +2,6 @@ using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Infrastructure.Idempotency;
 using FichaDigital.Api.Modules.Clientes.Application;
 using FichaDigital.Api.Modules.Fichas.Application;
-using FichaDigital.Api.Modules.Fichas.Infrastructure;
 using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.Api.Modules.Profissionais.Domain;
 using FichaDigital.Api.Modules.Profissionais.Infrastructure.Provisionamento;
@@ -33,13 +32,12 @@ internal static class ApplicationServiceCollectionExtensions
             IGeradorTokenConvite,
             GeradorTokenConvite>();
         services.AddSingleton<CalculadorHashConteudo>();
+        services.AddSingleton<ICalculadorHashConteudo>(provider =>
+            provider.GetRequiredService<CalculadorHashConteudo>());
         services.AddSingleton<ResolvedorModeloFicha>();
 
         services.AddScoped<CriarClienteService>();
-        services.AddScoped<ConsultaClientes>();
         services.AddScoped<AuditoriaService>();
-        services.AddScoped<ListarFichasService>();
-        services.AddScoped<ObterFichaDetalheService>();
         services.AddScoped<EmitirConviteFichaService>();
         services.AddScoped<AbrirConviteFichaService>();
         services.AddScoped<PreencherDadosPessoaisService>();

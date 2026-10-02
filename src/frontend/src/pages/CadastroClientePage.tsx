@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { ConviteQrCode } from '../components/ConviteQrCode'
 import {
   obterAntiforgeryToken,
   obterSessaoProfissional,
@@ -259,7 +260,7 @@ function FormularioCadastroCliente() {
               >
                 <p className="eyebrow">Convite pronto</p>
                 <h3 id="registration-invitation-title">
-                  Envie este link para {clienteCriado.nomeParaExibicao}
+                  Compartilhe o convite com {clienteCriado.nomeParaExibicao}
                 </h3>
                 <p>
                   Responsável: <strong>{profissionalResponsavelNome}</strong>.
@@ -272,6 +273,7 @@ function FormularioCadastroCliente() {
                   </strong>
                   .
                 </p>
+                <ConviteQrCode link={conviteGerado.linkPreenchimento} />
                 <div className="registration-invitation-link">
                   <input
                     ref={conviteInputRef}

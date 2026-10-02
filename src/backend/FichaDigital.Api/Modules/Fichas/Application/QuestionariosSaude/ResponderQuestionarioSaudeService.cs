@@ -1,15 +1,11 @@
-using FichaDigital.Api.Infrastructure.Persistence;
-using FichaDigital.Api.Infrastructure.Auditing;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class ResponderQuestionarioSaudeService(
-    FichaDigitalDbContext dbContext,
+    IQuestionarioSaudeRepository repository,
     IGeradorTokenConvite geradorToken,
-    TimeProvider timeProvider,
-    AuditoriaService auditoriaService)
+    TimeProvider timeProvider)
 {
     public async Task<ResultadoRespostaQuestionarioSaude> ResponderAsync(
         ResponderQuestionarioSaudeCommand command,
@@ -18,11 +14,7 @@ public sealed class ResponderQuestionarioSaudeService(
     {
         var tokenHash = geradorToken.CalcularHash(command.TokenOriginal);
 
-        var convite = await dbContext.ConvitesFicha
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.TokenHash == tokenHash,
-                cancellationToken);
+        var convite = await repository.ObterConviteAsync(tokenHash, cancellationToken);
 
         if (convite is null)
         {
@@ -36,10 +28,7 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.ConviteExpirado);
         }
 
-        var ficha = await dbContext.Fichas
-            .SingleOrDefaultAsync(
-                item => item.Id == convite.FichaId,
-                cancellationToken);
+        var ficha = await repository.ObterFichaAsync(convite.FichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -47,10 +36,7 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.ConviteNaoEncontrado);
         }
 
-        var questionarioJaExiste = await dbContext.QuestionariosSaude
-            .AnyAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var questionarioJaExiste = await repository.QuestionarioExisteAsync(ficha.Id, cancellationToken);
 
         if (questionarioJaExiste)
         {
@@ -64,11 +50,7 @@ public sealed class ResponderQuestionarioSaudeService(
                 StatusRespostaQuestionarioSaude.FichaIndisponivel);
         }
 
-        var dadosPessoaisPreenchidos = await dbContext.DadosPessoaisFichas
-            .AsNoTracking()
-            .AnyAsync(
-                dados => dados.FichaId == ficha.Id,
-                cancellationToken);
+        var dadosPessoaisPreenchidos = await repository.DadosPessoaisExistemAsync(ficha.Id, cancellationToken);
 
         if (!dadosPessoaisPreenchidos)
         {
@@ -99,18 +81,12 @@ public sealed class ResponderQuestionarioSaudeService(
             command.DescricaoMedicacao,
             command.EstaGravidaOuAmamentando);
 
-        dbContext.QuestionariosSaude.Add(questionario);
-
         if (ficha.VersaoModelo is not null)
         {
             ficha.ConcluirAnamnese();
         }
 
-        auditoriaService.AdicionarAcaoDoCliente(
-            "Questionário de saúde respondido",
-            ficha.Id,
-            correlacaoId);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarRespostaAsync(ficha, questionario, correlacaoId, cancellationToken);
 
         return new ResultadoRespostaQuestionarioSaude(
             StatusRespostaQuestionarioSaude.Respondido,

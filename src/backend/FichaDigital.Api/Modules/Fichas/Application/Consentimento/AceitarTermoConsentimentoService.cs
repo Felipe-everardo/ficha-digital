@@ -1,20 +1,15 @@
 using System.Text.Json;
-using FichaDigital.Api.Infrastructure.Auditing;
-using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
-using Microsoft.EntityFrameworkCore;
 
 namespace FichaDigital.Api.Modules.Fichas.Application;
 
 public sealed class AceitarTermoConsentimentoService(
-    FichaDigitalDbContext dbContext,
+    IConsentimentoRepository repository,
     IGeradorTokenConvite geradorToken,
-    CalculadorHashConteudo calculadorHash,
+    ICalculadorHashConteudo calculadorHash,
     ResolvedorModeloFicha resolvedorModelo,
-    TimeProvider timeProvider,
-    AuditoriaService auditoriaService)
+    TimeProvider timeProvider)
 {
     private const int VersaoEvidenciaAtual = 4;
 
@@ -29,11 +24,7 @@ public sealed class AceitarTermoConsentimentoService(
         CancellationToken cancellationToken)
     {
         var tokenHash = geradorToken.CalcularHash(command.TokenOriginal);
-        var convite = await dbContext.ConvitesFicha
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.TokenHash == tokenHash,
-                cancellationToken);
+        var convite = await repository.ObterConviteAsync(tokenHash, cancellationToken);
 
         if (convite is null)
         {
@@ -47,10 +38,7 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.ConviteExpirado);
         }
 
-        var ficha = await dbContext.Fichas
-            .SingleOrDefaultAsync(
-                item => item.Id == convite.FichaId,
-                cancellationToken);
+        var ficha = await repository.ObterFichaAsync(convite.FichaId, cancellationToken);
 
         if (ficha is null)
         {
@@ -58,11 +46,7 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.ConviteNaoEncontrado);
         }
 
-        var questionario = await dbContext.QuestionariosSaude
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var questionario = await repository.ObterQuestionarioAsync(ficha.Id, cancellationToken);
 
         if (questionario is null)
         {
@@ -70,11 +54,7 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.QuestionarioPendente);
         }
 
-        var dadosDaFicha = await dbContext.DadosPessoaisFichas
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var dadosDaFicha = await repository.ObterDadosPessoaisAsync(ficha.Id, cancellationToken);
 
         if (dadosDaFicha is null)
         {
@@ -82,11 +62,7 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.DadosPessoaisPendentes);
         }
 
-        var cliente = await dbContext.Clientes
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                item => item.Id == ficha.ClienteId,
-                cancellationToken);
+        var cliente = await repository.ObterClienteAsync(ficha.ClienteId, cancellationToken);
 
         if (cliente is null)
         {
@@ -94,10 +70,7 @@ public sealed class AceitarTermoConsentimentoService(
                 StatusAceiteTermoConsentimento.ConviteNaoEncontrado);
         }
 
-        var aceiteJaExiste = await dbContext.AceitesTermoConsentimento
-            .AnyAsync(
-                item => item.FichaId == ficha.Id,
-                cancellationToken);
+        var aceiteJaExiste = await repository.AceiteExisteAsync(ficha.Id, cancellationToken);
 
         if (aceiteJaExiste)
         {
@@ -210,12 +183,7 @@ public sealed class AceitarTermoConsentimentoService(
             ficha.ConcluirFluxoLegado();
         }
 
-        dbContext.AceitesTermoConsentimento.Add(aceite);
-        auditoriaService.AdicionarAcaoDoCliente(
-            "Consentimento assinado e procedimento autorizado",
-            ficha.Id,
-            correlacaoId);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await repository.SalvarAceiteAsync(ficha, aceite, correlacaoId, cancellationToken);
 
         return new ResultadoAceiteTermoConsentimento(
             StatusAceiteTermoConsentimento.Aceito,

@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
+using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -413,7 +413,7 @@ public sealed class AbrirConviteFichaTests
 
     private static string ObterToken(string linkPreenchimento)
     {
-        return linkPreenchimento.Split('/').Last();
+        return linkPreenchimento.Split('#').Last();
     }
 
     private static async Task<Guid> CriarClienteAsync(
@@ -439,7 +439,7 @@ public sealed class AbrirConviteFichaTests
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
         var geradorToken = scope.ServiceProvider
-            .GetRequiredService<GeradorTokenConvite>();
+            .GetRequiredService<IGeradorTokenConvite>();
         var cliente = CriarCliente();
         var ficha = new Ficha(cliente.Id);
         ficha.EnviarConvite();

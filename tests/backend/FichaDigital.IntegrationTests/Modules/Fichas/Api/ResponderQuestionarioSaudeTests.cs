@@ -3,8 +3,8 @@ using System.Net.Http.Json;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Clientes.Domain;
 using FichaDigital.Api.Modules.Fichas.Api;
+using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using FichaDigital.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -345,7 +345,7 @@ public sealed class ResponderQuestionarioSaudeTests
         var convite = (await emitirResponse.Content
             .ReadFromJsonAsync<ConviteFichaCriadoResponse>(
                 TestContext.Current.CancellationToken))!;
-        var token = convite.LinkPreenchimento.Split('/').Last();
+        var token = convite.LinkPreenchimento.Split('#').Last();
 
         using var abrirResponse = await client.PostAsJsonAsync(
             "/api/fichas/convites/abrir",
@@ -407,7 +407,7 @@ public sealed class ResponderQuestionarioSaudeTests
         var dbContext = scope.ServiceProvider
             .GetRequiredService<FichaDigitalDbContext>();
         var geradorToken = scope.ServiceProvider
-            .GetRequiredService<GeradorTokenConvite>();
+            .GetRequiredService<IGeradorTokenConvite>();
         var cliente = new Cliente(DadosPessoaisTeste.Criar(
             celular: "(21) 99999-9999"));
         var ficha = new Ficha(cliente.Id);

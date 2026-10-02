@@ -1,14 +1,14 @@
+using FichaDigital.Api.Modules.Fichas.Application;
 using FichaDigital.Api.Infrastructure.Persistence;
 using FichaDigital.Api.Modules.Fichas.Domain;
-using FichaDigital.Api.Modules.Fichas.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
-namespace FichaDigital.Api.Modules.Fichas.Application;
+namespace FichaDigital.Api.Modules.Fichas.Infrastructure;
 
-public sealed class ObterFichaDetalheService(
+internal sealed class ConsultaDetalheFicha(
     FichaDigitalDbContext dbContext,
     TimeProvider timeProvider,
-    CalculadorHashConteudo calculadorHash)
+    ICalculadorHashConteudo calculadorHash) : IConsultaDetalheFicha
 {
     public async Task<DetalheFichaConsultada?> ObterAsync(
         Guid fichaId,
