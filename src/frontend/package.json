@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "pretest:e2e": "dotnet build ../backend/FichaDigital.Api/FichaDigital.Api.csproj",
+    "pretest:e2e": "tsc -p tsconfig.e2e.json && dotnet build ../backend/FichaDigital.Api/FichaDigital.Api.csproj",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "preview": "vite preview"

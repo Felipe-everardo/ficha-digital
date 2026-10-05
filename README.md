@@ -142,9 +142,14 @@ npm --prefix src/frontend exec -- playwright install chromium
 npm --prefix src/frontend run test:e2e
 ```
 
-O E2E inicia API, frontend e banco SQLite temporário. Ele percorre login,
-cadastro, convites, preenchimento, assinatura e filtros, incluindo verificações
-de QR Code, rolagem no celular e URLs sem token nos novos convites.
+O E2E inicia API, frontend e banco SQLite temporário. Cinco cenários independentes
+cobrem login e cadastro, links, QR Code no celular, preenchimento com assinatura
+e filtros. Cada cenário prepara seus próprios dados pela API real; login e
+cadastro também são exercitados pela interface.
+
+O deploy chama o mesmo CI usado nos pull requests e só prepara e publica o
+pacote após backend, SQL Server, lint, build e E2E passarem para o mesmo commit.
+Após a publicação, verifica a saúde da aplicação e o acesso ao esquema do banco.
 
 Os testes específicos de SQL Server exigem Docker e `RUN_SQLSERVER_TESTS=true`.
 Sem essa configuração, são ignorados localmente; o CI os habilita. Consulte os

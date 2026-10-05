@@ -17,13 +17,14 @@ Implementado no código:
   e teste automatizado das dependências da camada de aplicação.
 - [x] Health check que detecta migrations pendentes no SQL Server.
 - [x] Documentação de execução, decisões técnicas e roteiro de demonstração.
+- [x] Publicação condicionada às verificações de backend, SQL Server e frontend
+  do mesmo commit, com cenários E2E independentes.
 
 Próximas melhorias da demonstração:
 
 - [ ] Aviso de dados fictícios dentro da interface, além do README.
 - [ ] Rotina controlada para recompor os dados da demonstração.
 - [ ] Processo de migrations integrado à publicação, com identidade separada.
-- [ ] Garantir que a publicação aguarde todas as verificações do frontend e backend.
 - [ ] Recuperação de acesso e revisão do provisionamento da conta inicial.
 
 ## Antes do primeiro atendimento real

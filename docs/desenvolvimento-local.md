@@ -109,8 +109,24 @@ npm --prefix src/frontend exec -- playwright install chromium
 O teste de navegador inicia API e frontend isolados com SQLite e dados
 descartáveis; ele não utiliza o banco local de desenvolvimento.
 Pare seus servidores locais antes desse teste, pois ele usa as portas 5057 e
-5173. Os testes de navegador não exigem LocalDB nem Docker; o backend precisa
+5173; a preparação recusa portas ocupadas para não usar outro banco por engano.
+Os testes de navegador não exigem LocalDB nem Docker; o backend precisa
 estar compilado, o que o comando `npm run test:e2e` faz automaticamente.
+
+Os cinco cenários são independentes: cada um inicia uma API e um banco SQLite
+novos e cria seus próprios clientes e convites. Isso também isola os limites
+de requisições, sem desativá-los. Usam um worker porque reutilizam as mesmas
+portas; apenas o servidor do frontend é compartilhado. O comando
+também verifica os tipos TypeScript dos testes antes de iniciar os servidores.
+Para executar apenas o cenário de filtros:
+
+```powershell
+npm --prefix src/frontend run test:e2e -- filtros.spec.ts
+```
+
+Falhas geram screenshot e trace em `src/frontend/test-results`. No GitHub Actions,
+esses arquivos ficam no artefato `playwright-<SHA>` por sete dias. Contêm apenas
+dados fictícios do ambiente de teste; não reutilize esse roteiro com dados reais.
 
 ### Testes opcionais com SQL Server real
 

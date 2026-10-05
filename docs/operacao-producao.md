@@ -16,6 +16,31 @@
 - Definir com a proprietária e a assessoria jurídica o prazo de retenção das
   fichas, auditoria e backups. Não automatizar exclusão antes dessa decisão.
 
+## Validação e publicação automatizada
+
+Em pull requests para `main`, `ci.yml` verifica backend com SQL Server real e
+frontend com lint, build e E2E. Em pushes para `main`, `main_fichadigital.yml`
+chama esse mesmo workflow por `workflow_call`, na versão do próprio commit.
+Não há uma segunda execução de CI por push em paralelo à publicação.
+
+A cadeia obrigatória é `validar → build → deploy`. Falha, cancelamento ou
+etapa ignorada na validação impede a preparação e a publicação. O pacote é
+gerado a partir de `github.sha` e identificado por esse SHA. Somente o job de
+deploy recebe permissão OIDC para autenticar no Azure.
+
+A execução manual também passa pelas validações e só publica a branch `main`.
+As execuções de publicação compartilham um grupo de concorrência para evitar
+implantações simultâneas; uma publicação em andamento não é cancelada por um push.
+Após implantar, o workflow exige `/health/ready` saudável e HTTP 404 ao abrir um
+convite deliberadamente inexistente. Uma falha nessa verificação sinaliza o
+deploy como malsucedido; não há rollback automático.
+
+Para confirmar a configuração no GitHub após o push, verifique os jobs Backend
+e Frontend dentro de Validar antes de publicar e a sequência de preparação,
+deploy e verificação. Essas mudanças não aplicam migrations no Azure SQL.
+
+Referência: [workflows reutilizáveis do GitHub Actions](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows).
+
 ## Migrations em produção
 
 Em produção, a aplicação não aplica migrations automaticamente por padrão. A

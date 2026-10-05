@@ -9,61 +9,37 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: publicar-azure-main
+  cancel-in-progress: false
+
 env:
   SOLUTION_PATH: FichaDigital.sln
   API_PROJECT_PATH: src/backend/FichaDigital.Api/FichaDigital.Api.csproj
   PUBLISH_PATH: ${{ github.workspace }}/publish
 
 jobs:
-  sql-server:
-    name: Validar SQL Server real
-    runs-on: ubuntu-latest
+  validar:
+    name: Validar antes de publicar
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Preparar aplicação validada
+    runs-on: windows-latest
+    needs: validar
     timeout-minutes: 20
 
     steps:
       - name: Obter código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
 
       - name: Configurar .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.x
-
-      - name: Restaurar dependências
-        run: >-
-          dotnet restore
-          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
-
-      - name: Compilar testes de integração
-        run: >-
-          dotnet build
-          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
-          --configuration Release
-          --no-restore
-
-      - name: Executar testes com SQL Server real
-        env:
-          RUN_SQLSERVER_TESTS: "true"
-        run: >-
-          dotnet test
-          tests/backend/FichaDigital.IntegrationTests/FichaDigital.IntegrationTests.csproj
-          --configuration Release
-          --no-build
-          --no-restore
-
-  build:
-    name: Testar e preparar aplicação
-    runs-on: windows-latest
-    needs: sql-server
-
-    steps:
-      - name: Obter código
-        uses: actions/checkout@v4
-
-      - name: Configurar .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.x
+          dotnet-version: 10.0.x
 
       - name: Configurar Node.js
         uses: actions/setup-node@v6
@@ -78,9 +54,6 @@ jobs:
       - name: Compilar solução
         run: dotnet build "${{ env.SOLUTION_PATH }}" --configuration Release --no-restore
 
-      - name: Executar testes
-        run: dotnet test "${{ env.SOLUTION_PATH }}" --configuration Release --no-build
-
       - name: Publicar API e frontend
         run: >-
           dotnet publish "${{ env.API_PROJECT_PATH }}"
@@ -92,7 +65,7 @@ jobs:
       - name: Armazenar pacote da aplicação
         uses: actions/upload-artifact@v4
         with:
-          name: fichadigital-app
+          name: fichadigital-app-${{ github.sha }}
           path: ${{ env.PUBLISH_PATH }}
           if-no-files-found: error
 
@@ -100,6 +73,8 @@ jobs:
     name: Implantar no Azure
     runs-on: windows-latest
     needs: build
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main'
     permissions:
       id-token: write
       contents: read
@@ -108,7 +83,7 @@ jobs:
       - name: Baixar pacote da aplicação
         uses: actions/download-artifact@v4
         with:
-          name: fichadigital-app
+          name: fichadigital-app-${{ github.sha }}
           path: ./publish
 
       - name: Autenticar no Azure sem senha
