@@ -22,6 +22,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.aviso-demonstracao {
+  padding: 10px 16px;
+  border-bottom: 1px solid #d6c494;
+  background: #fff2cb;
+  color: #574322;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: rgba(102, 112, 99, 0.62);

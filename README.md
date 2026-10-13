@@ -184,3 +184,8 @@ técnica. **Ainda não está validado para armazenar dados reais de clientes.**
 
 Veja o [plano de evolução por ambiente](docs/evolucao.md), o
 [runbook de produção](docs/operacao-producao.md) e a [política de segurança](SECURITY.md).
+
+A [publicação manual do piloto do estúdio](docs/publicacao-estudio.md) usa um
+workflow separado e exige aplicação, banco e credenciais exclusivos. O build
+padrão identifica a demonstração na interface; o pacote do estúdio é preparado
+pelo workflow manual. A preparação no código não comprova prontidão para dados reais.

@@ -5,6 +5,7 @@ using FichaDigital.Api.Infrastructure.Web;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
+ConfiguracaoPiloto.Validar(builder.Configuration, builder.Environment);
 
 if (builder.Environment.IsEnvironment("E2E"))
 {
