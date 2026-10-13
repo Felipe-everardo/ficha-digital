@@ -46,7 +46,11 @@ public sealed class SqlServerCompatibilityTests(
                 foreach (var lote in Regex.Split(script, @"^\s*GO\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase))
                 {
                     if (!string.IsNullOrWhiteSpace(lote))
-                        await banco.Database.ExecuteSqlRawAsync(lote, cancellationToken);
+                    {
+                        await using var comando = banco.Database.GetDbConnection().CreateCommand();
+                        comando.CommandText = lote;
+                        await comando.ExecuteNonQueryAsync(cancellationToken);
+                    }
                 }
                 Assert.Empty(await banco.Database.GetPendingMigrationsAsync(cancellationToken));
                 Assert.Equal(banco.Database.GetMigrations(),
