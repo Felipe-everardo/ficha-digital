@@ -49,15 +49,18 @@ provisionamento da conta exclusiva do estúdio continua pendente.
   Comandos de dados das migrations usam SQL dinâmico para evitar compilação
   antecipada de colunas recém-criadas ou já removidas em scripts idempotentes.
   Para executar via sqlcmd, usar `-I -b` (QUOTED_IDENTIFIER e parada em erro).
+  O CI executa também um teste de instalação e reaplicação idempotente em SQL
+  Server descartável, além dos testes de compatibilidade já existentes.
 - O environment `estudio` foi conferido no GitHub: apenas branch `main`, duas
   variáveis com os valores corretos do App Service e três environment secrets
   (`AZURE_ESTUDIO_CLIENT_ID`, `AZURE_ESTUDIO_TENANT_ID` e
   `AZURE_ESTUDIO_SUBSCRIPTION_ID`) cadastrados. A identidade de deploy e sua
-  federação foram verificadas/configuradas no Azure. O workflow ainda não foi
-  enviado ao GitHub e nenhuma publicação do piloto foi executada.
+  federação foram verificadas/configuradas no Azure. O workflow foi enviado
+  na proposta [PR #1](https://github.com/Felipe-everardo/ficha-digital/pull/1).
+  Nenhuma publicação do piloto foi executada.
 - O pacote Release foi preparado em uma pasta temporária local, com o perfil
   Piloto e o frontend do estúdio. Ainda não foi enviado ao App Service.
-- Verificação local: 169 testes .NET aprovados, 3 de SQL Server ignorados por
+- Verificação local: 169 testes .NET aprovados, 4 de SQL Server ignorados por
   exigir Docker; 5 E2E aprovados; lint, builds demo/estúdio e publicação Release
   aprovados. A dependência transitiva `source-map-js` foi atualizada para 1.2.2;
   `npm audit` passou sem alertas após a atualização.
