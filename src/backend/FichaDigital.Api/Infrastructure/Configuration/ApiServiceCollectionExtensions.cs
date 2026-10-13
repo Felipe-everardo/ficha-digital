@@ -14,7 +14,7 @@ internal static class ApiServiceCollectionExtensions
         services.AddControllersWithViews();
 
         var dataProtection = services.AddDataProtection()
-            .SetApplicationName("FichaDigital");
+            .SetApplicationName(configuration["DataProtection:ApplicationName"] ?? "FichaDigital");
 
         if (environment.IsEnvironment("E2E"))
         {

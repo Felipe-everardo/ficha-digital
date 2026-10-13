@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -41,6 +41,7 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 INSERT INTO [RevisoesProfissionais] (
                     [FichaId], [ProfissionalId], [ProfissionalNome],
                     [DadosDaFichaConferidos], [RevisadaEmUtc])
@@ -50,8 +51,9 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                 FROM [IniciosProcedimento];
 
                 UPDATE [Fichas]
-                SET [Status] = N'RevisadaPeloProfissional'
-                WHERE [Status] IN (N'EmProcedimento', N'Interrompida');
+                SET [Status] = N''RevisadaPeloProfissional''
+                WHERE [Status] IN (N''EmProcedimento'', N''Interrompida'');
+                ');
                 """);
 
             migrationBuilder.DropTable(
@@ -90,6 +92,7 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 INSERT INTO [IniciosProcedimento] (
                     [FichaId], [ProfissionalId], [ProfissionalNome],
                     [IdentidadeClienteConferida], [IniciadoEmUtc])
@@ -99,8 +102,9 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                 FROM [RevisoesProfissionais];
 
                 UPDATE [Fichas]
-                SET [Status] = N'EmProcedimento'
-                WHERE [Status] = N'RevisadaPeloProfissional';
+                SET [Status] = N''EmProcedimento''
+                WHERE [Status] = N''RevisadaPeloProfissional'';
+                ');
                 """);
 
             migrationBuilder.DropTable(

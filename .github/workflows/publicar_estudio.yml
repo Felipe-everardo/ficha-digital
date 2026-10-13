@@ -1,0 +1,168 @@
+name: Publicar piloto do estúdio (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-azure-estudio
+  cancel-in-progress: false
+
+env:
+  SOLUTION_PATH: FichaDigital.sln
+  API_PROJECT_PATH: src/backend/FichaDigital.Api/FichaDigital.Api.csproj
+  PUBLISH_PATH: ${{ github.workspace }}/publish
+
+jobs:
+  validar:
+    name: Validar antes de publicar
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Preparar aplicação validada
+    runs-on: windows-latest
+    needs: validar
+    timeout-minutes: 20
+
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Restaurar dependências
+        run: dotnet restore "${{ env.SOLUTION_PATH }}"
+
+      - name: Compilar solução
+        run: dotnet build "${{ env.SOLUTION_PATH }}" --configuration Release --no-restore
+
+      - name: Publicar API e frontend
+        env:
+          FICHA_AMBIENTE: estudio
+        run: >-
+          dotnet publish "${{ env.API_PROJECT_PATH }}"
+          --configuration Release
+          --no-build
+          --no-restore
+          --output "${{ env.PUBLISH_PATH }}"
+
+      - name: Armazenar pacote da aplicação
+        uses: actions/upload-artifact@v4
+        with:
+          name: fichadigital-estudio-${{ github.sha }}
+          path: ${{ env.PUBLISH_PATH }}
+          if-no-files-found: error
+
+  deploy:
+    name: Implantar no ambiente do estúdio
+    runs-on: windows-latest
+    needs: build
+    environment: estudio
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Validar destino exclusivo do estúdio
+        shell: pwsh
+        env:
+          ESTUDIO_APP_NAME: ${{ vars.AZURE_ESTUDIO_APP_NAME }}
+          ESTUDIO_BASE_URL: ${{ vars.AZURE_ESTUDIO_BASE_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:ESTUDIO_APP_NAME) -or
+              $env:ESTUDIO_APP_NAME -notmatch '^[a-zA-Z0-9-]+$' -or
+              $env:ESTUDIO_APP_NAME -eq 'fichaDigital') {
+            throw 'Configure um App Service exclusivo do estúdio no environment estudio.'
+          }
+          $destino = $null
+          if (-not [Uri]::TryCreate($env:ESTUDIO_BASE_URL, [UriKind]::Absolute, [ref]$destino) -or
+              $destino.Scheme -ne 'https' -or
+              $destino.Host -notlike "$($env:ESTUDIO_APP_NAME)*.azurewebsites.net" -or
+              $destino.Host -eq 'fichadigital-f0ffagenh8gegvea.eastus-01.azurewebsites.net' -or
+              $destino.AbsolutePath -ne '/' -or $destino.Query -or $destino.Fragment -or $destino.UserInfo) {
+            throw 'Configure a URL HTTPS do App Service exclusivo do estúdio.'
+          }
+
+      - name: Baixar pacote da aplicação
+        uses: actions/download-artifact@v4
+        with:
+          name: fichadigital-estudio-${{ github.sha }}
+          path: ./publish
+
+      - name: Autenticar no Azure sem senha
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_ESTUDIO_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_ESTUDIO_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_ESTUDIO_SUBSCRIPTION_ID }}
+
+      - name: Implantar no App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_ESTUDIO_APP_NAME }}
+          slot-name: Production
+          package: ./publish
+
+      - name: Verificar aplicação publicada e schema
+        env:
+          ESTUDIO_BASE_URL: ${{ vars.AZURE_ESTUDIO_BASE_URL }}
+        shell: pwsh
+        run: |
+          $baseUrl = $env:ESTUDIO_BASE_URL
+          $deadline = (Get-Date).AddMinutes(5)
+          $ready = $false
+
+          do {
+            try {
+              $response = Invoke-WebRequest `
+                -Uri "$baseUrl/health/ready" `
+                -UseBasicParsing `
+                -TimeoutSec 20
+
+              if ($response.StatusCode -eq 200) {
+                $ready = $true
+                break
+              }
+            }
+            catch {
+              Write-Host "Aguardando a aplicação reiniciar com a configuração segura..."
+            }
+
+            Start-Sleep -Seconds 10
+          } while ((Get-Date) -lt $deadline)
+
+          if (-not $ready) {
+            throw "A aplicação publicada não ficou pronta."
+          }
+
+          $headers = @{ "Idempotency-Key" = [guid]::NewGuid().ToString() }
+          $schemaResponse = Invoke-WebRequest `
+            -Uri "$baseUrl/api/fichas/convites/abrir" `
+            -Method Post `
+            -Headers $headers `
+            -ContentType "application/json" `
+            -Body '{"token":"verificacao-deploy-token-inexistente"}' `
+            -SkipHttpErrorCheck
+
+          if ($schemaResponse.StatusCode -ne 404) {
+            throw "A verificação do schema retornou HTTP $($schemaResponse.StatusCode), esperado 404."
+          }
+
+          Write-Host "Aplicação e schema validados com sucesso."

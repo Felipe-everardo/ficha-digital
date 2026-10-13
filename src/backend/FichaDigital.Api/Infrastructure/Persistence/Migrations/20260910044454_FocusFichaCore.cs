@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -49,6 +49,7 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
             // cadastro mutável do cliente e não havia um retrato por ficha.
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 INSERT INTO [DadosPessoaisFichas] (
                     [FichaId], [NomeCompleto], [NomeSocial], [Pronomes],
                     [DataNascimento], [Celular], [Email], [Instagram],
@@ -65,6 +66,7 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
                   AND [c].[NomeCompleto] IS NOT NULL
                   AND [c].[DataNascimento] IS NOT NULL
                   AND [c].[Celular] IS NOT NULL;
+                ');
                 """);
         }
 

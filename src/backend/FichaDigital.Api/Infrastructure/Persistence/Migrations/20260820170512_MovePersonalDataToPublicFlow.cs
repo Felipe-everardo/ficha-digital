@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -76,10 +76,12 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
 
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 UPDATE [Clientes]
                 SET [NomeReferencia] = [NomeCompleto],
                     [DadosPessoaisPreenchidosEmUtc] = [CriadoEmUtc]
-                WHERE [NomeReferencia] = N'';
+                WHERE [NomeReferencia] = N'''';
+                ');
                 """);
 
             migrationBuilder.CreateIndex(
@@ -93,10 +95,12 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 UPDATE [Clientes]
                 SET [NomeCompleto] = COALESCE([NomeCompleto], [NomeReferencia]),
-                    [DataNascimento] = COALESCE([DataNascimento], '1900-01-01'),
-                    [Celular] = COALESCE([Celular], N'Não informado');
+                    [DataNascimento] = COALESCE([DataNascimento], ''1900-01-01''),
+                    [Celular] = COALESCE([Celular], N''Não informado'');
+                ');
                 """);
 
             migrationBuilder.DropIndex(

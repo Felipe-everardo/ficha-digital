@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -12,9 +12,11 @@ namespace FichaDigital.Api.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 UPDATE [Atendimentos]
-                SET [SituacaoPagamento] = N'Pago'
-                WHERE [SituacaoPagamento] = N'Pendente';
+                SET [SituacaoPagamento] = N''Pago''
+                WHERE [SituacaoPagamento] = N''Pendente'';
+                ');
                 """);
         }
 

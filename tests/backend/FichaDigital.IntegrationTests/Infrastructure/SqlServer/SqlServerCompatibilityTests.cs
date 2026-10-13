@@ -6,6 +6,11 @@ using FichaDigital.Api.Modules.Profissionais.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Text.RegularExpressions;
 
 namespace FichaDigital.IntegrationTests.Infrastructure.SqlServer;
 
@@ -13,6 +18,52 @@ namespace FichaDigital.IntegrationTests.Infrastructure.SqlServer;
 public sealed class SqlServerCompatibilityTests(
     SqlServerContainerFixture fixture)
 {
+    [Fact(
+        Skip = SqlServerTestEnvironment.SkipReason,
+        SkipUnless = nameof(SqlServerTestEnvironment.Enabled),
+        SkipType = typeof(SqlServerTestEnvironment))]
+    public async Task ScriptIdempotente_DeveInstalarBancoVazioEPermitirReaplicacao()
+    {
+        await using var origem = fixture.CreateDbContext();
+        var conexao = new SqlConnectionStringBuilder(origem.Database.GetConnectionString())
+        {
+            InitialCatalog = $"FichaDigitalScriptTests_{Guid.NewGuid():N}"
+        };
+        var options = new DbContextOptionsBuilder<FichaDigitalDbContext>()
+            .UseSqlServer(conexao.ConnectionString).Options;
+        await using var banco = new FichaDigitalDbContext(options);
+        var criador = banco.GetService<IRelationalDatabaseCreator>();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await criador.CreateAsync(cancellationToken);
+        try
+        {
+            var script = banco.GetService<IMigrator>().GenerateScript(
+                options: MigrationsSqlGenerationOptions.Idempotent);
+            await banco.Database.OpenConnectionAsync(cancellationToken);
+            await banco.Database.ExecuteSqlRawAsync("SET QUOTED_IDENTIFIER ON", cancellationToken);
+            for (var execucao = 0; execucao < 2; execucao++)
+            {
+                foreach (var lote in Regex.Split(script, @"^\s*GO\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(lote))
+                    {
+                        await using var comando = banco.Database.GetDbConnection().CreateCommand();
+                        comando.CommandText = lote;
+                        await comando.ExecuteNonQueryAsync(cancellationToken);
+                    }
+                }
+                Assert.Empty(await banco.Database.GetPendingMigrationsAsync(cancellationToken));
+                Assert.Equal(banco.Database.GetMigrations(),
+                    await banco.Database.GetAppliedMigrationsAsync(cancellationToken));
+            }
+        }
+        finally
+        {
+            await banco.Database.CloseConnectionAsync();
+            await banco.Database.EnsureDeletedAsync(CancellationToken.None);
+        }
+    }
+
     [Fact(
         Skip = SqlServerTestEnvironment.SkipReason,
         SkipUnless = nameof(SqlServerTestEnvironment.Enabled),
