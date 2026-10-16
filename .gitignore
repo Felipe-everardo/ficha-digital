@@ -32,3 +32,10 @@ Thumbs.db
 
 # Documentação pessoal de publicação
 /docs/particular
+
+# Certificados, chaves exportadas e backups locais privados
+*.pfx
+*.p12
+*.bak
+*.bacpac
+*.publishsettings

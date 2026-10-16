@@ -22,7 +22,6 @@ Implementado no código:
 
 Próximas melhorias da demonstração:
 
-- [ ] Aviso de dados fictícios dentro da interface, além do README.
 - [ ] Rotina controlada para recompor os dados da demonstração.
 - [ ] Processo de migrations integrado à publicação, com identidade separada.
 - [ ] Recuperação de acesso e revisão do provisionamento da conta inicial.
@@ -40,6 +39,44 @@ Próximas melhorias da demonstração:
 - [ ] Validar os textos e procedimentos com o estúdio e a assessoria responsável.
 
 Critérios e execução: [runbook de produção](operacao-producao.md).
+
+## Melhorias locais de outubro de 2026
+
+- Exportação individual de fichas concluídas em PDF A4 de uma página, com dados
+  históricos, termo aceito, assinaturas e nome de arquivo baseado no cliente.
+- Acesso autenticado e solicitação de exportação registrada na auditoria.
+- Controle para mostrar e ocultar senha com ícone fixo dentro do campo.
+- Ajustes mobile: link de retorno do cliente apenas no desktop, cabeçalho com
+  nome do estúdio e logo central escura restrita ao início mobile.
+- Avisos de demonstração no topo e de sessão ativa removidos a pedido do usuário.
+- Dependência System.Security.Cryptography.Pkcs atualizada para 9.0.21; os dois
+  alertas conhecidos deixaram de aparecer na consulta NuGet.
+
+Validação: 175 testes de backend aprovados e 4 de SQL Server não executados por
+exigirem Docker; fluxos de login, convites e PDFs verificados no navegador.
+As últimas telas mobile e desktop foram conferidas com API simulada em porta
+separada para preservar os servidores locais em uso. Compilação e lint aprovados.
+Estas melhorias ainda não foram publicadas no Azure.
+
+## Piloto do estúdio
+
+Preparação concluída em 13/10/2026 e registro reconstruído em 15/10/2026:
+
+- [x] Aplicação e banco exclusivos do piloto, separados da demonstração.
+- [x] Identidades distintas para execução e publicação, com acesso limitado.
+- [x] Workflow manual do estúdio integrado à `main`, com validação antes do deploy.
+- [x] Perfil Piloto com validação de configuração e migrations automáticas desabilitadas.
+- [x] Conta inicial exclusiva criada; provisionamento desabilitado e senha temporária removida.
+- [x] Publicação da versão `71ee391` e prontidão verificadas na preparação.
+- [ ] Confirmar login e atendimento fictício completo com a profissional.
+- [ ] Comprovar separação de dados e credenciais entre demo e piloto.
+- [ ] Cumprir os critérios de recuperação, chaves e operação antes dos dados reais.
+
+O item anterior de infraestrutura de produção permanece aberto: provisionar o
+piloto não comprova todos os requisitos para atendimentos reais.
+
+Estudo do orçamento: [ambiente do estúdio sem serviços pagos](ambiente-estudio-gratuito.md).
+Procedimentos e resultados: [publicação manual do estúdio](publicacao-estudio.md).
 
 ## Direção para os ambientes
 

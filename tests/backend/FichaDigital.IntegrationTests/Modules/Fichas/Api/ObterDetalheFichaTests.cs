@@ -101,9 +101,9 @@ public sealed class ObterDetalheFichaTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    private static async Task<Guid> CriarFichaConcluidaAsync(
+    internal static async Task<Guid> CriarFichaConcluidaAsync(
         FichaDigitalApiFactory factory,
-        DateTimeOffset agora)
+        DateTimeOffset agora, bool evidenciaIntegra = false)
     {
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider
@@ -146,10 +146,19 @@ public sealed class ObterDetalheFichaTests
             estaGravidaOuAmamentando: false);
         var aceite = new AceiteTermoConsentimento(
             ficha.Id,
+            conviteId: null,
             versaoTermo: 1,
             conteudoTermo: "Termo fictício para teste automatizado.",
             conteudoHash: new string('d', 64),
             nomeAssinante: "Ana Silva",
+            confirmouLeituraEAutorizacao: true,
+            versaoEvidencia: 1,
+            evidenciaJson: "{}",
+            evidenciaHash: evidenciaIntegra
+                ? Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData("{}"u8))
+                : new string('d', 64),
+            enderecoIp: null,
+            agenteUsuario: null,
             aceitoEmUtc: agora);
 
         dbContext.Clientes.Add(cliente);

@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import logoManuscrito from '../assets/manuscrito-estudio-logo.png'
 import { StudioBrand } from '../components/StudioBrand'
 import { ProfessionalMobileLayout } from '../components/ProfessionalMobileNav'
 import { ApiRequestError } from '../services/api'
@@ -22,6 +23,7 @@ export function AreaProfissionalPage() {
   })
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [autenticando, setAutenticando] = useState(false)
   const [encerrandoSessao, setEncerrandoSessao] = useState(false)
   const [erroFormulario, setErroFormulario] = useState<string | null>(null)
@@ -88,6 +90,7 @@ export function AreaProfissionalPage() {
           : 'Não foi possível entrar. Tente novamente.',
       )
     } finally {
+      setSenhaVisivel(false)
       setAutenticando(false)
     }
   }
@@ -175,20 +178,45 @@ export function AreaProfissionalPage() {
               />
             </label>
 
-            <label>
-              <span>Senha</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                maxLength={128}
-                required
-                value={senha}
-                onChange={(event) => {
-                  setSenha(event.target.value)
-                  setErroFormulario(null)
-                }}
-              />
-            </label>
+            <div className="professional-password-field">
+              <label htmlFor="senha-profissional">Senha</label>
+              <div className="professional-password-input">
+                <input
+                  id="senha-profissional"
+                  type={senhaVisivel ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  maxLength={128}
+                  required
+                  value={senha}
+                  onChange={(event) => {
+                    setSenha(event.target.value)
+                    setErroFormulario(null)
+                  }}
+                />
+                <button
+                  className="professional-password-toggle"
+                  type="button"
+                  aria-label={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'}
+                  title={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-controls="senha-profissional"
+                  aria-pressed={senhaVisivel}
+                  onClick={() => setSenhaVisivel((visivel) => !visivel)}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {senhaVisivel ? (
+                      <>
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M3 9c2 4 5 6 9 6s7-2 9-6M5 12l-2 3m6-1-1 4m7-4 1 4m3-6 2 3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </div>
 
             {erroFormulario && (
               <p className="form-error" role="alert">
@@ -240,7 +268,6 @@ export function AreaProfissionalPage() {
         className="professional-dashboard"
         aria-labelledby="professional-dashboard-title"
       >
-        <p className="eyebrow">Sessão protegida ativa</p>
         <h1 id="professional-dashboard-title">
           Bem-vindo ao Manuscrito Studio.
         </h1>
@@ -254,6 +281,12 @@ export function AreaProfissionalPage() {
             {erroFormulario}
           </p>
         )}
+
+        <img
+          className="professional-home-logo"
+          src={logoManuscrito}
+          alt="Logo Manuscrito Estudio"
+        />
 
         <div className="professional-placeholder-grid">
           <a
