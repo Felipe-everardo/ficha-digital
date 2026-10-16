@@ -7,11 +7,14 @@ Insights. Também foram criados o servidor `sql-fichadigital-estudio` e o banco
 gratuito `FichaDigitalEstudioDb` em West US 2. A identidade da aplicação está
 ativa e a identidade de deploy tem federação GitHub e permissão de publicação
 no App Service do piloto. A estrutura SQL e o acesso limitado da aplicação foram
-concluídos. A publicação e a conta do estúdio continuam pendentes. Este guia não
+concluídos. A publicação e a criação da conta exclusiva foram concluídas. Este guia não
 declara o sistema pronto para receber dados reais.
 
 Endereço provisionado: `https://fichadigital-estudio-aacpdwfkbpa9f3gx.eastus-01.azurewebsites.net`.
-A aplicação ainda não foi implantada nesse endereço.
+A versão `71ee391` foi implantada nesse endereço em 13/10/2026. A segunda
+tentativa da etapa de implantação concluiu com sucesso, e `/health/ready`
+respondeu HTTP 200 com `Healthy`. Esses são resultados daquela preparação;
+esta recuperação de arquivos em 15/10/2026 não revalidou os recursos remotos.
 
 O inventário completo de bancos do portal mostrou apenas `FichaDigitalDb`,
 da demo, na oferta gratuita, em West US 2. A assinatura rejeitou um servidor
@@ -28,9 +31,9 @@ As variáveis `ASPNETCORE_ENVIRONMENT=Piloto`, nome e pasta exclusivos de
 Data Protection, migrations automáticas desabilitadas e `AllowedHosts` foram
 salvas no App Service. A conexão SQL foi salva com autenticação Active Directory
 Managed Identity, criptografia obrigatória e validação do certificado. O
-provisionamento da conta exclusiva do estúdio continua pendente.
+provisionamento da conta exclusiva foi concluído. `ProfissionalInicial__Habilitado` foi salvo como `false`, e `ProfissionalInicial__Senha` foi removido da configuração.
 
-## Pendências observadas nesta preparação
+## Registro da preparação e verificações pendentes
 
 - Após o bloqueio inicial da revisão automática, o usuário autorizou a identidade
   e o acesso limitado ao banco do piloto. A tela do Azure confirma a identidade
@@ -44,7 +47,7 @@ provisionamento da conta exclusiva do estúdio continua pendente.
   `docs/particular/migrations-piloto.sql` (pasta ignorada pelo Git).
   O script de acesso está em `scripts/provisionar-acesso-estudio.sql` e valida
   o nome do banco antes de criar o usuário. Ambos foram executados no banco do piloto.
-  Conferência final: 24 migrations, 19 tabelas, zero usuários e zero fichas.
+  Conferência anterior à criação da conta: 24 migrations, 19 tabelas, zero usuários e zero fichas. A conta inicial foi criada depois dessa conferência.
   A instalação limpa e a reaplicação do SQL foram validadas em LocalDB isolado.
   Comandos de dados das migrations usam SQL dinâmico para evitar compilação
   antecipada de colunas recém-criadas ou já removidas em scripts idempotentes.
@@ -57,15 +60,42 @@ provisionamento da conta exclusiva do estúdio continua pendente.
   `AZURE_ESTUDIO_SUBSCRIPTION_ID`) cadastrados. A identidade de deploy e sua
   federação foram verificadas/configuradas no Azure. O workflow foi enviado
   na proposta [PR #1](https://github.com/Felipe-everardo/ficha-digital/pull/1).
-  Nenhuma publicação do piloto foi executada.
+  A proposta foi integrada à main, versão 71ee391. A publicação manual concluiu
+  com sucesso na tentativa 2 da etapa de deploy:
+  [execução #1](https://github.com/Felipe-everardo/ficha-digital/actions/runs/38450642164).
 - O pacote Release foi preparado em uma pasta temporária local, com o perfil
-  Piloto e o frontend do estúdio. Ainda não foi enviado ao App Service.
+  Piloto e o frontend do estúdio. O workflow montou e enviou o pacote ao App Service.
 - Verificação local: 169 testes .NET aprovados, 4 de SQL Server ignorados por
   exigir Docker; 5 E2E aprovados; lint, builds demo/estúdio e publicação Release
   aprovados. A dependência transitiva `source-map-js` foi atualizada para 1.2.2;
   `npm audit` passou sem alertas após a atualização.
 
-Não houve alteração dos recursos, banco ou publicação da demonstração existente.
+As configurações e o banco da demo foram preservados. A integração à main
+disparou seu fluxo automático de publicação. Na preparação, a prontidão da demo
+foi conferida e retornou Healthy.
+
+## Diagnóstico e conclusão da primeira publicação
+
+Registro reconstruído do histórico de 13/10/2026:
+
+- O primeiro deploy enviou o pacote, mas falhou na verificação de prontidão.
+- O log do App Service indicou tempo limite na fase pós-login do SQL. A política
+  de conexão do servidor exclusivo foi alterada de Padrão para Proxy e salva,
+  mantendo autenticação Entra e criptografia.
+- Depois dessa alteração, a aplicação conseguiu consultar `AspNetUsers`, mas a
+  criação da conta falhou porque a senha tinha menos de 12 caracteres.
+- O usuário corrigiu e salvou a senha no portal; o log passou a registrar
+  inicialização bem-sucedida, e a tela de acesso profissional abriu.
+- O provisionamento inicial foi desabilitado, e a configuração temporária da
+  senha foi removida. A senha não foi lida nem incluída nos arquivos recuperados.
+- A etapa de implantação foi repetida com o mesmo pacote. O GitHub registrou
+  sucesso, incluindo prontidão e verificação de convite inexistente.
+
+O login com a senha pessoal e o fluxo completo de atendimento devem ser
+conferidos pelo operador. Proteção e recuperação das chaves, restauração de
+backup e critérios de liberação de dados reais continuam pendentes.
+
+Referência: [diagnóstico de conexões SQL](https://learn.microsoft.com/en-us/azure/sql-database/sql-database-troubleshoot-common-connection-issues).
 
 ## Separação
 

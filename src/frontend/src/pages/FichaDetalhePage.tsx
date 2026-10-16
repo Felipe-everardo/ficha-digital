@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import {
   ApiRequestError,
   obterDetalheFicha,
+  obterExportacaoFicha,
   type FichaDetalhe,
 } from '../services/api'
 import { OperacoesProfissionaisFicha } from '../components/ficha-profissional/OperacoesProfissionaisFicha'
+import { nomeArquivoFicha } from '../services/nomeArquivoFicha'
 import './FichaDetalhePage.css'
 
 type FichaDetalhePageProps = {
@@ -84,6 +86,8 @@ function obterStatus(ficha: FichaDetalhe) {
 export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
   const [ficha, setFicha] = useState<FichaDetalhe | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [exportando, setExportando] = useState(false)
+  const [erroExportacao, setErroExportacao] = useState<string | null>(null)
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -109,6 +113,25 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
 
     return () => abortController.abort()
   }, [fichaId])
+
+  async function baixarPdf() {
+    setExportando(true)
+    setErroExportacao(null)
+    try {
+      const { criarPdfFicha } = await import('../services/fichaPdf')
+      const dados = await obterExportacaoFicha(fichaId)
+      const pdf = criarPdfFicha(dados)
+      pdf.save(nomeArquivoFicha(dados.ficha.cliente.nomeParaExibicao, dados.ficha.criadaEmUtc))
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) {
+        window.location.replace('/profissional/entrar')
+        return
+      }
+      setErroExportacao(error instanceof Error ? error.message : 'Não foi possível gerar o PDF.')
+    } finally {
+      setExportando(false)
+    }
+  }
 
   function atualizarDepoisDaOperacao(novoStatus: string) {
     setFicha((atual) =>
@@ -161,6 +184,15 @@ export function FichaDetalhePage({ fichaId }: FichaDetalhePageProps) {
           </span>
         </div>
       </header>
+
+      {ficha.status === 'Concluida' && (
+        <div className="record-export">
+          <button type="button" disabled={exportando} onClick={baixarPdf}>
+            {exportando ? 'Gerando PDF...' : 'Baixar PDF'}
+          </button>
+          {erroExportacao && <p className="form-error" role="alert">{erroExportacao}</p>}
+        </div>
+      )}
 
       {([
         'AnamnesePreenchida',

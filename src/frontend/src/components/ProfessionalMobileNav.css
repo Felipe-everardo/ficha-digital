@@ -76,3 +76,17 @@
     display: none;
   }
 }
+
+@media (max-width: 760px) {
+  .professional-topbar .studio-brand__logo-frame {
+    display: none;
+  }
+
+  .professional-topbar .studio-brand {
+    gap: 0;
+  }
+
+  .client-detail-header > .client-detail-back {
+    display: none;
+  }
+}

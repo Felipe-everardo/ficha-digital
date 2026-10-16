@@ -271,3 +271,72 @@
     border-radius: 0;
   }
 }
+
+.professional-password-field {
+  display: grid;
+  gap: 9px;
+}
+
+.professional-password-field > label {
+  color: var(--text);
+  font-size: 0.87rem;
+  font-weight: 700;
+}
+
+.professional-password-input {
+  position: relative;
+}
+
+.professional-login-form .professional-password-input input {
+  padding-right: 54px;
+}
+
+.professional-login-form .professional-password-toggle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 4px;
+  transform: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: auto 0;
+  padding: 0;
+  color: var(--moss-dark);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  transition: none;
+}
+
+.professional-login-form .professional-password-toggle:hover:not(:disabled),
+.professional-login-form .professional-password-toggle:active {
+  transform: none;
+  background: transparent;
+  border: 0;
+}
+
+.professional-login-form .professional-password-toggle:focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: -2px;
+}
+
+.professional-home-logo {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .professional-home-logo {
+    display: block;
+    width: min(76vw, 320px);
+    aspect-ratio: 1;
+    object-fit: cover;
+    margin: 32px auto;
+    opacity: 0.045;
+    pointer-events: none;
+    user-select: none;
+  }
+}

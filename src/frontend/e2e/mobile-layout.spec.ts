@@ -1,0 +1,28 @@
+import { expect, test } from './fixtures'
+import { autenticar, criarCliente } from './apoio'
+
+test('marca e navegação se adaptam entre celular e desktop', async ({ page }) => {
+  await autenticar(page.request)
+  const cliente = await criarCliente(page.request, 'Cliente de teste mobile')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/profissional')
+  await expect(page.getByRole('heading', { name: 'Bem-vindo ao Manuscrito Studio.' })).toBeVisible()
+  await expect(page.getByText('Sessão protegida ativa', { exact: true })).toHaveCount(0)
+  await expect(page.locator('.professional-topbar .studio-brand__logo-frame')).toBeHidden()
+  await expect(page.locator('.professional-home-logo')).toBeVisible()
+  await expect(page.locator('.professional-topbar .studio-brand__copy')).toBeVisible()
+  await page.screenshot({ path: 'test-results/inicio-mobile.png', fullPage: true })
+  await page.setViewportSize({ width: 320, height: 720 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.goto(`/profissional/clientes/${cliente.id}`)
+  const voltar = page.getByRole('link', { name: '← Voltar aos clientes', includeHidden: true })
+  await expect(voltar).toBeHidden()
+  await expect(page.locator('.professional-home-logo')).toHaveCount(0)
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await expect(voltar).toBeVisible()
+  await expect(page.locator('.professional-home-logo')).toBeHidden()
+  await page.goto('/profissional')
+  await expect(page.locator('.professional-topbar .studio-brand__logo-frame')).toBeVisible()
+  await expect(page.locator('.professional-home-logo')).toBeHidden()
+  await page.screenshot({ path: 'test-results/inicio-desktop.png', fullPage: true })
+})

@@ -554,3 +554,20 @@ export function concluirProcedimento(
     antiforgeryToken,
   )
 }
+
+export type ExportacaoFicha = {
+  ficha: FichaDetalhe
+  conteudoTermo: string
+  exportadaEmUtc: string
+}
+
+export async function obterExportacaoFicha(fichaId: string): Promise<ExportacaoFicha> {
+  const response = await fetch(`/api/fichas/${encodeURIComponent(fichaId)}/exportacao-pdf`, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+  })
+  if (!response.ok) {
+    throw await criarErroDaApi(response, 'Não foi possível exportar a ficha.')
+  }
+  return response.json() as Promise<ExportacaoFicha>
+}

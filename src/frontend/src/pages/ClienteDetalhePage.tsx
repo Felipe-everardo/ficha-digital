@@ -92,7 +92,7 @@ export function ClienteDetalhePage({ clienteId }: ClienteDetalhePageProps) {
   return (
     <main className="client-detail-shell">
       <header className="client-detail-header">
-        <a href="/profissional/clientes">← Voltar aos clientes</a>
+        <a className="client-detail-back" href="/profissional/clientes">← Voltar aos clientes</a>
         <p className="eyebrow">Cadastro do cliente</p>
         <h1>{cliente.nomeParaExibicao}</h1>
         <p>
